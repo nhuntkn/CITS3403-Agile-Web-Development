@@ -1,0 +1,236 @@
+/* ============================================================
+   style.css — shared styles for Exercise Planner
+   Covers: base, navbar, page layout, metric cards, utilities
+   Page-specific styles (charts, forms etc.) live in each page
+   ============================================================ */
+
+/* ── Base ────────────────────────────────────────────────── */
+body {
+  background: #ffffff;
+  font-family: Arial, sans-serif;
+  color: #212529;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Navbar ──────────────────────────────────────────────── */
+.ep-navbar {
+  border-bottom: 2px solid #dee2e6;
+  padding: 0 1.5rem;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.ep-brand {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: #212529;
+  text-decoration: none;
+  padding: 0 1.25rem 0 0;
+  letter-spacing: -0.5px;
+  flex-shrink: 0;
+}
+
+.ep-brand:hover {
+  color: #212529;
+}
+
+.ep-nav-link {
+  font-size: 0.95rem;
+  color: #212529;
+  text-decoration: none;
+  padding: 0 1.1rem;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  border-bottom: 3px solid transparent;
+  transition: border-color 0.15s;
+  white-space: nowrap;
+}
+
+.ep-nav-link:hover {
+  color: #212529;
+  border-bottom-color: #adb5bd;
+}
+
+.ep-nav-link.active {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  border-bottom-color: transparent;
+}
+
+/* Pink "Create Exercise" button — always last in the navbar */
+.ep-nav-link.create-btn {
+  background: #e91e8c;
+  color: #ffffff !important;
+  border-radius: 6px;
+  margin-left: auto;
+  height: 38px;
+  padding: 0 1.2rem;
+  font-weight: 600;
+  text-decoration: none !important;
+  border-bottom: none;
+  transition: background 0.15s;
+}
+
+.ep-nav-link.create-btn:hover {
+  background: #c91679;
+  border-bottom-color: transparent;
+}
+
+/* ── Page layout ─────────────────────────────────────────── */
+.page-content {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 1.75rem 1.25rem 3rem;
+}
+
+/* ── Metric cards ────────────────────────────────────────── */
+.metric-card {
+  background: #e0e0e0;
+  border-radius: 12px;
+  padding: 1rem 1.25rem 1.25rem;
+  min-height: 120px;
+}
+
+.metric-card .card-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 0.6rem;
+  color: #212529;
+}
+
+.metric-card .card-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #333333;
+}
+
+.metric-card .card-sub {
+  font-size: 0.78rem;
+  color: #666666;
+  margin-top: 2px;
+}
+
+/* ── Section card (grey panel used on multiple pages) ────── */
+.ep-card {
+  background: #e0e0e0;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+}
+
+.ep-card .ep-card-title {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  color: #212529;
+}
+
+/* ── Calorie goal box ────────────────────────────────────── */
+.calorie-box {
+  background: #e8e8e8;
+  border-radius: 12px;
+  padding: 1.1rem 1.5rem 1.2rem;
+}
+
+.calorie-box .box-title {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.calorie-box .goal-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.calorie-box .goal-label {
+  font-size: 0.9rem;
+  color: #444444;
+}
+
+.calorie-box .goal-count {
+  font-size: 0.9rem;
+  color: #333333;
+  font-weight: 500;
+}
+
+.calorie-box .progress {
+  height: 18px;
+  border-radius: 20px;
+  background: #c8c8c8;
+}
+
+.calorie-box .progress-bar {
+  background: #4caf50;
+  border-radius: 20px;
+  transition: width 0.6s ease;
+}
+
+/* ── Chart cards ─────────────────────────────────────────── */
+.chart-card {
+  background: #e0e0e0;
+  border-radius: 14px;
+  padding: 1rem 1rem 0.75rem;
+}
+
+.chart-card .chart-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+  color: #212529;
+}
+
+.chart-wrapper {
+  background: #1e1e1e;
+  border-radius: 8px;
+  padding: 0.75rem 0.5rem 0.5rem;
+}
+
+/* ── Utility ─────────────────────────────────────────────── */
+.text-pink  { color: #e91e8c; }
+.btn-pink {
+  background: #e91e8c;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-pink:hover { background: #c91679; }
+
+.btn-dark-rounded {
+  background: #555555;
+  color: #ffffff;
+  border: none;
+  border-radius: 20px;
+  padding: 0.5rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-dark-rounded:hover { background: #333333; }
+
+.btn-danger-rounded {
+  background: #555555;
+  color: #e74c3c;
+  border: none;
+  border-radius: 20px;
+  padding: 0.5rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-danger-rounded:hover { background: #333333; }git 
