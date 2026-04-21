@@ -26,12 +26,18 @@
   <a href="#" class="ep-nav-link">Profile</a>
   <a href="#" class="ep-nav-link">Ranking</a>
   <a href="{{ url_for('home') }}" class="ep-nav-link create-btn">Create Exercise</a>
+  <div class="ep-user-menu">
+    <div class="ep-user-avatar">{{ username[0]|upper if username else 'U' }}</div>
+    <div class="ep-user-dropdown">
+      <a href="{{ url_for('login') }}" class="ep-dropdown-item">Logout</a>
+    </div>
+  </div>
 </nav>
 
 <!-- ── Page content ────────────────────────────────────────────────────── -->
 <div class="page-content">
 
-  <p class="fw-bold fs-5 mb-4">Welcome, User.</p>
+  <p class="fw-bold fs-5 mb-4">Welcome!</p>
 
   <!-- 4 Metric cards -->
   <div class="row g-3 mb-4">

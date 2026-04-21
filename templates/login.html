@@ -3,12 +3,14 @@
 <head>
     <title>Exercise Planner</title>
     <!-- Shared styles (for .btn-pink) -->
-    <link rel="stylesheet" href="static/css/style.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
 </head>
 
 <body style="font-family: Arial; text-align: center;">
 
-<h1>Exercise Planner</h1>
+<div style="background-color: #7793ae; padding: 10px 0; text-align: center;">
+  <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Exercise Planner" style="height:100px; width:auto;">
+</div>
 
 <p>
 This website will help you keep track of the total calories burned through your exercises,

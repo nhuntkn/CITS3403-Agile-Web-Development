@@ -8,7 +8,12 @@ def home():
 
 @app.route("/dashboard")
 def dashboard():
-    return render_template("dashboard.html")
+    username = "Jackson"  # TODO: replace with session user once auth is implemented
+    return render_template("dashboard.html", username=username)
+
+@app.route("/login")
+def login():
+    return render_template("login.html")
 
 if __name__ == "__main__":
     app.run(debug=True)
