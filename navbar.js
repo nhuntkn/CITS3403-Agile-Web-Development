@@ -16,7 +16,9 @@ function loadNavbar(activePage) {
 
     container.innerHTML = `
         <nav class = "ep-navbar">
-            <a href = "dashboard.html"  class = "ep-brand">EP</a>
+            <a href = "dashboard.html"  class = "ep-brand">
+                <img src = "{{ url_for('static', filename = 'images/logo.png') }}" alt="EP" style="height:36px; width:auto;">
+            </a>
             ${navLinks}
             <a href = "exercise.html" class = "ep-nav-link create-btn ${activePage === 'exercise' ? 'active' : ''}">
                 Create Exercise
