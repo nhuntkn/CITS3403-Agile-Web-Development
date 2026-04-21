@@ -209,6 +209,19 @@ body {
 }
 .btn-pink:hover { background: #c91679; }
 
+.btn-blue {
+  background: #2e7bc4;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-blue:hover { background: #1a5fa0; }
+
 .btn-dark-rounded {
   background: #555555;
   color: #ffffff;
