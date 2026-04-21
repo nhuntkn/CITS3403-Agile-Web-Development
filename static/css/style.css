@@ -1,0 +1,82 @@
+    body {
+      background-color: #f8f9fa;
+      margin: 0;
+    }
+    /* navigation bar background */
+    .top-bar {
+      background-color: #7793ae;
+      padding: 10px 30px;
+    }
+
+    /* box styles */
+    .nav-box, .main-box, .exercise-row-box {
+      border: 1px solid #ccc;
+      background-color: white;
+    }
+
+    /* nav button style */
+    .nav-box {
+      padding: 8px 14px;
+      text-decoration: none; /* none for removing text underline */
+      color: black;
+      border-radius: 8px;
+      display: inline-block;
+    }
+
+    .main-box {
+      padding: 25px;
+    }
+
+    .notes-box {
+      height: 220px;
+      resize: none;
+    }
+
+    /* top right profile icon */
+    .profile-circle {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background-color: white;
+      color: black;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      border: 1px solid #ccc;
+    }
+
+    /* dropdown menu relative to icon */
+    .hover-dropdown {
+      position: relative;
+    }
+
+    /* dropdown menu when mouse hovers icon */
+    .hover-dropdown:hover .dropdown-menu {
+      display: block;
+      margin-top: 0;
+    }
+
+    /* dropdown hidden by default */
+    .dropdown-menu {
+      display: none;
+      min-width: 160px;
+    }
+
+    /* exercise row box style */
+    .exercise-row-box {
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+    }
+
+    .site-logo {
+      height: 80px;
+      width: auto;
+    }
