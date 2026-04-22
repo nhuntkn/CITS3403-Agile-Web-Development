@@ -72,13 +72,13 @@
               </select>
             </div>
 
-            <div class="col-md-2">
+            <div class="col-md-3">
               <label class="form-label">Minutes</label>
               <input type="number" class="form-control" id="minutes${rowCount}" placeholder="0">
             </div>
 
-            <div class="col-md-2">
-              <button class="btn btn-outline-danger w-100" onclick="removeRow(${rowCount})">Remove</button>
+            <div class="col-md-1 d-flex align-items-end">
+              <button class="btn btn-outline-danger w-100" onclick="removeRow(${rowCount})" title="Remove">&times;</button>
             </div>
           </div>
         </div>

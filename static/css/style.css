@@ -1,82 +1,376 @@
-    body {
-      background-color: #f8f9fa;
-      margin: 0;
-    }
-    /* navigation bar background */
-    .top-bar {
-      background-color: #7793ae;
-      padding: 10px 30px;
-    }
+/* ============================================================
+   style.css — shared styles for Exercise Planner
+   Covers: base, navbar, page layout, metric cards, utilities
+   Page-specific styles (charts, forms etc.) live in each page
+   ============================================================ */
 
-    /* box styles */
-    .nav-box, .main-box, .exercise-row-box {
-      border: 1px solid #ccc;
-      background-color: white;
-    }
+/* ── Base ────────────────────────────────────────────────── */
+body {
+  background: #ffffff;
+  font-family: Arial, sans-serif;
+  color: #212529;
+  margin: 0;
+  padding: 0;
+}
 
-    /* nav button style */
-    .nav-box {
-      padding: 8px 14px;
-      text-decoration: none; /* none for removing text underline */
-      color: black;
-      border-radius: 8px;
-      display: inline-block;
-    }
+/* ── Navbar ──────────────────────────────────────────────── */
+.ep-navbar {
+  border-bottom: 2px solid #5a7a96;
+  padding: 0 1.5rem;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  background: #7793ae;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
 
-    .main-box {
-      padding: 25px;
-    }
+.ep-brand {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: #ffffff;
+  text-decoration: none;
+  padding: 0 1.25rem 0 0;
+  letter-spacing: -0.5px;
+  flex-shrink: 0;
+}
 
-    .notes-box {
-      height: 220px;
-      resize: none;
-    }
+.ep-brand:hover {
+  color: #ffffff;
+}
 
-    /* top right profile icon */
-    .profile-circle {
-      width: 42px;
-      height: 42px;
-      border-radius: 50%;
-      background-color: white;
-      color: black;
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      border: 1px solid #ccc;
-    }
+.ep-nav-link {
+  font-size: 0.95rem;
+  color: #ffffff;
+  text-decoration: none;
+  padding: 0 1.1rem;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  border-bottom: 3px solid transparent;
+  transition: border-color 0.15s;
+  white-space: nowrap;
+}
 
-    /* dropdown menu relative to icon */
-    .hover-dropdown {
-      position: relative;
-    }
+.ep-nav-link:hover {
+  color: #ffffff;
+  border-bottom-color: rgba(255,255,255,0.6);
+}
 
-    /* dropdown menu when mouse hovers icon */
-    .hover-dropdown:hover .dropdown-menu {
-      display: block;
-      margin-top: 0;
-    }
+.ep-nav-link.active {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  border-bottom-color: transparent;
+}
 
-    /* dropdown hidden by default */
-    .dropdown-menu {
-      display: none;
-      min-width: 160px;
-    }
+/* User avatar circle */
+.ep-user-menu {
+  position: relative;
+  margin-left: 0.75rem;
+}
 
-    /* exercise row box style */
-    .exercise-row-box {
-      border-radius: 8px;
-      padding: 15px;
-      margin-bottom: 15px;
-    }
+.ep-user-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #333333;
+  font-weight: 700;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255,255,255,0.6);
+  cursor: pointer;
+  user-select: none;
+}
 
-    .logo {
-      display: flex;
-      align-items: center;
-    }
+/* Dropdown panel */
+.ep-user-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  min-width: 130px;
+  z-index: 200;
+  overflow: hidden;
+}
 
-    .site-logo {
-      height: 80px;
-      width: auto;
-    }
+.ep-user-menu:hover .ep-user-dropdown {
+  display: block;
+}
+
+.ep-dropdown-item {
+  display: block;
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
+  color: #333333;
+  text-decoration: none;
+  transition: background 0.12s;
+}
+
+.ep-dropdown-item:hover {
+  background: #f0f0f0;
+  color: #333333;
+}
+
+/* Pink "Create Exercise" button — always last in the navbar */
+.ep-nav-link.create-btn {
+  background: #e91e8c;
+  color: #ffffff !important;
+  border-radius: 6px;
+  margin-left: auto;
+  height: 38px;
+  padding: 0 1.2rem;
+  font-weight: 600;
+  text-decoration: none !important;
+  border-bottom: none;
+  transition: background 0.15s;
+}
+
+.ep-nav-link.create-btn:hover {
+  background: #c91679;
+  border-bottom-color: transparent;
+}
+
+/* ── Page layout ─────────────────────────────────────────── */
+.page-content {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 1.75rem 1.25rem 3rem;
+}
+
+/* ── Metric cards ────────────────────────────────────────── */
+.metric-card {
+  background: #e0e0e0;
+  border-radius: 12px;
+  padding: 1rem 1.25rem 1.25rem;
+  min-height: 120px;
+}
+
+.metric-card .card-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 0.6rem;
+  color: #212529;
+}
+
+.metric-card .card-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #333333;
+}
+
+.metric-card .card-sub {
+  font-size: 0.78rem;
+  color: #666666;
+  margin-top: 2px;
+}
+
+/* ── Section card (grey panel used on multiple pages) ────── */
+.ep-card {
+  background: #e0e0e0;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+}
+
+.ep-card .ep-card-title {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  color: #212529;
+}
+
+/* ── Calorie goal box ────────────────────────────────────── */
+.calorie-box {
+  background: #e8e8e8;
+  border-radius: 12px;
+  padding: 1.1rem 1.5rem 1.2rem;
+}
+
+.calorie-box .box-title {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.calorie-box .goal-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.calorie-box .goal-label {
+  font-size: 0.9rem;
+  color: #444444;
+}
+
+.calorie-box .goal-count {
+  font-size: 0.9rem;
+  color: #333333;
+  font-weight: 500;
+}
+
+.calorie-box .progress {
+  height: 18px;
+  border-radius: 20px;
+  background: #c8c8c8;
+}
+
+.calorie-box .progress-bar {
+  background: #4caf50;
+  border-radius: 20px;
+  transition: width 0.6s ease;
+}
+
+/* ── Chart cards ─────────────────────────────────────────── */
+.chart-card {
+  background: #e0e0e0;
+  border-radius: 14px;
+  padding: 1rem 1rem 0.75rem;
+}
+
+.chart-card .chart-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+  color: #212529;
+}
+
+.chart-wrapper {
+  background: #1e1e1e;
+  border-radius: 8px;
+  padding: 0.75rem 0.5rem 0.5rem;
+}
+
+/* ── Utility ─────────────────────────────────────────────── */
+.text-pink  { color: #e91e8c; }
+.btn-pink {
+  background: #e91e8c;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-pink:hover { background: #c91679; }
+
+.btn-blue {
+  background: #2e7bc4;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-blue:hover { background: #1a5fa0; }
+
+.btn-dark-rounded {
+  background: #555555;
+  color: #ffffff;
+  border: none;
+  border-radius: 20px;
+  padding: 0.5rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-dark-rounded:hover { background: #333333; }
+
+.btn-danger-rounded {
+  background: #555555;
+  color: #e74c3c;
+  border: none;
+  border-radius: 20px;
+  padding: 0.5rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-danger-rounded:hover { background: #333333; }
+
+/* ── Legacy page styles (index / exercise log pages) ─────── */
+.top-bar {
+  background-color: #7793ae;
+  padding: 10px 30px;
+}
+
+.nav-box, .main-box, .exercise-row-box {
+  border: 1px solid #ccc;
+  background-color: white;
+}
+
+.nav-box {
+  padding: 8px 14px;
+  text-decoration: none;
+  color: black;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.main-box {
+  padding: 25px;
+}
+
+.notes-box {
+  height: 220px;
+  resize: none;
+}
+
+.profile-circle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background-color: white;
+  color: black;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  border: 1px solid #ccc;
+}
+
+.hover-dropdown {
+  position: relative;
+}
+
+.hover-dropdown:hover .dropdown-menu {
+  display: block;
+  margin-top: 0;
+}
+
+.dropdown-menu {
+  display: none;
+  min-width: 160px;
+}
+
+.exercise-row-box {
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.site-logo {
+  height: 80px;
+  width: auto;
+}
