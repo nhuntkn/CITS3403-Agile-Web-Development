@@ -1,8 +1,6 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect
 import sqlite3
-
-from flask import request
-from flask import redirect
+import re
 
 app = Flask(__name__)
 
@@ -17,9 +15,8 @@ def get_db_connection():
 
 def init_db():
     conn = get_db_connection()
-    cursor = conn.cursor()
 
-    cursor.execute("""
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS rankings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL,
@@ -29,25 +26,6 @@ def init_db():
         )
     """)
 
-    cursor.execute("SELECT COUNT(*) FROM rankings")
-    count = cursor.fetchone()[0]
-
-    if count == 0:
-        cursor.executemany("""
-            INSERT INTO rankings (username, kg_lost, kcal_burned, streak)
-            VALUES (?, ?, ?, ?)
-        """, [
-            ("Ronnie Coleman", 12.5, 9800, 21),
-            ("Dorian Yates", 10.2, 9100, 18),
-            ("Johnnie O. Jackson", 8.7, 8600, 15)
-        ])
-
-    conn.commit()
-    conn.close()
-
-
-def ensure_users_table():
-    conn = get_db_connection()
     conn.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,32 +37,30 @@ def ensure_users_table():
             height REAL
         )
     """)
+
     conn.commit()
     conn.close()
 
 
 @app.route("/")
 def home():
-    return render_template("web.html")
+    return render_template("exercise.html")
 
 
-@app.route("/ranking")
-def ranking():
-    conn = get_db_connection()
-    top_users = conn.execute("""
-        SELECT username, kg_lost, kcal_burned, streak
-        FROM rankings
-        ORDER BY kg_lost DESC
-        LIMIT 3
-    """).fetchall()
-    conn.close()
+@app.route("/dashboard")
+def dashboard():
+    username = "Jackson"
+    return render_template("dashboard.html", username=username)
 
-    return render_template("ranking.html", top_users=top_users)
+
+@app.route("/login")
+def login():
+    return render_template("login.html")
 
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
-    ensure_users_table()
+    init_db()
 
     if request.method == "POST":
         username = request.form.get("username")
@@ -95,12 +71,17 @@ def signup():
         weight = request.form.get("weight")
         height = request.form.get("height")
 
+        # password validation
+        if len(password) < 6 or not re.search(r"[A-Za-z]", password):
+            return render_template("signup.html",
+                                   error="Password must be at least 6 characters and contain letters")
+
         if password != confirm:
-            return "Passwords do not match"
+            return render_template("signup.html",
+                                   error="Passwords do not match")
 
         conn = get_db_connection()
 
-    
         existing_user = conn.execute(
             "SELECT * FROM users WHERE username = ?",
             (username,)
@@ -108,7 +89,8 @@ def signup():
 
         if existing_user:
             conn.close()
-            return "Username already exists"
+            return render_template("signup.html",
+                                   error="Username already exists")
 
         conn.execute("""
             INSERT INTO users (username, password, dob, sex, weight, height)
@@ -125,12 +107,11 @@ def signup():
 
 @app.route("/profile/<username>", methods=["GET", "POST"])
 def profile(username):
-    ensure_users_table()
+    init_db()
 
     conn = get_db_connection()
 
     if request.method == "POST":
-        password = request.form.get("password")
         dob = request.form.get("dob")
         sex = request.form.get("sex")
         weight = request.form.get("weight")
@@ -138,15 +119,14 @@ def profile(username):
 
         conn.execute("""
             UPDATE users
-            SET password = ?, dob = ?, sex = ?, weight = ?, height = ?
+            SET dob = ?, sex = ?, weight = ?, height = ?
             WHERE username = ?
-        """, (password, dob, sex, weight, height, username))
+        """, (dob, sex, weight, height, username))
 
         conn.commit()
 
     user = conn.execute("""
-        SELECT * FROM users
-        WHERE username = ?
+        SELECT * FROM users WHERE username = ?
     """, (username,)).fetchone()
 
     stats = conn.execute("""

@@ -16,6 +16,7 @@
     <!-- Logo -->
     <img src="{{ url_for('static', filename='images/logo.png') }}" style="height:60px;">
 
+    <!-- Navigation Links -->
     <div>
         <a href="/" class="me-3">Dashboard</a>
         <a href="/ranking">Ranking</a>
@@ -23,13 +24,20 @@
 
 </div>
 
+<!-- Main Content -->
 <div class="container mt-4">
 
-    <h1>Sign Up</h1>
+    <h1>Create an Account</h1>
     <hr>
 
-    <!-- Form -->
-    <form method="POST" action="/signup">
+    <!-- Error Message -->
+    {% if error %}
+    <div class="alert alert-danger">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST">
 
         <!-- Username -->
         <div class="mb-3">
@@ -40,16 +48,24 @@
         <!-- Password -->
         <div class="mb-3">
             <label class="form-label">Password</label>
-            <input type="password" class="form-control" name="password" placeholder="Enter your password" required>
+            <input type="password"
+                   class="form-control"
+                   name="password"
+                   placeholder="Minimum 6 characters and must include letters"
+                   required>
         </div>
 
         <!-- Confirm Password -->
         <div class="mb-3">
             <label class="form-label">Confirm Password</label>
-            <input type="password" class="form-control" name="confirm" placeholder="Confirm your password" required>
+            <input type="password"
+                   class="form-control"
+                   name="confirm"
+                   placeholder="Re-enter your password"
+                   required>
         </div>
 
-        <!-- DOB + Gender -->
+        <!-- Date of Birth + Gender -->
         <div class="row mb-3">
 
             <div class="col-md-4">

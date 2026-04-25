@@ -21,6 +21,28 @@
     <h1>User Profile</h1>
     <hr>
 
+    <!-- ✅ Avatar / Sign In -->
+    <div class="mb-4">
+        {% if user %}
+            <div style="
+                width:80px;
+                height:80px;
+                border-radius:50%;
+                background-color:#007bff;
+                color:white;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                font-size:30px;
+                font-weight:bold;">
+                {{ user['username'][0]|upper }}
+            </div>
+        {% else %}
+            <a href="/login" class="btn btn-primary">Sign In</a>
+        {% endif %}
+    </div>
+
+    {% if user %}
     <form method="POST">
 
         <div class="row">
@@ -33,14 +55,17 @@
 
                     <p><strong>Username:</strong> {{ user["username"] }}</p>
 
-                    <label>Password</label>
-                    <input type="text" class="form-control mb-2" name="password" value="{{ user['password'] }}">
+                    <!--  Password removed -->
 
                     <label>Date of Birth</label>
                     <input type="text" class="form-control mb-2" name="dob" value="{{ user['dob'] }}">
 
                     <label>Gender</label>
-                    <input type="text" class="form-control mb-2" name="sex" value="{{ user['sex'] }}">
+                    <select class="form-control mb-2" name="sex">
+                        <option value="">Select</option>
+                        <option value="Male" {% if user['sex']=="Male" %}selected{% endif %}>Male</option>
+                        <option value="Female" {% if user['sex']=="Female" %}selected{% endif %}>Female</option>
+                    </select>
 
                 </div>
             </div>
@@ -75,6 +100,7 @@
         <button class="btn btn-primary">Save Changes</button>
 
     </form>
+    {% endif %}
 
 </div>
 
