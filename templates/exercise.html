@@ -8,52 +8,49 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-<div class="top-bar">
-  <div class="container nav-row">
-    <div class="d-flex justify-content-between align-items-center">
+  <div class="top-bar d-flex justify-content-between align-items-center">
+    <a href="{{url_for('dashboard')}}" class="logo">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Exercise Planner" class="site-logo">
+      </a>
 
-      <div class="logo">
-        <a href="#">
-          <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Exercise Planner" class="site-logo">
-        </a>
+    <div class="d-flex gap-3 align-items-center">
+      <a href="{{ url_for('dashboard') }}" class="nav-box">Dashboard</a>
+      <a href="#" class="nav-box">Ranking</a>
+      <a href="#" class="nav-box">History</a>
+
+      <div class="hover-dropdown">
+        <a href="#" class="profile-circle">J</a>
+        
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="#">Profile</a></li>
+          <li><a class="dropdown-item" href="#">Settings</a></li>
+          <li><a class="dropdown-item" href="#">Logout</a></li>
+        </ul>
       </div>
-
-      <div class="d-flex gap-3 align-items-center">
-        <a href="{{ url_for('dashboard') }}" class="nav-box">Dashboard</a>
-        <a href="#" class="nav-box">Ranking</a>
-
-        <div class="hover-dropdown">
-          <a href="#" class="profile-circle">J</a>
-          
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="#">Profile</a></li>
-            <li><a class="dropdown-item" href="#">History</a></li>
-            <li><a class="dropdown-item" href="#">Logout</a></li>
-          </ul>
-        </div>
-      </div>
-
     </div>
   </div>
-</div>
 
   <!-- main content -->
   <div class="container py-4">
-    <div class="main-box">
+    <form class="main-box" method="POST" action="{{ url_for('home') }}">
       <h1>Add Session</h1>
+
+      {% if message %}
+        <div class="alert alert-success">{{ message }}</div>
+      {% endif %}
       <hr>
 
       <!-- data and weight section -->
       <div class="row mb-4">
         <div class="col-md-4">
           <label class="form-label">Date</label>
-          <input type="date" class="form-control">
+          <input type="date" class="form-control" name="date" required>
         </div>
 
         <div class="col-md-4">
           <label class="form-label">Current Weight</label>
           <div class="input-group">
-            <input type="number" class="form-control" id="weight" placeholder="Enter weight">
+            <input type="number" class="form-control" id="weight" name="weight" placeholder="Enter weight" required>
             <span class="input-group-text">kg</span>
           </div>
         </div>
@@ -64,19 +61,19 @@
         <div class="col-md-7">
           <h4>Exercises in This Session</h4>
           <div id="exerciseContainer"></div>
-          <button class="btn btn-outline-primary mt-2" onclick="addExerciseRow()">Add Another Exercise</button>
+          <button type="button" class="btn btn-outline-primary mt-2" onclick="addExerciseRow()">Add Another Exercise</button>
         </div>
 
         <div class="col-md-5">
           <h4>Notes</h4>
-          <textarea class="form-control notes-box" placeholder="Write any notes here..."></textarea>
+          <textarea class="form-control notes-box" name="notes" placeholder="Write any notes here..."></textarea>
         </div>
       </div>
 
       <!-- calculate calories section -->
       <div class="row align-items-center mb-4">
         <div class="col-md-auto">
-          <button class="btn btn-primary" onclick="calculateCalories()">Calculate Session Calories</button>
+          <button type="button" class="btn btn-primary" onclick="calculateCalories()">Calculate Session Calories</button>
         </div>
 
         <div class="col-md">
@@ -86,10 +83,11 @@
         </div>
       </div>
 
-      <button class="btn btn-outline-dark">Add to Record</button>
-    </div>
+      <button type="submit" class="btn btn-outline-dark">Add to Record</button>
+    </form>
   </div>
   
+  <script id="exercise-data" type="application/json"> {{ exercise_data | tojson }} </script>
   <script src="{{ url_for('static', filename='js/exercise.js') }}"></script>
 </body>
 </html>
