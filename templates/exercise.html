@@ -7,28 +7,27 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
+
 <body>
-  <div class="top-bar d-flex justify-content-between align-items-center">
-    <a href="{{url_for('dashboard')}}" class="logo">
-        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Exercise Planner" class="site-logo">
-      </a>
-
-    <div class="d-flex gap-3 align-items-center">
-      <a href="{{ url_for('dashboard') }}" class="nav-box">Dashboard</a>
-      <a href="#" class="nav-box">Ranking</a>
-      <a href="#" class="nav-box">History</a>
-
-      <div class="hover-dropdown">
-        <a href="#" class="profile-circle">J</a>
-        
-        <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item" href="#">Profile</a></li>
-          <li><a class="dropdown-item" href="#">Settings</a></li>
-          <li><a class="dropdown-item" href="#">Logout</a></li>
-        </ul>
-      </div>
+  
+<!-- Navbar -->
+<nav class="ep-navbar">
+  <a href="/dashboard" class="ep-brand">
+    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="EP">
+  </a>
+  <a href="/dashboard" class="ep-nav-link">Dashboard</a>
+  <a href="#" class="ep-nav-link">Ranking</a>
+  <a href="#" class="ep-nav-link">History</a>
+  <div class = "ep-nav-spacer"></div>
+  <div class="ep-user-menu">
+    <div class="ep-user-avatar">{{ username[0]|upper if username else 'J' }}</div>
+    <div class="ep-user-dropdown">
+      <a href = "#" class = "ep-dropdown-item">Profile</a>
+      <a href = "#" class = "ep-dropdown-item">Settings</a>
+      <a href="{{ url_for('login') }}" class="ep-dropdown-item">Logout</a>
     </div>
   </div>
+</nav>
 
   <!-- main content -->
   <div class="container py-4">

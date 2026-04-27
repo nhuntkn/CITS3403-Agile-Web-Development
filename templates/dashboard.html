@@ -11,104 +11,109 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-  <style>
-    body { font-size: 20px; }
-  </style>
 </head>
 <body>
 
 <!-- Navbar -->
 <nav class="ep-navbar">
-  <a href="{{ url_for('dashboard') }}" class="ep-brand">
-    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="EP" style="height:36px; width:auto;">
+  <a href="/dashboard" class="ep-brand">
+    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="EP">
   </a>
-  <a href="{{ url_for('dashboard') }}" class="ep-nav-link active">Dashboard</a>
-  <a href="#" class="ep-nav-link">Profile</a>
+  <a href="/dashboard" class="ep-nav-link active">Dashboard</a>
   <a href="#" class="ep-nav-link">Ranking</a>
+  <a href="#" class="ep-nav-link">History</a>
   <a href="{{ url_for('home') }}" class="ep-nav-link create-btn">Create Exercise</a>
+  <div class = "ep-nav-spacer"></div>
   <div class="ep-user-menu">
-    <div class="ep-user-avatar">{{ username[0]|upper if username else 'U' }}</div>
+    <div class="ep-user-avatar">{{ username[0]|upper if username else 'J' }}</div>
     <div class="ep-user-dropdown">
+      <a href = "#" class = "ep-dropdown-item">Profile</a>
+      <a href = "#" class = "ep-dropdown-item">Settings</a>
       <a href="{{ url_for('login') }}" class="ep-dropdown-item">Logout</a>
     </div>
   </div>
 </nav>
 
 <!-- ── Page content ────────────────────────────────────────────────────── -->
-<div class="page-content">
+<div class="container py-4">
+  <div class="main-box">
 
-  <p class="fw-bold fs-5 mb-4">Welcome!</p>
+    <h1>Welcome!</h1>
+    <hr>
 
-  <!-- 4 Metric cards -->
-  <div class="row g-3 mb-4">
-    <div class="col-6 col-md-3">
-      <div class="metric-card">
-        <div class="card-title">Start Weight</div>
-        <div class="card-value" id="startWeight">—</div>
-        <div class="card-sub">kg</div>
+    <!-- 4 Metric cards -->
+    <h4>Your Stats</h4>
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="metric-card">
+          <div class="card-title">Start Weight</div>
+          <div class="card-value" id="startWeight">—</div>
+          <div class="card-sub">kg</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="metric-card">
+          <div class="card-title">Current Weight</div>
+          <div class="card-value" id="currentWeight">—</div>
+          <div class="card-sub">kg</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="metric-card">
+          <div class="card-title">Current BMI</div>
+          <div class="card-value" id="currentBMI">—</div>
+          <div class="card-sub" id="bmiCategory"></div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="metric-card">
+          <div class="card-title">Total Changes</div>
+          <div class="card-value" id="totalChanges">—</div>
+          <div class="card-sub">kg since start</div>
+        </div>
       </div>
     </div>
-    <div class="col-6 col-md-3">
-      <div class="metric-card">
-        <div class="card-title">Current Weight</div>
-        <div class="card-value" id="currentWeight">—</div>
-        <div class="card-sub">kg</div>
+
+    <!-- Calorie goal progress -->
+    <h4>Today's Calorie Goal</h4>
+    <div class="row mb-4">
+      <div class="col-12 col-md-8">
+        <div class="calorie-box">
+          <div class="goal-row">
+            <span class="goal-label">Calories burned</span>
+            <span class="goal-count" id="goalCount">0 / 500 goal</span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar" id="calorieBar" role="progressbar"
+                 style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="col-6 col-md-3">
-      <div class="metric-card">
-        <div class="card-title">Current BMI</div>
-        <div class="card-value" id="currentBMI">—</div>
-        <div class="card-sub" id="bmiCategory"></div>
+
+    <!-- Two bar charts -->
+    <h4>Activity Charts</h4>
+    <div class="row g-3">
+      <div class="col-12 col-md-6">
+        <div class="chart-card">
+          <div class="chart-title">Calories burned — this week</div>
+          <div class="chart-wrapper">
+            <canvas id="weeklyChart" height="160"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-6">
+        <div class="chart-card">
+          <div class="chart-title">Calories burned — this month</div>
+          <div class="chart-wrapper">
+            <canvas id="monthlyChart" height="160"></canvas>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="col-6 col-md-3">
-      <div class="metric-card">
-        <div class="card-title">Total Changes</div>
-        <div class="card-value" id="totalChanges">—</div>
-        <div class="card-sub">kg since start</div>
-      </div>
-    </div>
+
   </div>
-
-  <!-- Calorie goal progress -->
-  <div class="row mb-4">
-    <div class="col-12 col-md-8 offset-md-2">
-      <div class="calorie-box">
-        <div class="box-title">Today's calorie goal</div>
-        <div class="goal-row">
-          <span class="goal-label">Calories burned</span>
-          <span class="goal-count" id="goalCount">0 / 500 goal</span>
-        </div>
-        <div class="progress">
-          <div class="progress-bar" id="calorieBar" role="progressbar"
-               style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Two bar charts -->
-  <div class="row g-3">
-    <div class="col-12 col-md-6">
-      <div class="chart-card">
-        <div class="chart-title">Calories burned — this week</div>
-        <div class="chart-wrapper">
-          <canvas id="weeklyChart" height="160"></canvas>
-        </div>
-      </div>
-    </div>
-    <div class="col-12 col-md-6">
-      <div class="chart-card">
-        <div class="chart-title">Calories burned — this month</div>
-        <div class="chart-wrapper">
-          <canvas id="monthlyChart" height="160"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
-
-</div><!-- /page-content -->
+</div><!-- /container -->
 
 </body>
 </html>
