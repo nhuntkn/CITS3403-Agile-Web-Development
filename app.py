@@ -1,145 +1,182 @@
-from flask import Flask, render_template, request, redirect
-import sqlite3
-import re
+#setup Flask app and routes, connects to database, handles form submission and rendering templates
+
+from flask import Flask, render_template, request, redirect, session, url_for
+from models import db, ExerciseSession, SessionExercise, User
+from data import exercise_data
+from utils import calculate_calories
 
 app = Flask(__name__)
 
-DB_NAME = "database.db"
+#configure SQLite database, SQLAlchemy will store the database file inside the Flask instance folder
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///exercise_planner.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+db.init_app(app) #attach SQLAlchemy to Flask app
 
-def get_db_connection():
-    conn = sqlite3.connect(DB_NAME)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-
-def init_db():
-    conn = get_db_connection()
-
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS rankings (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL,
-            kg_lost REAL NOT NULL,
-            kcal_burned INTEGER NOT NULL,
-            streak INTEGER NOT NULL
-        )
-    """)
-
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE,
-            password TEXT,
-            dob TEXT,
-            sex TEXT,
-            weight REAL,
-            height REAL
-        )
-    """)
-
-    conn.commit()
-    conn.close()
-
-
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def home():
-    return render_template("exercise.html")
+    #displays Add Session page, if form is submitted, it saves the session and exercises to the database
+    
+    if request.method == "POST":
+        #get the main session data from the form
+        date = request.form.get("date")
+        current_weight = float(request.form.get("weight"))
+        notes = request.form.get("notes")
 
+        #get the repeated exercise rows from the form
+        exercise_names = request.form.getlist("exercise[]")
+        activity_levels = request.form.getlist("level[]")
+        minutes_list = request.form.getlist("minutes[]")
+
+        #create the main exercise session record
+        new_session = ExerciseSession(
+            date=date,
+            current_weight=current_weight,
+            notes=notes,
+            total_calories=0
+        )
+
+        #add the session first to get an ID, ID needed for the foreign key in exercises
+        db.session.add(new_session)
+        db.session.flush()
+
+        total_calories = 0
+
+        #save each exercise row that belongs to this session
+        for i in range(len(exercise_names)):
+            exercise_name = exercise_names[i]
+            activity_level = activity_levels[i]
+            minutes = int(minutes_list[i])
+
+            #find MET value for the exercise and activity level
+            met_value = exercise_data[exercise_name][activity_level]
+
+            calories = calculate_calories(
+                met_value,
+                minutes,
+                current_weight
+            )
+
+            #create the database record for this exercise row
+            new_exercise = SessionExercise(
+                exercise_name=exercise_name,
+                activity_level=activity_level,
+                minutes=minutes,
+                met_value=met_value,
+                calories=calories,
+                session_id=new_session.id
+            )
+
+            total_calories = total_calories + calories
+            db.session.add(new_exercise)
+
+        #store the total calories for the full session
+        new_session.total_calories = round(total_calories, 2)
+
+        #save everything to the database
+        db.session.commit()
+        #reload page and show success message
+        return render_template("exercise.html", message="Session added successfully.", exercise_data = exercise_data)
+
+    #display the Add Session page before the form is submitted
+    return render_template("exercise.html", exercise_data=exercise_data)
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+        confirm = request.form.get("confirm")
+
+        dob = request.form.get("dob")
+        gender = request.form.get("gender")
+        weight = request.form.get("weight")
+        height = request.form.get("height")
+
+        if not password or len(password) < 6:
+            return render_template("signup.html", error="Password must be at least 6 characters long")
+
+        if not any(char.isalpha() for char in password):
+            return render_template("signup.html", error="Password must include at least one letter")
+
+        if password != confirm:
+            return render_template("signup.html", error="Passwords do not match")
+
+        existing = User.query.filter_by(username=username).first()
+        if existing:
+            return render_template("signup.html", error="Username already exists")
+
+        new_user = User(
+            username=username,
+            password=password,
+            dob=dob,
+            gender=gender,
+            weight=float(weight) if weight else None,
+            height=float(height) if height else None
+        )
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        session['username'] = username
+        return redirect(url_for('dashboard'))
+
+    return render_template("signup.html")
+
+
+@app.route("/profile", methods=["GET", "POST"])
+def profile():
+    if 'username' not in session:
+        return redirect('/login')
+
+    user = User.query.filter_by(username=session['username']).first()
+
+    sessions = ExerciseSession.query.all()
+    total_calories = sum(s.total_calories for s in sessions)
+    total_sessions = len(sessions)
+
+    stats = {
+        "total_calories": round(total_calories, 2),
+        "total_sessions": total_sessions
+    }
+
+    if request.method == 'POST':
+        user.dob = request.form.get('dob')
+        user.gender = request.form.get('gender')
+
+        weight = request.form.get('weight')
+        height = request.form.get('height')
+
+        user.weight = float(weight) if weight else None
+        user.height = float(height) if height else None
+
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+
+        if new_password:
+            if new_password != confirm_password:
+                return render_template("profile.html", user=user, stats=stats, error="Passwords do not match")
+            user.password = new_password
+
+        db.session.commit()
+
+    return render_template("profile.html", user=user, stats=stats)
 
 @app.route("/dashboard")
 def dashboard():
-    username = "Jackson"
-    return render_template("dashboard.html", username=username)
+    #loads the dashboard page, which shows all past exercise sessions and their details
+    username = "Jackson"  # TODO: replace with session user once auth is implemented
+    
+    sessions = ExerciseSession.query.order_by(ExerciseSession.id.desc()).all()
 
+    return render_template("dashboard.html", username=username, sessions=sessions)
 
 @app.route("/login")
 def login():
     return render_template("login.html")
 
-
-@app.route("/signup", methods=["GET", "POST"])
-def signup():
-    init_db()
-
-    if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-        confirm = request.form.get("confirm")
-        dob = request.form.get("dob")
-        sex = request.form.get("sex")
-        weight = request.form.get("weight")
-        height = request.form.get("height")
-
-        # password validation
-        if len(password) < 6 or not re.search(r"[A-Za-z]", password):
-            return render_template("signup.html",
-                                   error="Password must be at least 6 characters and contain letters")
-
-        if password != confirm:
-            return render_template("signup.html",
-                                   error="Passwords do not match")
-
-        conn = get_db_connection()
-
-        existing_user = conn.execute(
-            "SELECT * FROM users WHERE username = ?",
-            (username,)
-        ).fetchone()
-
-        if existing_user:
-            conn.close()
-            return render_template("signup.html",
-                                   error="Username already exists")
-
-        conn.execute("""
-            INSERT INTO users (username, password, dob, sex, weight, height)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (username, password, dob, sex, weight, height))
-
-        conn.commit()
-        conn.close()
-
-        return redirect(f"/profile/{username}")
-
-    return render_template("signup.html")
-
-
-@app.route("/profile/<username>", methods=["GET", "POST"])
-def profile(username):
-    init_db()
-
-    conn = get_db_connection()
-
-    if request.method == "POST":
-        dob = request.form.get("dob")
-        sex = request.form.get("sex")
-        weight = request.form.get("weight")
-        height = request.form.get("height")
-
-        conn.execute("""
-            UPDATE users
-            SET dob = ?, sex = ?, weight = ?, height = ?
-            WHERE username = ?
-        """, (dob, sex, weight, height, username))
-
-        conn.commit()
-
-    user = conn.execute("""
-        SELECT * FROM users WHERE username = ?
-    """, (username,)).fetchone()
-
-    stats = conn.execute("""
-        SELECT kcal_burned, streak
-        FROM rankings
-        WHERE username = ?
-    """, (username,)).fetchone()
-
-    conn.close()
-
-    return render_template("profile.html", user=user, stats=stats)
-
+with app.app_context():
+    db.create_all()
 
 if __name__ == "__main__":
-    init_db()
     app.run(debug=True)
