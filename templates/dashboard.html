@@ -115,5 +115,95 @@
   </div>
 </div><!-- /container -->
 
+  <script>
+    const sessions = {{ sessions_data | tojson }};
+
+    //Metric cards
+    const sorted = [...sessions].sort((a, b) => a.date.localeCompare(b.date));
+    const first = sorted[0];
+    const last = sorted[sorted.length - 1];
+
+    if (first) {
+      document.getElementById('startWeight').textContent = first.current_weight.toFixed(1);
+      document.getElementById('currentWeight').textContent =last.current_weight.toFixed(1);
+      const change = last.current_weight - first.current_weight;
+      document.getElementById('totalChanges').textContent =
+        (change >= 0 ? "+" : "") + change.toFixed(1);
+    }
+
+    //Calorie goal bar
+    const today = new Date().toISOString().split("T")[0];
+    const todayKcal = sessions
+      .filter(s => s.date === today)
+      .reduce((sum, s) => sum + s.total_calories, 0);
+
+    const GOAL = 500;
+    const pct = Math.min(100, (todayKcal / GOAL) * 100);
+    document.getElementById("goalCount").textContent = `${Math.round(todayKcal)} / ${GOAL} goal`;
+    const bar = document.getElementById("calorieBar");
+    bar.style.width = pct + "%";
+    bar.setAttribute("aria-valuenow", pct);
+
+    //Weekly chart
+    const weekDays = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      weekDays.push(d.toISOString().split("T")[0]);
+    }
+    const weekLabels = weekDays.map(d => {
+      const dt = new Date(d + "T00:00:00");
+      return dt.toLocaleDateString("en-AU", {weekday: "short", day: "numeric"});
+    })
+    const weekData = weekDays.map(d =>
+      sessions.filter(s => s.date === d).reduce((sum, s) => sum + s.total_calories, 0)
+    );
+
+    new Chart(document.getElementById("weeklyChart"), {
+      type: "bar",
+      data: {
+        labels: weekLabels,
+        datasets: [{ label: "Calories", data: weekData,
+                      backgroundColor: "#4caf50", borderRadius: 4}]
+      },
+      options: {
+        responsive: true,
+        plugins: {legend: {display: false}},
+        scales: {
+          x: {ticks: {color: "#ccc"}, grid: {color: "rgba(255,255,255,0.1)"}},
+          y: {ticks: {color: "#ccc"}, grid: {color: "rgba(255,255,255,0.1)"}, beginAtZero: true }
+        }
+      }
+    });
+
+    //Monthly chart (current month)
+    const now = new Date();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const monthDays = Array.from({length: daysInMonth}, (_, i) => {
+      const day = String(i + 1).padStart(2, "0");
+      const mon = String(now.getMonth() + 1).padStart(2, "0");
+      return `${now.getFullYear()}-${mon}-${day}`;
+    });
+    const monthData = monthDays.map(d =>
+      sessions.filter(s => s.date === d).reduce((sum, s) => sum + s.total_calories, 0)
+    );
+    
+    new Chart(document.getElementById("monthlyChart"), {
+      type: "bar",
+      data: {
+        labels: Array.from({ length: daysInMonth}, (_, i) => i + 1),
+        datasets: [{label: "Calories", data: monthData,
+                    backgroundColor: "#2196f3", borderRadius: 4}]
+      },
+      options: {
+        responsive: true,
+        plugins: {legend: {display: false}},
+        scales: {
+          x: {ticks: {color: "#ccc"}, grid: {color: "rgba(255,255,255,0.1)"}},
+          y: {ticks: {color: "#ccc"}, grid: {color: "rgba(255,255,255,0.1)"}, beginAtZero: true }
+        }
+      }
+    });
+  </script>
 </body>
 </html>

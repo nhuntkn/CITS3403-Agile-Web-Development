@@ -86,9 +86,18 @@ def dashboard():
     #loads the dashboard page, which shows all past exercise sessions and their details
     username = "Jackson"  # TODO: replace with session user once auth is implemented
     
-    sessions = ExerciseSession.query.order_by(ExerciseSession.id.desc()).all()
+    sessions = ExerciseSession.query.order_by(ExerciseSession.date.asc()).all()
 
-    return render_template("dashboard.html", username=username, sessions=sessions)
+    sessions_data = [
+        {
+            "date" : s.date,
+            "current_weight" : s.current_weight,
+            "total_calories" : s.total_calories,
+        } 
+        for s in sessions
+    ]
+
+    return render_template("dashboard.html", username = username, sessions_data = sessions_data)
 
 @app.route("/login")
 def login():
