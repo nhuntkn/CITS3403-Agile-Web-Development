@@ -41,22 +41,26 @@ save your routines and see your progress everyday. JOIN NOW !!!
     <div style="background-color: #e0e0e0; padding: 30px; width: 300px; border-radius: 12px;">
         <h2>Sign In</h2>
 
-        <p>Username</p>
-        <input type="text">
+        {% if error %}
+            <div style="color: red; margin-bottom: 10px;">{{ error }}</div>
+        {% endif %}
 
-        <p>Password</p>
-        <input type="password">
+        <form method="POST" action="{{ url_for('login') }}">
+            <p>Username</p>
+            <input type="text" name="username" required>
 
-        <br><br>
-        <button class="btn-blue">Sign In</button>
+            <p>Password</p>
+            <input type="password" name="password" required>
+
+            <br><br>
+            <button type="submit" class="btn-blue">Sign In</button>
+        </form>
 
         <p>
             Don't have an account?
-            <a href="#">Sign Up</a>
+            <a href="{{ url_for('signup') }}">Sign Up</a>
         </p>
     </div>
-
 </div>
-
 </body>
 </html>
