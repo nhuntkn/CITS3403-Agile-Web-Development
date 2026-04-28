@@ -1,7 +1,7 @@
 #setup Flask app and routes, connects to database, handles form submission and rendering templates
 
-from flask import Flask, render_template, request
-from models import db, ExerciseSession, SessionExercise
+from flask import Flask, render_template, request, redirect, session, url_for
+from models import db, ExerciseSession, SessionExercise, User
 from data import exercise_data
 from utils import calculate_calories
 
@@ -89,6 +89,87 @@ def dashboard():
     sessions = ExerciseSession.query.order_by(ExerciseSession.id.desc()).all()
 
     return render_template("dashboard.html", username=username, sessions=sessions)
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+        confirm = request.form.get("confirm")
+
+        dob = request.form.get("dob")
+        gender = request.form.get("gender")
+        weight = request.form.get("weight")
+        height = request.form.get("height")
+
+        if not password or len(password) < 6:
+            return render_template("signup.html", error="Password must be at least 6 characters long")
+
+        if not any(char.isalpha() for char in password):
+            return render_template("signup.html", error="Password must include at least one letter")
+
+        if password != confirm:
+            return render_template("signup.html", error="Passwords do not match")
+
+        existing = User.query.filter_by(username=username).first()
+        if existing:
+            return render_template("signup.html", error="Username already exists")
+
+        new_user = User(
+            username=username,
+            password=password,
+            dob=dob,
+            gender=gender,
+            weight=float(weight) if weight else None,
+            height=float(height) if height else None
+        )
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        session['username'] = username
+        return redirect(url_for('dashboard'))
+
+    return render_template("signup.html")
+
+
+@app.route("/profile", methods=["GET", "POST"])
+def profile():
+    if 'username' not in session:
+        return redirect('/login')
+
+    user = User.query.filter_by(username=session['username']).first()
+
+    sessions = ExerciseSession.query.all()
+    total_calories = sum(s.total_calories for s in sessions)
+    total_sessions = len(sessions)
+
+    stats = {
+        "total_calories": round(total_calories, 2),
+        "total_sessions": total_sessions
+    }
+
+    if request.method == 'POST':
+        user.dob = request.form.get('dob')
+        user.gender = request.form.get('gender')
+
+        weight = request.form.get('weight')
+        height = request.form.get('height')
+
+        user.weight = float(weight) if weight else None
+        user.height = float(height) if height else None
+
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+
+        if new_password:
+            if new_password != confirm_password:
+                return render_template("profile.html", user=user, stats=stats, error="Passwords do not match")
+            user.password = new_password
+
+        db.session.commit()
+
+    return render_template("profile.html", user=user, stats=stats)
 
 @app.route("/login")
 def login():
