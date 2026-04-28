@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(py -m pip show flask-sqlalchemy)",
-      "Bash(python -c ' *)"
-    ]
-  }
-}
