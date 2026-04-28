@@ -7,6 +7,8 @@ from utils import calculate_calories
 
 app = Flask(__name__)
 
+app.config['SECRET_KEY'] = '1234'
+
 #configure SQLite database, SQLAlchemy will store the database file inside the Flask instance folder
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///exercise_planner.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
