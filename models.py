@@ -29,3 +29,12 @@ class SessionExercise(db.Model):
     
     #link this row to its parent session
     session_id = db.Column(db.Integer, db.ForeignKey('exercise_session.id'), nullable=False)
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    password = db.Column(db.String(100), nullable=False)
+    dob = db.Column(db.String(20))
+    gender = db.Column(db.String(10))
+    weight = db.Column(db.Float)
+    height = db.Column(db.Float)
