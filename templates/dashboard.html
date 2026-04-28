@@ -23,13 +23,13 @@
     <img src="{{ url_for('static', filename='images/logo.png') }}" alt="EP" style="height:36px; width:auto;">
   </a>
   <a href="{{ url_for('dashboard') }}" class="ep-nav-link active">Dashboard</a>
-  <a href="#" class="ep-nav-link">Profile</a>
+  <a href="{{ url_for('profile') }}" class="ep-nav-link">Profile</a>
   <a href="#" class="ep-nav-link">Ranking</a>
-  <a href="{{ url_for('home') }}" class="ep-nav-link create-btn">Create Exercise</a>
+  <a href="{{ url_for('add_session') }}" class="ep-nav-link create-btn">Create Exercise</a>
   <div class="ep-user-menu">
     <div class="ep-user-avatar">{{ username[0]|upper if username else 'U' }}</div>
     <div class="ep-user-dropdown">
-      <a href="{{ url_for('login') }}" class="ep-dropdown-item">Logout</a>
+      <a href="{{ url_for('logout') }}" class="ep-dropdown-item">Logout</a> <!-- changed login to logout -->
     </div>
   </div>
 </nav>
