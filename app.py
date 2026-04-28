@@ -15,8 +15,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app) #attach SQLAlchemy to Flask app
 
-@app.route("/", methods=["GET", "POST"])
-def home():
+@app.route("/add-session", methods=["GET", "POST"])
+def add_session():
     #displays Add Session page, if form is submitted, it saves the session and exercises to the database
     
     if request.method == "POST":
@@ -173,9 +173,31 @@ def profile():
 
     return render_template("profile.html", user=user, stats=stats)
 
-@app.route("/login")
-def login():
+@app.route("/")
+def home():
     return render_template("login.html")
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        user = User.query.filter_by(username=username).first()
+
+        if user is None:
+            return render_template("login.html", error="Invalid username or password")
+        if user.password != password:
+            return render_template("login.html", error="Invalid username or password")
+        
+        session['username'] = username
+        return redirect(url_for('dashboard'))
+    return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
 
 with app.app_context():
     db.create_all()
