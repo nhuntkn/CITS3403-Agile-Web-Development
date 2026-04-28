@@ -22,9 +22,9 @@
         <a href="#" class="profile-circle">J</a>
         
         <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item" href="#">Profile</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('profile') }}">Profile</a></li>
           <li><a class="dropdown-item" href="#">Settings</a></li>
-          <li><a class="dropdown-item" href="#">Logout</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a></li>
         </ul>
       </div>
     </div>
@@ -32,7 +32,7 @@
 
   <!-- main content -->
   <div class="container py-4">
-    <form class="main-box" method="POST" action="{{ url_for('home') }}">
+    <form class="main-box" method="POST" action="{{ url_for('add_session') }}">
       <h1>Add Session</h1>
 
       {% if message %}
