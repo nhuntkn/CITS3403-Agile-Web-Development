@@ -14,25 +14,25 @@
 </head>
 <body>
 
-<!-- Navbar -->
-<nav class="ep-navbar">
-  <a href="/dashboard" class="ep-brand">
-    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="EP">
-  </a>
-  <a href="/dashboard" class="ep-nav-link active">Dashboard</a>
-  <a href="#" class="ep-nav-link">Ranking</a>
-  <a href="#" class="ep-nav-link">History</a>
-  <a href="{{ url_for('home') }}" class="ep-nav-link create-btn">Create Exercise</a>
-  <div class = "ep-nav-spacer"></div>
-  <div class="ep-user-menu">
-    <div class="ep-user-avatar">{{ username[0]|upper if username else 'J' }}</div>
-    <div class="ep-user-dropdown">
-      <a href = "#" class = "ep-dropdown-item">Profile</a>
-      <a href = "#" class = "ep-dropdown-item">Settings</a>
-      <a href="{{ url_for('login') }}" class="ep-dropdown-item">Logout</a>
+  <!-- Navbar -->
+  <nav class="ep-navbar">
+    <a href="/dashboard" class="ep-brand">
+      <img src="{{ url_for('static', filename='images/logo.png') }}" alt="EP">
+    </a>
+    <a href="/dashboard" class="ep-nav-link active">Dashboard</a>
+    <a href="#" class="ep-nav-link">Ranking</a>
+    <a href="#" class="ep-nav-link">History</a>
+    <a href="{{ url_for('exercise') }}" class="ep-nav-link create-btn">Create Exercise</a>
+    <div class = "ep-nav-spacer"></div>
+    <div class="ep-user-menu">
+      <div class="ep-user-avatar">{{ username[0]|upper if username else 'J' }}</div>
+      <div class="ep-user-dropdown">
+        <a href = "{{ url_for('profile') }}" class = "ep-dropdown-item">Profile</a>
+        <a href = "#" class = "ep-dropdown-item">Settings</a>
+        <a href="{{ url_for('logout') }}" class="ep-dropdown-item">Logout</a>
+      </div>
     </div>
-  </div>
-</nav>
+  </nav>
 
 <!-- ── Page content ────────────────────────────────────────────────────── -->
 <div class="container py-4">
@@ -119,16 +119,34 @@
     const sessions = {{ sessions_data | tojson }};
 
     //Metric cards
+    const startWeight = {{start_weight | tojson}};
+
     const sorted = [...sessions].sort((a, b) => a.date.localeCompare(b.date));
-    const first = sorted[0];
     const last = sorted[sorted.length - 1];
 
-    if (first) {
-      document.getElementById('startWeight').textContent = first.current_weight.toFixed(1);
+    if (startWeight !== null) {
+      document.getElementById("startWeight").textContent = startWeight.toFixed(1);
+    }
+    if (last) {
       document.getElementById('currentWeight').textContent =last.current_weight.toFixed(1);
-      const change = last.current_weight - first.current_weight;
-      document.getElementById('totalChanges').textContent =
-        (change >= 0 ? "+" : "") + change.toFixed(1);
+      if (startWeight !== null) {
+        const change = last.current_weight - startWeight;
+        document.getElementById('totalChanges').textContent =
+          (change >= 0 ? "+" : "") + change.toFixed(1);
+      }
+      const userHeight = {{ user_height | tojson}};
+      if (userHeight) {
+        const heightM = userHeight / 100;
+        const bmi = last.current_weight / (heightM * heightM);
+        document.getElementById("currentBMI").textContent = bmi.toFixed(1);
+
+        let category = "";
+        if (bmi < 18.5)     category = "Underweight";
+        else if (bmi < 25)  category = "Normal";
+        else if (bmi < 30)  category = "Overweight";
+        else                category = "Obese";
+        document.getElementById("bmiCategory").textContent = category;
+      }
     }
 
     //Calorie goal bar
@@ -137,7 +155,7 @@
       .filter(s => s.date === today)
       .reduce((sum, s) => sum + s.total_calories, 0);
 
-    const GOAL = 500;
+    const GOAL = {{ calorie_goal | tojson }};
     const pct = Math.min(100, (todayKcal / GOAL) * 100);
     document.getElementById("goalCount").textContent = `${Math.round(todayKcal)} / ${GOAL} goal`;
     const bar = document.getElementById("calorieBar");

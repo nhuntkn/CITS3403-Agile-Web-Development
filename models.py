@@ -38,3 +38,4 @@ class User(db.Model):
     gender = db.Column(db.String(10))
     weight = db.Column(db.Float)
     height = db.Column(db.Float)
+    calorie_goal = db.Column(db.Integer, default = 1000)

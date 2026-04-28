@@ -11,29 +11,8 @@
 <body>
 
 <!-- top bar -->
-<div class="top-bar d-flex justify-content-between align-items-center">
-
-    <a href="{{ url_for('dashboard') }}" class="logo">
-        <img src="{{ url_for('static', filename='images/logo.png') }}" class="site-logo">
-    </a>
-
-    <div class="d-flex gap-3 align-items-center">
-
-        <a href="{{ url_for('dashboard') }}" class="nav-box">Dashboard</a>
-        <a href="#" class="nav-box">Ranking</a>
-        <a href="#" class="nav-box">History</a>
-
-        <div class="hover-dropdown">
-            <a href="#" class="profile-circle">U</a>
-
-            <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="/profile">Profile</a></li>
-                <li><a class="dropdown-item" href="#">Settings</a></li>
-                <li><a class="dropdown-item" href="#">Logout</a></li>
-            </ul>
-        </div>
-
-    </div>
+<div style="background-color: #7793ae; padding: 10px 0; text-align: center;">
+  <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Exercise Planner" style="height:100px; width:auto;">
 </div>
 
 <!-- main content -->
@@ -79,10 +58,9 @@
 
                 <div class="col-md-4">
                     <label class="form-label">Date of Birth</label>
-                    <input type="text"
+                    <input type="date"
                            class="form-control"
-                           name="dob"
-                           placeholder="YYYY-MM-DD">
+                           name="dob">
                 </div>
 
                 <div class="col-md-4">

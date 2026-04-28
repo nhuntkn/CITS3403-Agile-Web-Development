@@ -9,34 +9,25 @@
 </head>
 
 <body>
-
-<!-- top bar -->
-<div class="top-bar d-flex justify-content-between align-items-center">
-
-    <a href="{{ url_for('dashboard') }}" class="logo">
-        <img src="{{ url_for('static', filename='images/logo.png') }}" class="site-logo">
+  <!-- Navbar -->
+  <nav class="ep-navbar">
+    <a href="/dashboard" class="ep-brand">
+      <img src="{{ url_for('static', filename='images/logo.png') }}" alt="EP">
     </a>
-
-    <div class="d-flex gap-3 align-items-center">
-
-        <a href="{{ url_for('dashboard') }}" class="nav-box">Dashboard</a>
-        <a href="#" class="nav-box">Ranking</a>
-        <a href="#" class="nav-box">History</a>
-
-        <div class="hover-dropdown">
-            <a href="#" class="profile-circle">
-                {{ user.username[0]|upper if user else 'U' }}
-            </a>
-
-            <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="/profile">Profile</a></li>
-                <li><a class="dropdown-item" href="#">Settings</a></li>
-                <li><a class="dropdown-item" href="#">Logout</a></li>
-            </ul>
-        </div>
-
+    <a href="/dashboard" class="ep-nav-link active">Dashboard</a>
+    <a href="#" class="ep-nav-link">Ranking</a>
+    <a href="#" class="ep-nav-link">History</a>
+    <a href="{{ url_for('exercise') }}" class="ep-nav-link create-btn">Create Exercise</a>
+    <div class = "ep-nav-spacer"></div>
+    <div class="ep-user-menu">
+      <div class="ep-user-avatar">{{ username[0]|upper if username else 'J' }}</div>
+      <div class="ep-user-dropdown">
+        <a href = "{{ url_for('profile') }}" class = "ep-dropdown-item">Profile</a>
+        <a href = "#" class = "ep-dropdown-item">Settings</a>
+        <a href="{{ url_for('logout') }}" class="ep-dropdown-item">Logout</a>
+      </div>
     </div>
-</div>
+  </nav>
 
 <!-- main content -->
 <div class="container py-4">
@@ -63,7 +54,7 @@
                     <p><strong>Username:</strong> {{ user.username }}</p>
 
                     <label>Date of Birth</label>
-                    <input type="text" class="form-control mb-2" name="dob" value="{{ user.dob }}">
+                    <input type="date" class="form-control mb-2" name="dob" value="{{ user.dob }}">
 
                     <label>Gender</label>
                     <select class="form-control mb-2" name="gender">
@@ -85,6 +76,8 @@
                     <label>Height (cm)</label>
                     <input type="number" class="form-control mb-2" name="height" value="{{ user.height }}">
 
+                    <label>Daily Calorie Goal (kcal)</label>
+                    <input type = "number" class = "form-control mb-2" name = "calorie_goal" value = "{{user.calorie_goal or 1500}}">
                     <p class="mt-3">
                         <strong>Total Calories Burned:</strong>
                         {{ stats.total_calories if stats else 0 }} kcal

@@ -15,8 +15,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app) #attach SQLAlchemy to Flask app
 
-@app.route("/", methods=["GET", "POST"])
-def home():
+@app.route("/exercise", methods=["GET", "POST"])
+def exercise():
     #displays Add Session page, if form is submitted, it saves the session and exercises to the database
     
     if request.method == "POST":
@@ -85,9 +85,14 @@ def home():
 
 @app.route("/dashboard")
 def dashboard():
-    #loads the dashboard page, which shows all past exercise sessions and their details
-    username = "Jackson"  # TODO: replace with session user once auth is implemented
+    if "username" not in session:
+        return redirect(url_for("login"))
     
+    username = session["username"] 
+    user = User.query.filter_by(username = username).first()
+    start_weight = user.weight if user else None
+    calorie_goal = user.calorie_goal if user and user.calorie_goal else 1000
+
     sessions = ExerciseSession.query.order_by(ExerciseSession.date.asc()).all()
 
     sessions_data = [
@@ -99,7 +104,8 @@ def dashboard():
         for s in sessions
     ]
 
-    return render_template("dashboard.html", username = username, sessions_data = sessions_data)
+    return render_template("dashboard.html", username = username, sessions_data = sessions_data, start_weight = start_weight, 
+                           user_height = user.height if user else None, calorie_goal = calorie_goal)
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
@@ -116,8 +122,14 @@ def signup():
         if not password or len(password) < 6:
             return render_template("signup.html", error="Password must be at least 6 characters long")
 
-        if not any(char.isalpha() for char in password):
-            return render_template("signup.html", error="Password must include at least one letter")
+        if not any(char.isupper() for char in password):
+            return render_template("signup.html", error="Password must include at least one uppercase letter")
+
+        if not any(char.islower() for char in password):
+            return render_template("signup.html", error="Password must include at least one lowercase letter")
+
+        if not any(char in "!@#$%^&*()_+-=[]{}|;':\",./<>?" for char in password):
+            return render_template("signup.html", error="Password must include at least one special character")
 
         if password != confirm:
             return render_template("signup.html", error="Passwords do not match")
@@ -170,21 +182,48 @@ def profile():
         user.weight = float(weight) if weight else None
         user.height = float(height) if height else None
 
+        calorie_goal = request.form.get("calorie_goal")
+        user.calorie_goal = int(calorie_goal) if calorie_goal else 1000
+
         new_password = request.form.get('new_password')
         confirm_password = request.form.get('confirm_password')
 
         if new_password:
+            if len(new_password) <= 6:
+                return render_template("profile.html", user=user, stats=stats, error="Password must be more than 6 characters long")
+            if not any(char.isupper() for char in new_password):
+                return render_template("profile.html", user=user, stats=stats, error="Password must include at least one uppercase letter")
+            if not any(char.islower() for char in new_password):
+                return render_template("profile.html", user=user, stats=stats, error="Password must include at least one lowercase letter")
+            if not any(char in "!@#$%^&*()_+-=[]{}|;':\",./<>?" for char in new_password):
+                return render_template("profile.html", user=user, stats=stats, error="Password must include at least one special character")
             if new_password != confirm_password:
                 return render_template("profile.html", user=user, stats=stats, error="Passwords do not match")
             user.password = new_password
 
         db.session.commit()
 
-    return render_template("profile.html", user=user, stats=stats)
+    return render_template("profile.html", user=user, stats=stats, username = session["username"])
 
-@app.route("/login")
+@app.route("/", methods = ["GET", "POST"])
+@app.route("/login", methods = ["GET", "POST"])
 def login():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        user = User.query.filter_by(username = username, password = password).first()
+        if user:
+            session["username"] = user.username
+            return redirect(url_for("dashboard"))
+        return render_template("login.html", error = "Invalid username or password")
+    
     return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+    session.pop("username", None)
+    return redirect(url_for("login"))
 
 with app.app_context():
     db.create_all()
