@@ -18,6 +18,14 @@ db.init_app(app) #attach SQLAlchemy to Flask app
 @app.route("/add-session", methods=["GET", "POST"])
 def add_session():
     #displays Add Session page, if form is submitted, it saves the session and exercises to the database
+    if 'username' not in session:
+        return redirect('/login')
+    
+    user = User.query.filter_by(username=session['username']).first()
+
+    if user is None:
+        session.clear()
+        return redirect('/login')
     
     if request.method == "POST":
         #get the main session data from the form
@@ -35,7 +43,8 @@ def add_session():
             date=date,
             current_weight=current_weight,
             notes=notes,
-            total_calories=0
+            total_calories=0,
+            user_id=user.id
         )
 
         #add the session first to get an ID, ID needed for the foreign key in exercises
@@ -142,7 +151,7 @@ def profile():
 
     user = User.query.filter_by(username=session['username']).first()
 
-    sessions = ExerciseSession.query.all()
+    sessions = ExerciseSession.query.filter_by(user_id=user.id).all()
     total_calories = sum(s.total_calories for s in sessions)
     total_sessions = len(sessions)
 

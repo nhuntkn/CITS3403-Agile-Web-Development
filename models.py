@@ -13,6 +13,8 @@ class ExerciseSession(db.Model):
     notes = db.Column(db.Text)
     total_calories = db.Column(db.Float, default=0)
     
+    #link this session to the user who created it
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     #one exercise session can contain many exercise rows
     #to display session details in ranking and history later
     exercises = db.relationship('SessionExercise', backref='session', cascade="all, delete-orphan")
@@ -38,3 +40,6 @@ class User(db.Model):
     gender = db.Column(db.String(10))
     weight = db.Column(db.Float)
     height = db.Column(db.Float)
+
+    #one user can have many exercise sessions
+    sessions = db.relationship('ExerciseSession', backref='user', cascade="all, delete-orphan")
