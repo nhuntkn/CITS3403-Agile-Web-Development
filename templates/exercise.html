@@ -10,24 +10,7 @@
 
 <body>
   
-  <!-- Navbar -->
-  <nav class="ep-navbar">
-    <a href="/dashboard" class="ep-brand">
-      <img src="{{ url_for('static', filename='images/logo.png') }}" alt="EP">
-    </a>
-    <a href="/dashboard" class="ep-nav-link active">Dashboard</a>
-    <a href="#" class="ep-nav-link">Ranking</a>
-    <a href="#" class="ep-nav-link">History</a>
-    <div class = "ep-nav-spacer"></div>
-    <div class="ep-user-menu">
-      <div class="ep-user-avatar">{{ username[0]|upper if username else 'J' }}</div>
-      <div class="ep-user-dropdown">
-        <a href = "{{ url_for('profile') }}" class = "ep-dropdown-item">Profile</a>
-        <a href = "#" class = "ep-dropdown-item">Settings</a>
-        <a href="{{ url_for('logout') }}" class="ep-dropdown-item">Logout</a>
-      </div>
-    </div>
-  </nav>
+  {% include 'navbar.html' %}
 
   <!-- main content -->
   <div class="container py-4">

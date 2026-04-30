@@ -14,25 +14,7 @@
 </head>
 <body>
 
-  <!-- Navbar -->
-  <nav class="ep-navbar">
-    <a href="/dashboard" class="ep-brand">
-      <img src="{{ url_for('static', filename='images/logo.png') }}" alt="EP">
-    </a>
-    <a href="/dashboard" class="ep-nav-link active">Dashboard</a>
-    <a href="#" class="ep-nav-link">Ranking</a>
-    <a href="#" class="ep-nav-link">History</a>
-    <a href="{{ url_for('exercise') }}" class="ep-nav-link create-btn">Create Exercise</a>
-    <div class = "ep-nav-spacer"></div>
-    <div class="ep-user-menu">
-      <div class="ep-user-avatar">{{ username[0]|upper if username else 'J' }}</div>
-      <div class="ep-user-dropdown">
-        <a href = "{{ url_for('profile') }}" class = "ep-dropdown-item">Profile</a>
-        <a href = "#" class = "ep-dropdown-item">Settings</a>
-        <a href="{{ url_for('logout') }}" class="ep-dropdown-item">Logout</a>
-      </div>
-    </div>
-  </nav>
+  {% include 'navbar.html' %}
 
 <!-- ── Page content ────────────────────────────────────────────────────── -->
 <div class="container py-4">
@@ -96,7 +78,7 @@
     <div class="row g-3">
       <div class="col-12 col-md-6">
         <div class="chart-card">
-          <div class="chart-title">Calories burned — this week</div>
+          <div class="chart-title">Calories burned — the last 7 days</div>
           <div class="chart-wrapper">
             <canvas id="weeklyChart" height="160"></canvas>
           </div>
@@ -150,7 +132,10 @@
     }
 
     //Calorie goal bar
-    const today = new Date().toISOString().split("T")[0];
+    const today = (() => {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2, '0')}`;
+    })();
     const todayKcal = sessions
       .filter(s => s.date === today)
       .reduce((sum, s) => sum + s.total_calories, 0);
@@ -167,7 +152,7 @@
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      weekDays.push(d.toISOString().split("T")[0]);
+      weekDays.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2, '0')}`);
     }
     const weekLabels = weekDays.map(d => {
       const dt = new Date(d + "T00:00:00");

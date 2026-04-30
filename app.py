@@ -17,6 +17,9 @@ db.init_app(app) #attach SQLAlchemy to Flask app
 
 @app.route("/exercise", methods=["GET", "POST"])
 def exercise():
+    if "username" not in session:
+        return redirect(url_for("login"))
+    
     #displays Add Session page, if form is submitted, it saves the session and exercises to the database
     
     if request.method == "POST":
@@ -30,12 +33,14 @@ def exercise():
         activity_levels = request.form.getlist("level[]")
         minutes_list = request.form.getlist("minutes[]")
 
+        user = User.query.filter_by(username = session["username"]).first()
         #create the main exercise session record
         new_session = ExerciseSession(
             date=date,
             current_weight=current_weight,
             notes=notes,
-            total_calories=0
+            total_calories=0,
+            user_id = user.id
         )
 
         #add the session first to get an ID, ID needed for the foreign key in exercises
@@ -93,7 +98,7 @@ def dashboard():
     start_weight = user.weight if user else None
     calorie_goal = user.calorie_goal if user and user.calorie_goal else 1000
 
-    sessions = ExerciseSession.query.order_by(ExerciseSession.date.asc()).all()
+    sessions = ExerciseSession.query.filter_by(user_id = user.id).order_by(ExerciseSession.date.asc()).all()
 
     sessions_data = [
         {
@@ -205,6 +210,18 @@ def profile():
 
     return render_template("profile.html", user=user, stats=stats, username = session["username"])
 
+@app.route("/ranking")
+def ranking():
+    if 'username' not in session:
+        return redirect(url_for("login"))
+    return render_template("ranking.html")
+
+@app.route("/history")
+def history():
+    if 'username' not in session:
+        return redirect(url_for("login"))
+    return render_template("history.html")
+    
 @app.route("/", methods = ["GET", "POST"])
 @app.route("/login", methods = ["GET", "POST"])
 def login():
