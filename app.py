@@ -15,8 +15,11 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app) #attach SQLAlchemy to Flask app
 
-@app.route("/", methods=["GET", "POST"])
-def home():
+@app.route("/exercise", methods=["GET", "POST"])
+def exercise():
+    if "username" not in session:
+        return redirect(url_for("login"))
+    
     #displays Add Session page, if form is submitted, it saves the session and exercises to the database
     
     if request.method == "POST":
@@ -30,12 +33,14 @@ def home():
         activity_levels = request.form.getlist("level[]")
         minutes_list = request.form.getlist("minutes[]")
 
+        user = User.query.filter_by(username = session["username"]).first()
         #create the main exercise session record
         new_session = ExerciseSession(
             date=date,
             current_weight=current_weight,
             notes=notes,
-            total_calories=0
+            total_calories=0,
+            user_id = user.id
         )
 
         #add the session first to get an ID, ID needed for the foreign key in exercises
@@ -85,12 +90,27 @@ def home():
 
 @app.route("/dashboard")
 def dashboard():
-    #loads the dashboard page, which shows all past exercise sessions and their details
-    username = "Jackson"  # TODO: replace with session user once auth is implemented
+    if "username" not in session:
+        return redirect(url_for("login"))
     
-    sessions = ExerciseSession.query.order_by(ExerciseSession.id.desc()).all()
+    username = session["username"] 
+    user = User.query.filter_by(username = username).first()
+    start_weight = user.weight if user else None
+    calorie_goal = user.calorie_goal if user and user.calorie_goal else 1000
 
-    return render_template("dashboard.html", username=username, sessions=sessions)
+    sessions = ExerciseSession.query.filter_by(user_id = user.id).order_by(ExerciseSession.date.asc()).all()
+
+    sessions_data = [
+        {
+            "date" : s.date,
+            "current_weight" : s.current_weight,
+            "total_calories" : s.total_calories,
+        } 
+        for s in sessions
+    ]
+
+    return render_template("dashboard.html", username = username, sessions_data = sessions_data, start_weight = start_weight, 
+                           user_height = user.height if user else None, calorie_goal = calorie_goal)
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
@@ -107,8 +127,14 @@ def signup():
         if not password or len(password) < 6:
             return render_template("signup.html", error="Password must be at least 6 characters long")
 
-        if not any(char.isalpha() for char in password):
-            return render_template("signup.html", error="Password must include at least one letter")
+        if not any(char.isupper() for char in password):
+            return render_template("signup.html", error="Password must include at least one uppercase letter")
+
+        if not any(char.islower() for char in password):
+            return render_template("signup.html", error="Password must include at least one lowercase letter")
+
+        if not any(char in "!@#$%^&*()_+-=[]{}|;':\",./<>?" for char in password):
+            return render_template("signup.html", error="Password must include at least one special character")
 
         if password != confirm:
             return render_template("signup.html", error="Passwords do not match")
@@ -161,21 +187,60 @@ def profile():
         user.weight = float(weight) if weight else None
         user.height = float(height) if height else None
 
+        calorie_goal = request.form.get("calorie_goal")
+        user.calorie_goal = int(calorie_goal) if calorie_goal else 1000
+
         new_password = request.form.get('new_password')
         confirm_password = request.form.get('confirm_password')
 
         if new_password:
+            if len(new_password) <= 6:
+                return render_template("profile.html", user=user, stats=stats, error="Password must be more than 6 characters long")
+            if not any(char.isupper() for char in new_password):
+                return render_template("profile.html", user=user, stats=stats, error="Password must include at least one uppercase letter")
+            if not any(char.islower() for char in new_password):
+                return render_template("profile.html", user=user, stats=stats, error="Password must include at least one lowercase letter")
+            if not any(char in "!@#$%^&*()_+-=[]{}|;':\",./<>?" for char in new_password):
+                return render_template("profile.html", user=user, stats=stats, error="Password must include at least one special character")
             if new_password != confirm_password:
                 return render_template("profile.html", user=user, stats=stats, error="Passwords do not match")
             user.password = new_password
 
         db.session.commit()
 
-    return render_template("profile.html", user=user, stats=stats)
+    return render_template("profile.html", user=user, stats=stats, username = session["username"])
 
-@app.route("/login")
+@app.route("/ranking")
+def ranking():
+    if 'username' not in session:
+        return redirect(url_for("login"))
+    return render_template("ranking.html")
+
+@app.route("/history")
+def history():
+    if 'username' not in session:
+        return redirect(url_for("login"))
+    return render_template("history.html")
+    
+@app.route("/", methods = ["GET", "POST"])
+@app.route("/login", methods = ["GET", "POST"])
 def login():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        user = User.query.filter_by(username = username, password = password).first()
+        if user:
+            session["username"] = user.username
+            return redirect(url_for("dashboard"))
+        return render_template("login.html", error = "Invalid username or password")
+    
     return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+    session.pop("username", None)
+    return redirect(url_for("login"))
 
 with app.app_context():
     db.create_all()

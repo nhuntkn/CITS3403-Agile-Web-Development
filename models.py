@@ -12,6 +12,7 @@ class ExerciseSession(db.Model):
     current_weight = db.Column(db.Float, nullable=False)
     notes = db.Column(db.Text)
     total_calories = db.Column(db.Float, default=0)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable = False)
     
     #one exercise session can contain many exercise rows
     #to display session details in ranking and history later
@@ -38,3 +39,4 @@ class User(db.Model):
     gender = db.Column(db.String(10))
     weight = db.Column(db.Float)
     height = db.Column(db.Float)
+    calorie_goal = db.Column(db.Integer, default = 1000)
