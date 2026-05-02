@@ -6,6 +6,7 @@ from flask_migrate import Migrate
 from models import db, ExerciseSession, SessionExercise, User
 from data import exercise_data
 from utils import calculate_calories
+from datetime import date as current_date
 
 app = Flask(__name__)
 
@@ -33,6 +34,8 @@ def exercise():
     if request.method == "POST":
         #get the main session data from the form
         date = request.form.get("date")
+        if date > current_date.today().isoformat():
+            return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Date cannot be in the future")
         current_weight = float(request.form.get("weight"))
         notes = request.form.get("notes")
 
@@ -92,10 +95,10 @@ def exercise():
         #save everything to the database
         db.session.commit()
         #reload page and show success message
-        return render_template("exercise.html", message="Session added successfully.", exercise_data = exercise_data)
+        return render_template("exercise.html", message="Session added successfully.", exercise_data = exercise_data, username=current_user.username)
 
     #display the Add Session page before the form is submitted
-    return render_template("exercise.html", exercise_data=exercise_data)
+    return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username)
 
 @app.route("/dashboard")
 @login_required
