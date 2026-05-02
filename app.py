@@ -1,9 +1,12 @@
 #setup Flask app and routes, connects to database, handles form submission and rendering templates
 
-from flask import Flask, render_template, request, redirect, session, url_for
+from flask import Flask, render_template, request, redirect, url_for
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from flask_migrate import Migrate
 from models import db, ExerciseSession, SessionExercise, User
 from data import exercise_data
 from utils import calculate_calories
+from datetime import date as current_date
 
 app = Flask(__name__)
 
@@ -15,16 +18,24 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app) #attach SQLAlchemy to Flask app
 
+migrate = Migrate(app, db) #set up Flask-Migrate for database migrations
+login_manager = LoginManager(app) #set up Flask-Login for user session management
+login_manager.login_view = 'login' #redirect to login page if user tries to access protected routes
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id)) #load user from database by ID for Flask-Login
+
 @app.route("/exercise", methods=["GET", "POST"])
+@login_required
 def exercise():
-    if "username" not in session:
-        return redirect(url_for("login"))
-    
     #displays Add Session page, if form is submitted, it saves the session and exercises to the database
     
     if request.method == "POST":
         #get the main session data from the form
         date = request.form.get("date")
+        if date > current_date.today().isoformat():
+            return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Date cannot be in the future")
         current_weight = float(request.form.get("weight"))
         notes = request.form.get("notes")
 
@@ -33,7 +44,8 @@ def exercise():
         activity_levels = request.form.getlist("level[]")
         minutes_list = request.form.getlist("minutes[]")
 
-        user = User.query.filter_by(username = session["username"]).first()
+        user = current_user
+
         #create the main exercise session record
         new_session = ExerciseSession(
             date=date,
@@ -83,18 +95,17 @@ def exercise():
         #save everything to the database
         db.session.commit()
         #reload page and show success message
-        return render_template("exercise.html", message="Session added successfully.", exercise_data = exercise_data)
+        return render_template("exercise.html", message="Session added successfully.", exercise_data = exercise_data, username=current_user.username)
 
     #display the Add Session page before the form is submitted
-    return render_template("exercise.html", exercise_data=exercise_data)
+    return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username)
 
 @app.route("/dashboard")
-def dashboard():
-    if "username" not in session:
-        return redirect(url_for("login"))
-    
-    username = session["username"] 
-    user = User.query.filter_by(username = username).first()
+@login_required
+def dashboard(): 
+    user = current_user
+    username = current_user.username
+
     start_weight = user.weight if user else None
     calorie_goal = user.calorie_goal if user and user.calorie_goal else 1000
 
@@ -145,30 +156,30 @@ def signup():
 
         new_user = User(
             username=username,
-            password=password,
             dob=dob,
             gender=gender,
             weight=float(weight) if weight else None,
             height=float(height) if height else None
         )
 
+        new_user.set_password(password)
+
         db.session.add(new_user)
         db.session.commit()
 
-        session['username'] = username
+        login_user(new_user)
         return redirect(url_for('dashboard'))
 
     return render_template("signup.html")
 
 
 @app.route("/profile", methods=["GET", "POST"])
+@login_required
 def profile():
-    if 'username' not in session:
-        return redirect('/login')
+    user = current_user
+    username = current_user.username
 
-    user = User.query.filter_by(username=session['username']).first()
-
-    sessions = ExerciseSession.query.all()
+    sessions = ExerciseSession.query.filter_by(user_id = user.id).all()
     total_calories = sum(s.total_calories for s in sessions)
     total_sessions = len(sessions)
 
@@ -204,46 +215,49 @@ def profile():
                 return render_template("profile.html", user=user, stats=stats, error="Password must include at least one special character")
             if new_password != confirm_password:
                 return render_template("profile.html", user=user, stats=stats, error="Passwords do not match")
-            user.password = new_password
+            user.set_password(new_password)
 
         db.session.commit()
 
-    return render_template("profile.html", user=user, stats=stats, username = session["username"])
+    return render_template("profile.html", user=user, stats=stats, username=username)
 
 @app.route("/ranking")
 def ranking():
-    if 'username' not in session:
-        return redirect(url_for("login"))
     return render_template("ranking.html")
 
 @app.route("/history")
+@login_required
 def history():
-    if 'username' not in session:
-        return redirect(url_for("login"))
     return render_template("history.html")
     
 @app.route("/", methods = ["GET", "POST"])
 @app.route("/login", methods = ["GET", "POST"])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for("dashboard"))
+    
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
 
-        user = User.query.filter_by(username = username, password = password).first()
-        if user:
-            session["username"] = user.username
-            return redirect(url_for("dashboard"))
-        return render_template("login.html", error = "Invalid username or password")
+        user = User.query.filter_by(username = username).first()
+
+        if user is None or not user.check_password(password):
+            return render_template("login.html", error = "Invalid username or password")
+        
+        login_user(user)
+        return redirect(url_for("dashboard"))
     
     return render_template("login.html")
 
 @app.route("/logout")
+@login_required
 def logout():
-    session.pop("username", None)
+    logout_user()
     return redirect(url_for("login"))
 
-with app.app_context():
-    db.create_all()
+# with app.app_context():
+#     db.create_all()
 
 if __name__ == "__main__":
     app.run(debug=True)

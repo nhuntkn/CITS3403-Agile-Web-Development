@@ -2,6 +2,8 @@
 # Define the database tables used by SQLAlchemy
 
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import UserMixin
+from werkzeug.security import generate_password_hash, check_password_hash
 
 #create the SQLAlchemy instance, will be attached to Flask app in app.py
 db = SQLAlchemy()
@@ -31,12 +33,22 @@ class SessionExercise(db.Model):
     #link this row to its parent session
     session_id = db.Column(db.Integer, db.ForeignKey('exercise_session.id'), nullable=False)
 
-class User(db.Model):
+#UserMixin gives user model the properties and methods needed for Flask-Login to manage user sessions
+class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
     dob = db.Column(db.String(20))
     gender = db.Column(db.String(10))
     weight = db.Column(db.Float)
     height = db.Column(db.Float)
     calorie_goal = db.Column(db.Integer, default = 1000)
+    
+    sessions = db.relationship('ExerciseSession', backref='user', cascade="all, delete-orphan")
+    
+    #methods to set and check password using hashing for security
+    def set_password(self, password):
+        self.password = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password, password)

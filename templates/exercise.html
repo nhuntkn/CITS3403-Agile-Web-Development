@@ -20,13 +20,17 @@
       {% if message %}
         <div class="alert alert-success">{{ message }}</div>
       {% endif %}
+
+      {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+      {% endif %}
       <hr>
 
       <!-- data and weight section -->
       <div class="row mb-4">
         <div class="col-md-4">
           <label class="form-label">Date</label>
-          <input type="date" class="form-control" name="date" required>
+          <input type="date" class="form-control" id="sessionDate" name="date" required>
         </div>
 
         <div class="col-md-4">
@@ -70,6 +74,13 @@
   </div>
   
   <script id="exercise-data" type="application/json"> {{ exercise_data | tojson }} </script>
+  
+  <script>
+    const sessionDateInput = document.getElementById('sessionDate');
+    const today = new Date().toISOString().split('T')[0];
+    sessionDateInput.max = today;
+  </script>
+
   <script src="{{ url_for('static', filename='js/exercise.js') }}"></script>
 </body>
 </html>
