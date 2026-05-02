@@ -1,21 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Sign Up</title>
 
+    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Project CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
 <body>
 
-<!-- top bar -->
+<!-- Navbar -->
 <div style="background-color: #7793ae; padding: 10px 0; text-align: center;">
-  <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Exercise Planner" style="height:100px; width:auto;">
+    <img src="{{ url_for('static', filename='images/logo.png') }}"
+         alt="Exercise Planner"
+         style="height:100px; width:auto;">
 </div>
 
-<!-- main content -->
 <div class="container py-4">
 
     <div class="main-box">
@@ -24,65 +29,82 @@
         <hr>
 
         {% if error %}
-        <div class="alert alert-danger">
-            {{ error }}
-        </div>
+            <div class="alert alert-danger">
+                {{ error }}
+            </div>
         {% endif %}
 
         <form method="POST">
 
+            <!-- Username -->
             <div class="mb-3">
                 <label class="form-label">Username</label>
-                <input class="form-control" name="username" placeholder="Enter your username" required>
+                <input class="form-control" name="username" required>
+                <small id="usernameFeedback" style="color:red;"></small>
             </div>
 
+            <!-- Password -->
             <div class="mb-3">
                 <label class="form-label">Password</label>
-                <input type="password"
-                       class="form-control"
-                       name="password"
-                       placeholder="Minimum 6 characters"
-                       required>
+
+                <input
+                    type="password"
+                    class="form-control"
+                    name="password"
+                    id="password"
+                    required
+                >
+
+                <!-- Password rules -->
+                <div class="form-text mt-2">
+                    <div id="rule-length" style="color:red;">
+                        • At least 6 characters
+                    </div>
+
+                    <div id="rule-letter" style="color:red;">
+                        • Contains a letter
+                    </div>
+                </div>
             </div>
 
+            <!-- Confirm Password -->
             <div class="mb-3">
                 <label class="form-label">Confirm Password</label>
-                <input type="password"
-                       class="form-control"
-                       name="confirm"
-                       placeholder="Re-enter your password"
-                       required>
+                <input type="password" class="form-control" name="confirm" id="confirm" required>
+                <small id="confirmFeedback" style="color:red;"></small>
             </div>
 
+            <!-- DOB + Gender -->
             <div class="row mb-3">
 
                 <div class="col-md-4">
                     <label class="form-label">Date of Birth</label>
-                    <input type="date"
-                           class="form-control"
-                           name="dob">
+                    <input
+                        type="date"
+                        class="form-control"
+                        name="dob"
+                        max="{{ today }}"
+                    >
                 </div>
 
                 <div class="col-md-4">
                     <label class="form-label">Gender</label>
-                    <select class="form-control" name="gender">
+                    <select class="form-select" name="gender">
                         <option value="">Select</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
+                        <option>Male</option>
+                        <option>Female</option>
                     </select>
                 </div>
 
             </div>
 
+            <!-- Weight + Height -->
             <div class="row mb-3">
 
                 <div class="col-md-4">
                     <label class="form-label">Weight</label>
                     <div class="input-group">
-                        <input type="number"
-                               class="form-control"
-                               name="weight"
-                               placeholder="e.g. 70">
+                        <input type="number" class="form-control" name="weight" value="70">
                         <span class="input-group-text">kg</span>
                     </div>
                 </div>
@@ -90,10 +112,7 @@
                 <div class="col-md-4">
                     <label class="form-label">Height</label>
                     <div class="input-group">
-                        <input type="number"
-                               class="form-control"
-                               name="height"
-                               placeholder="e.g. 175">
+                        <input type="number" class="form-control" name="height" value="170">
                         <span class="input-group-text">cm</span>
                     </div>
                 </div>
@@ -107,6 +126,75 @@
     </div>
 
 </div>
+
+<!-- JS -->
+<script>
+// ===== Password validation =====
+const pwd = document.getElementById("password");
+const confirmInput = document.getElementById("confirm");
+
+const ruleLength = document.getElementById("rule-length");
+const ruleLetter = document.getElementById("rule-letter");
+
+// Password rules
+pwd.addEventListener("input", () => {
+    const value = pwd.value;
+
+    // length
+    if (value.length >= 6) {
+        ruleLength.style.color = "green";
+    } else {
+        ruleLength.style.color = "red";
+    }
+
+    // letter
+    if (/[A-Za-z]/.test(value)) {
+        ruleLetter.style.color = "green";
+    } else {
+        ruleLetter.style.color = "red";
+    }
+});
+
+// ===== Confirm password check =====
+confirmInput.addEventListener("input", () => {
+    const feedback = document.getElementById("confirmFeedback");
+
+    if (confirmInput.value !== pwd.value) {
+        feedback.innerText = "Passwords do not match";
+    } else {
+        feedback.innerText = "";
+    }
+});
+
+// ===== AJAX username check =====
+const usernameInput = document.querySelector('input[name="username"]');
+
+usernameInput.addEventListener('blur', function() {
+    const username = this.value;
+
+    if (!username) return;
+
+    fetch(`/check_username?username=${username}`)
+        .then(res => res.json())
+        .then(data => {
+            const feedback = document.getElementById("usernameFeedback");
+
+            if (data.exists) {
+                feedback.innerText = "Username already exists";
+            } else {
+                feedback.innerText = "";
+            }
+        });
+});
+
+// ===== DOB prevent future date =====
+const dobInput = document.querySelector('input[name="dob"]');
+
+if (dobInput) {
+    const today = new Date().toISOString().split("T")[0];
+    dobInput.setAttribute("max", today);
+}
+</script>
 
 </body>
 </html>
