@@ -1,6 +1,6 @@
 #setup Flask app and routes, connects to database, handles form submission and rendering templates
 
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_migrate import Migrate
 from models import db, ExerciseSession, SessionExercise, User
@@ -166,10 +166,19 @@ def signup():
 
     return render_template("signup.html", today=current_date.today().isoformat())
 
+@app.route('/check_username')
+def check_username():
+    username = request.args.get('username')
 
-@app.route("/profile", methods=["GET", "POST"])
+    user = User.query.filter_by(username=username).first()
+
+    return jsonify({
+        "exists": True if user else False
+    })
+
+@app.route("/account", methods=["GET", "POST"])
 @login_required
-def profile():
+def account():
     user = current_user
     username = current_user.username
 
@@ -200,20 +209,20 @@ def profile():
 
         if new_password:
             if len(new_password) < 6:
-                return render_template("profile.html", user=user, stats=stats, error="Password must be more than 6 characters long")
+                return render_template("account.html", user=user, stats=stats, error="Password must be more than 6 characters long")
             if not any(char.isupper() for char in new_password):
-                return render_template("profile.html", user=user, stats=stats, error="Password must include at least one uppercase letter")
+                return render_template("account.html", user=user, stats=stats, error="Password must include at least one uppercase letter")
             if not any(char.islower() for char in new_password):
-                return render_template("profile.html", user=user, stats=stats, error="Password must include at least one lowercase letter")
+                return render_template("account.html", user=user, stats=stats, error="Password must include at least one lowercase letter")
             if not any(char in "!@#$%^&*()_+-=[]{}|;':\",./<>?" for char in new_password):
-                return render_template("profile.html", user=user, stats=stats, error="Password must include at least one special character")
+                return render_template("account.html", user=user, stats=stats, error="Password must include at least one special character")
             if new_password != confirm_password:
-                return render_template("profile.html", user=user, stats=stats, error="Passwords do not match")
+                return render_template("account.html", user=user, stats=stats, error="Passwords do not match")
             user.set_password(new_password)
 
         db.session.commit()
 
-    return render_template("profile.html", user=user, stats=stats, username=username)
+    return render_template("account.html", user=user, stats=stats, username=username)
 
 @app.route("/ranking")
 def ranking():
