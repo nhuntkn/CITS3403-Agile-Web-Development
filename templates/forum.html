@@ -25,18 +25,24 @@
             <div class = "d-flex flex-column gap-3 flex-grow-1">
                 {% if tab == 'sent' %}
                     {% for share in sent %}
-                    <div class = "metric-card d-flex align-items-center gap-3">
+                    <div class = "post-card">
+                        <div style = "min-width:130px;">
+                            <div style = "font-size:0.92rem;">{{ share.session.date }}</div>
+                            <div style = "font-size:0.9rem; margin-top:0.2rem;">From: Me<br>To: {{share.receiver.username}}</div>
+                        </div>
+                        <div style = "width: 1px; background: #bbb; align-self: stretch;"></div>    
                         <div class = "flex-grow-1">
-                            <div style = "font-size:0.85 rem; color: #555;">{{ share.session.date }}</div>
-                            <div style = "font-size:0.8rem; color: #666;">From: Me<br>To: {{share.receiver.username}}</div>
                             <ul class = "list-unstyled mb-0 mt-1">
                                 {% for ex in share.session.exercises %}
-                                <li style = "font-size:0.9rem;">
-                                    {{ex.exercise_name}}
-                                    <span style = "color: #666; font-size: 0.82rem;">{{ex.activity_level}} - {{ex.minutes}} min</span>
+                                <li>
+                                    <div style = "font-size:0.95rem; font-weight:600;">{{ex.exercise_name}}</div>
+                                    <div style = "color: #666; font-size: 0.9rem;">{{ex.activity_level}} - {{ex.minutes}} min</div>
                                 </li>
                                 {% endfor %}
                             </ul>
+                            <div style = "font-size: 0.9rem; font-weight: 550; color:#444; margin-top: 0.4rem;">
+                                Total: {{share.session.total_calories}} kcal
+                            </div>
                         </div>
                         {% if share.liked %}
                         <span style = "font-size:1.3rem;"> ❤️ </span>
@@ -48,18 +54,24 @@
 
                 {% else %}
                     {% for share in received %}
-                    <div class = "metric-card d-flex align-items-center gap-3">
-                        <div class = "flex-frow-1">
-                            <div style = "font-size:0.85rem; color: #555;">{{share.session.date}}</div>
-                            <div style = "font-size:0.8rem; color: #666;">From: {{share.sender.username}}<br>To: Me</div>
+                    <div class = "post-card">
+                        <div style = "min-width:130px;">
+                            <div style = "font-size:0.92rem;">{{ share.session.date }}</div>
+                            <div style = "font-size:0.9rem; margin-top:0.2rem;">From: {{share.sender.username}}<br>To: Me</div>
+                        </div>
+                        <div style = "width: 1px; background: #bbb; align-self: stretch;"></div>    
+                        <div class = "flex-grow-1">
                             <ul class = "list-unstyled mb-0 mt-1">
                                 {% for ex in share.session.exercises %}
-                                <li style = "font-size:0.9rem;">
-                                    {{ex.exercise_name}}
-                                    <span style = "color: #666; font-size:0.82rem;">{{ex.activity_level}} - {{ex.minutes}} min</span>
+                                <li>
+                                    <div style = "font-size:0.95rem; font-weight:600;">{{ex.exercise_name}}</div>
+                                    <div style = "color: #666; font-size: 0.9rem;">{{ex.activity_level}} - {{ex.minutes}} min</div>
                                 </li>
                                 {% endfor %}
                             </ul>
+                            <div style = "font-size: 0.9rem; font-weight: 550; color:#444; margin-top: 0.4rem;">
+                                Total: {{share.session.total_calories}} kcal
+                            </div>                            
                         </div>
                         <form method = "POST" action ="{{url_for('forum')}}">
                             <input type = "hidden" name = "share_id" value = "{{share.id}}">
