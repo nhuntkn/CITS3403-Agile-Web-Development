@@ -331,11 +331,11 @@ def add_friend():
     # find target user by username
     target = User.query.filter_by(username=username).first()
     if not target:
-        return jsonify({"error": "invalid user"})
+        return jsonify({"error": "invalid user"}), 404
 
     # prevent adding yourself
     if target.id == current_user.id:
-        return jsonify({"error": "cannot add yourself"})
+        return jsonify({"error": "cannot add yourself"}), 400
 
     # check existing relationship (both directions)
     existing = Friend.query.filter(
@@ -346,17 +346,17 @@ def add_friend():
     if existing:
         # already friends
         if existing.status == "accepted":
-            return jsonify({"message": "already friends"})
+            return jsonify({"message": "already friends"}), 200
 
         # request already sent by current user
         if existing.sender_id == current_user.id:
-            return jsonify({"message": "already sent"})
+            return jsonify({"message": "already sent"}), 200
 
         # target has sent request → auto accept
         if existing.sender_id == target.id:
             existing.status = "accepted"
             db.session.commit()
-            return jsonify({"message": "friend added"})
+            return jsonify({"message": "friend added"}), 200
 
     # create new friend request
     new_req = Friend(
@@ -368,7 +368,7 @@ def add_friend():
     db.session.add(new_req)
     db.session.commit()
 
-    return jsonify({"message": "request sent"})
+    return jsonify({"message": "request sent"}), 200
 
 @app.route('/api/friends')
 @login_required
@@ -430,7 +430,7 @@ def accept_friend():
     # find target user by username
     target = User.query.filter_by(username=username).first()
     if not target:
-        return jsonify({"error": "invalid user"})
+        return jsonify({"error": "invalid user"}), 404
 
     # find pending request sent to current user
     req = Friend.query.filter_by(
@@ -441,14 +441,14 @@ def accept_friend():
 
     # check if request exists
     if not req:
-        return jsonify({"error": "no request found"})
+        return jsonify({"error": "no request found"}), 404
 
     # accept request
     req.status = "accepted"
     db.session.commit()
 
     # return result
-    return jsonify({"message": "friend added"})
+    return jsonify({"message": "friend added"}), 200
 
 @app.route('/api/reject_friend', methods=['POST'])
 @login_required
@@ -461,7 +461,7 @@ def reject_friend():
     # find target user by username
     target = User.query.filter_by(username=username).first()
     if not target:
-        return jsonify({"error": "invalid user"})
+        return jsonify({"error": "invalid user"}), 404
 
     # find pending request sent to current user
     req = Friend.query.filter_by(
@@ -472,14 +472,14 @@ def reject_friend():
 
     # check if request exists
     if not req:
-        return jsonify({"error": "no request found"})
+        return jsonify({"error": "no request found"}), 404
 
     # delete request
     db.session.delete(req)
     db.session.commit()
 
     # return result
-    return jsonify({"message": "request rejected"})
+    return jsonify({"message": "request rejected"}), 200
 
 
 
