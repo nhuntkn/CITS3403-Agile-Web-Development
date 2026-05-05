@@ -3,7 +3,7 @@
 from flask import Flask, render_template, request, redirect, url_for
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_migrate import Migrate
-from models import db, ExerciseSession, SessionExercise, User
+from models import db, ExerciseSession, SessionExercise, User, Share
 from data import exercise_data
 from utils import calculate_calories
 from datetime import date as current_date
@@ -255,6 +255,24 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for("login"))
+
+@app.route("/forum", methods = ["GET", "POST"])
+@login_required
+def forum():
+    if request.method == "POST":
+        share_id = request.form.get("share_id")
+        share = Share.query.get(int(share_id))
+        if share and share.receiver_id == current_user.id:
+            share.liked = not share.liked
+            db.session.commit()
+        return redirect(url_for('forum', tab = 'received'))
+        
+    tab = request.args.get('tab', 'sent')
+    sent = Share.query.filter_by(sender_id = current_user.id).order_by(Share.created_at.desc()).all()
+    received = Share.query.filter_by(receiver_id = current_user.id).order_by(Share.created_at.desc()).all()
+    return render_template("forum.html", tab = tab, sent = sent, 
+                           received = received, username = current_user.username)
+
 
 # with app.app_context():
 #     db.create_all()
