@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>User Profile</title>
+<title>Account</title>
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
@@ -20,20 +20,6 @@
 .stats-box{display:flex;justify-content:space-around;text-align:center;}
 .stat-label{font-size:15px;color:#777;}
 .stat-value{font-size:19px;font-weight:600;}
-.message-card{border:1px solid #eee;border-radius:12px;padding:18px 20px;margin-bottom:16px;background:#fff;box-shadow:0 3px 10px rgba(0,0,0,0.05);}
-.message-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;}
-.message-title{font-size:17px;font-weight:600;margin-bottom:4px;}
-.message-detail{font-size:14px;color:#444;margin-top:8px;line-height:1.6;}
-.message-like{background:#198754;color:white;border:none;border-radius:6px;padding:8px 12px;min-width:58px;}
-.message-meta-secondary{font-size:15px;color:#666;margin-top:2px;}
-.message-like-light{background:#f1f3f5;color:#333;border:none;border-radius:6px;padding:6px 10px;}
-.message-title{font-size:18px;font-weight:600;margin-bottom:6px;}
-.message-meta{font-size:15px;color:#444;margin-top:2px;}
-.message-list{flex:1;overflow-y:auto;}
-.pagination-box{display:flex;justify-content:space-between;align-items:center;margin-top:auto;}
-.page-btn{padding:6px 14px;border:none;background:#eef2f7;border-radius:8px;font-size:14px;color:#333;}
-.page-btn:hover{background:#dde5f0;}
-.page-info{font-size:14px;color:#666;font-weight:500;}
 </style>
 
 </head>
@@ -49,7 +35,6 @@
 <div class="col-md-2 bg-light p-3">
 <button class="btn btn-secondary w-100 mb-2" onclick="showSection('profile')">Profile</button>
 <button class="btn btn-light w-100 mb-2" onclick="showSection('add')">Add Friend</button>
-<button class="btn btn-light w-100" onclick="showSection('msg')">Messages</button>
 </div>
 
 <!-- MAIN -->
@@ -228,44 +213,6 @@
 
 </div>
 
-<!-- MESSAGES -->
-<div id="messageSection" class="main-box" style="display:none;">
-
-<div class="title-main">Messages</div>
-
-<div class="d-flex gap-2 mb-3">
-<button id="btnInbox" class="btn btn-secondary" onclick="showMsgTab('inbox')">Inbox</button>
-<button id="btnSent" class="btn btn-light" onclick="showMsgTab('sent')">Sent</button>
-</div>
-
-
-<div id="inboxTab">
-<div class="card p-4 mb-4 d-flex flex-column" style="min-height:500px;">
-<div class="title-section mb-3">Received Sessions</div>
-<div class="message-list" id="inboxList"></div>
-<div class="pagination-box mt-auto">
-<button class="page-btn" onclick="prevInbox()">Prev</button>
-<span class="page-info" id="inboxPageInfo"></span>
-<button class="page-btn" onclick="nextInbox()">Next</button>
-</div>
-</div>
-</div>
-
-
-<div id="sentTab" style="display:none;">
-<div class="card p-4 mb-4 d-flex flex-column" style="min-height:500px;">
-<div class="title-section mb-3">Sent Sessions</div>
-<div class="message-list" id="sentList"></div>
-<div class="pagination-box mt-auto">
-<button class="page-btn" onclick="prevSent()">Prev</button>
-<span class="page-info" id="sentPageInfo"></span>
-<button class="page-btn" onclick="nextSent()">Next</button>
-</div>
-</div>
-</div>
-
-</div>
-
 <script>
 
 /* ================= PROFILE ================= */
@@ -342,7 +289,7 @@ function showSection(type){
 // switch sections
 document.getElementById("profileSection").style.display = (type==="profile")?"block":"none";
 document.getElementById("addSection").style.display = (type==="add")?"block":"none";
-document.getElementById("messageSection").style.display = (type==="msg")?"block":"none";
+
 
 // get ONLY sidebar buttons
 const btns = document.querySelectorAll(".col-md-2 .btn");
@@ -362,11 +309,6 @@ if(type==="profile"){
 if(type==="add"){
     btns[1].classList.remove("btn-light");
     btns[1].classList.add("btn-secondary");
-}
-
-if(type==="msg"){
-    btns[2].classList.remove("btn-light");
-    btns[2].classList.add("btn-secondary");
 }
 
 }
@@ -503,141 +445,8 @@ box.appendChild(row);
 });
 }
 
-/* ================= MESSAGES ================= */
-
-let inboxPage = 1;
-let sentPage = 1;
-const pageSize = 5;
-
-let inbox=[
-
-];
-
-let sent=[
-
-];
-
-function showMsgTab(type){
-document.getElementById("inboxTab").style.display=(type==="inbox")?"block":"none";
-document.getElementById("sentTab").style.display=(type==="sent")?"block":"none";
-
-document.getElementById("btnInbox").classList.remove("btn-secondary");
-document.getElementById("btnSent").classList.remove("btn-secondary");
-
-if(type==="inbox") document.getElementById("btnInbox").classList.add("btn-secondary");
-else document.getElementById("btnSent").classList.add("btn-secondary");
-}
-
-function renderInbox(){
-const box=document.getElementById("inboxList");
-box.innerHTML="";
-
-const start = (inboxPage - 1) * pageSize;
-const end = start + pageSize;
-const current = inbox.slice(start, end);
-
-current.forEach((item,i)=>{
-const row=document.createElement("div");
-row.className="message-card";
-
-row.innerHTML=`
-<div class="message-head">
-    <div>
-        <div class="message-title">${item.session_name}</div>
-        <div class="message-meta">from ${item.from_username}</div>
-        <div class="message-meta-secondary">
-        ${item.minutes} mins · ${item.date}
-        </div>
-    </div>
-
-    <button class="${item.liked ? 'message-like-light' : 'message-like'}"
-    onclick="likeSession(${item.id})">
-    👍
-    </button>
-</div>
-`;
-
-box.appendChild(row);
-});
-
-document.getElementById("inboxPageInfo").innerText =
-    inboxPage+" / "+Math.max(1,Math.ceil(inbox.length/pageSize));
-}
-
-function likeSession(messageId){
-fetch('/api/like',{
-method:'POST',
-headers:{'Content-Type':'application/json'},
-body:JSON.stringify({message_id:messageId})
-})
-.then(()=>loadMessages());
-}
-
-function renderSent(){
-const box=document.getElementById("sentList");
-box.innerHTML="";
-
-const start=(sentPage-1)*pageSize;
-const end=start+pageSize;
-const current=sent.slice(start,end);
-
-current.forEach(item=>{
-const row=document.createElement("div");
-row.className="message-card";
-
-row.innerHTML=`
-<div class="message-head">
-    <div>
-        <div class="message-title">${item.session_name}</div>
-        <div class="message-meta">to ${item.to_username}</div>
-        <div class="message-meta-secondary">
-        ${item.minutes} mins · ${item.date}
-        </div>
-    </div>
-
-    <button class="message-like-light">
-    👍 ${item.likes_count}
-    </button>
-</div>
-`;
-
-box.appendChild(row);
-});
-
-document.getElementById("sentPageInfo").innerText=
-sentPage+" / "+Math.max(1,Math.ceil(sent.length/pageSize));
-}
-
-/* init */
-loadFriends();
-loadMessages();
-
-function nextInbox(){
-if(inboxPage<Math.ceil(inbox.length/pageSize)){
-inboxPage++;
-renderInbox();
-}
-}
-
-function prevInbox(){
-    if(inboxPage > 1){
-        inboxPage--;
-        renderInbox();
-    }
-}
-
-function nextSent(){if(sentPage<Math.ceil(sent.length/pageSize)){sentPage++;renderSent();}}
-function prevSent(){if(sentPage>1){sentPage--;renderSent();}}
-
-function loadMessages(){
-fetch('/api/messages')
-.then(res=>res.json())
-.then(data=>{
-inbox=data.inbox||[];
-sent=data.sent||[];
-renderInbox();
-renderSent();
-});
+window.onload = function(){
+    loadFriends();
 }
 
 </script>

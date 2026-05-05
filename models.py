@@ -60,33 +60,3 @@ class Friend(db.Model):
     receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     status = db.Column(db.String(20))  # pending / accepted
     __table_args__ = (db.UniqueConstraint('sender_id', 'receiver_id', name='unique_friend'),)
-
-class Message(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-
-    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
-    session_id = db.Column(db.Integer, db.ForeignKey('exercise_session.id'), nullable=False)
-    session = db.relationship('ExerciseSession')
-
-    date = db.Column(db.String(20))
-
-    # store display data to avoid extra joins
-    session_name = db.Column(db.String(50))
-    minutes = db.Column(db.Integer)
-
-    likes_count = db.Column(db.Integer, default=0)
-
-    sender = db.relationship('User', foreign_keys=[sender_id])
-    receiver = db.relationship('User', foreign_keys=[receiver_id])
-
-class Like(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    message_id = db.Column(db.Integer, db.ForeignKey('message.id'), nullable=False)
-    message = db.relationship('Message')
-
-    # prevent duplicate likes from the same user
-    __table_args__ = (db.UniqueConstraint('user_id', 'message_id', name='unique_like'),)

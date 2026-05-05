@@ -3,7 +3,7 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_migrate import Migrate
-from models import db, ExerciseSession, SessionExercise, User, Friend, Message, Like
+from models import db, ExerciseSession, SessionExercise, User, Friend
 from data import exercise_data
 from utils import calculate_calories
 from datetime import date as current_date
@@ -481,106 +481,6 @@ def reject_friend():
     # return result
     return jsonify({"message": "request rejected"})
 
-#---!  message  ---#
-@app.route('/api/messages')
-@login_required
-def get_messages():
-
-    # get current user id
-    user_id = current_user.id
-
-    # find inbox messages (received by current user)
-    inbox_msgs = Message.query.filter_by(
-        receiver_id=user_id
-    ).order_by(Message.id.desc()).all()
-
-    # find sent messages (sent by current user)
-    sent_msgs = Message.query.filter_by(
-        sender_id=user_id
-    ).order_by(Message.id.desc()).all()
-
-    # build inbox data
-    inbox = []
-    for m in inbox_msgs:
-
-        # find sender username
-        sender = User.query.get(m.sender_id)
-
-        # check if current user liked this message
-        liked = Like.query.filter_by(
-            user_id=user_id,
-            message_id=m.id
-        ).first() is not None
-
-        inbox.append({
-            "id": m.id,
-            "session_name": m.session_name,
-            "minutes": m.minutes,
-            "date": m.date,
-            "from_username": sender.username if sender else "",
-            "liked": liked
-        })
-
-    # build sent data
-    sent = []
-    for m in sent_msgs:
-
-        # find receiver username
-        receiver = User.query.get(m.receiver_id)
-
-        sent.append({
-            "id": m.id,
-            "session_name": m.session_name,
-            "minutes": m.minutes,
-            "date": m.date,
-            "to_username": receiver.username if receiver else "",
-            "likes_count": m.likes_count
-        })
-
-    # return result for frontend
-    return jsonify({
-        "inbox": inbox,
-        "sent": sent
-    })
-
-@app.route('/api/like', methods=['POST'])
-@login_required
-def like_message():
-
-    # get request data
-    data = request.get_json()
-    message_id = data.get("message_id")
-
-    # find message by id
-    msg = Message.query.get(message_id)
-    if not msg:
-        return jsonify({"error": "invalid message"})
-
-    # check if user already liked this message
-    existing = Like.query.filter_by(
-        user_id=current_user.id,
-        message_id=message_id
-    ).first()
-
-    # if already liked → unlike (toggle off)
-    if existing:
-        db.session.delete(existing)
-        msg.likes_count = max(0, msg.likes_count - 1)
-        db.session.commit()
-        return jsonify({"message": "unliked"})
-
-    # if not liked → add like
-    new_like = Like(
-        user_id=current_user.id,
-        message_id=message_id
-    )
-
-    db.session.add(new_like)
-    msg.likes_count += 1
-    db.session.commit()
-
-    # return result
-    return jsonify({"message": "liked"})
 
 
 with app.app_context():
