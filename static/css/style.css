@@ -235,6 +235,29 @@ body {
   padding: 0.75rem 0.5rem 0.5rem;
 }
 
+.activity-map {
+  height: 320px;
+  width: 100%;
+  border: 1px solid #cccccc;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.activity-location-panel {
+  background: #f8f9fa;
+  border: 1px solid #dddddd;
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.history-map {
+  height: 360px;
+  width: 100%;
+  border: 1px solid #cccccc;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
 /* ── Utility ─────────────────────────────────────────────── */
 .text-pink  { color: #e91e8c; }
 .btn-pink {

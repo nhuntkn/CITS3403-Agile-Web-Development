@@ -1,0 +1,169 @@
+const DEFAULT_MAP_CENTER = [-31.9505, 115.8605];
+const DEFAULT_MAP_ZOOM = 12;
+
+function createBaseMap(elementId) {
+  const map = L.map(elementId).setView(DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap contributors"
+  }).addTo(map);
+
+  return map;
+}
+
+function formatCoordinate(value) {
+  return Number(value).toFixed(5);
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function initActivityLocationMap() {
+  const mapElement = document.getElementById("activityMap");
+  if (!mapElement) {
+    return;
+  }
+
+  const toggleLocationMapButton = document.getElementById("toggleLocationMap");
+  const activityLocationPanel = document.getElementById("activityLocationPanel");
+  const latitudeInput = document.getElementById("latitude");
+  const longitudeInput = document.getElementById("longitude");
+  const locationStatus = document.getElementById("locationStatus");
+  const useCurrentLocationButton = document.getElementById("useCurrentLocation");
+  const clearLocationButton = document.getElementById("clearLocation");
+  let map = null;
+  let marker = null;
+
+  function ensureMap() {
+    if (!map) {
+      map = createBaseMap("activityMap");
+      map.on("click", (event) => {
+        setSelectedLocation(event.latlng.lat, event.latlng.lng);
+      });
+    }
+
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 0);
+
+    return map;
+  }
+
+  function setSelectedLocation(latitude, longitude) {
+    latitudeInput.value = latitude;
+    longitudeInput.value = longitude;
+
+    if (marker) {
+      marker.setLatLng([latitude, longitude]);
+    } else {
+      marker = L.marker([latitude, longitude]).addTo(map);
+    }
+
+    locationStatus.textContent = `Selected location: ${formatCoordinate(latitude)}, ${formatCoordinate(longitude)}`;
+  }
+
+  function clearSelectedLocation() {
+    latitudeInput.value = "";
+    longitudeInput.value = "";
+    locationStatus.textContent = "No location selected.";
+
+    if (marker) {
+      marker.remove();
+      marker = null;
+    }
+  }
+
+  function showLocationPanel() {
+    activityLocationPanel.hidden = false;
+    toggleLocationMapButton.textContent = "Hide activity location";
+    ensureMap();
+  }
+
+  function hideLocationPanel() {
+    activityLocationPanel.hidden = true;
+    toggleLocationMapButton.textContent = latitudeInput.value ? "Edit activity location" : "Add activity location";
+  }
+
+  toggleLocationMapButton.addEventListener("click", () => {
+    if (activityLocationPanel.hidden) {
+      showLocationPanel();
+    } else {
+      hideLocationPanel();
+    }
+  });
+
+  useCurrentLocationButton.addEventListener("click", () => {
+    if (!navigator.geolocation) {
+      locationStatus.textContent = "Geolocation is not supported by this browser.";
+      return;
+    }
+
+    locationStatus.textContent = "Getting your current location...";
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+        const activityMap = ensureMap();
+        activityMap.setView([latitude, longitude], 15);
+        setSelectedLocation(latitude, longitude);
+      },
+      () => {
+        locationStatus.textContent = "Unable to access your location. You can still click the map manually.";
+      }
+    );
+  });
+
+  clearLocationButton.addEventListener("click", () => {
+    clearSelectedLocation();
+    toggleLocationMapButton.textContent = "Add activity location";
+  });
+}
+
+function initHistoryLocationMap() {
+  const mapElement = document.getElementById("historyMap");
+  if (!mapElement) {
+    return;
+  }
+
+  const map = createBaseMap("historyMap");
+  const locations = window.historyLocations || [];
+
+  if (locations.length === 0) {
+    return;
+  }
+
+  const bounds = [];
+
+  locations.forEach((session) => {
+    const latitude = Number(session.latitude);
+    const longitude = Number(session.longitude);
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return;
+    }
+
+    const marker = L.marker([latitude, longitude]).addTo(map);
+    marker.bindPopup(`
+      <strong>${escapeHtml(session.date)}</strong><br>
+      Calories: ${escapeHtml(session.total_calories)} kcal<br>
+      Weight: ${escapeHtml(session.current_weight)} kg<br>
+      Notes: ${escapeHtml(session.notes || "-")}
+    `);
+    bounds.push([latitude, longitude]);
+  });
+
+  if (bounds.length > 0) {
+    map.fitBounds(bounds, { padding: [30, 30] });
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  initActivityLocationMap();
+  initHistoryLocationMap();
+});

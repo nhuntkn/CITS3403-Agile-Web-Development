@@ -14,6 +14,8 @@ class ExerciseSession(db.Model):
     current_weight = db.Column(db.Float, nullable=False)
     notes = db.Column(db.Text)
     total_calories = db.Column(db.Float, default=0)
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable = False)
     
     #one exercise session can contain many exercise rows

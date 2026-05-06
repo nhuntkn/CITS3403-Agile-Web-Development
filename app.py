@@ -22,6 +22,30 @@ migrate = Migrate(app, db) #set up Flask-Migrate for database migrations
 login_manager = LoginManager(app) #set up Flask-Login for user session management
 login_manager.login_view = 'login' #redirect to login page if user tries to access protected routes
 
+def create_database_tables():
+    with app.app_context():
+        db.create_all()
+
+def parse_location_fields(latitude_raw, longitude_raw):
+    if not latitude_raw and not longitude_raw:
+        return None, None, None
+
+    if not latitude_raw or not longitude_raw:
+        return None, None, "Please select both latitude and longitude for the activity location"
+
+    try:
+        latitude = float(latitude_raw)
+        longitude = float(longitude_raw)
+    except ValueError:
+        return None, None, "Activity location is invalid"
+
+    if latitude < -90 or latitude > 90:
+        return None, None, "Latitude must be between -90 and 90"
+    if longitude < -180 or longitude > 180:
+        return None, None, "Longitude must be between -180 and 180"
+
+    return latitude, longitude, None
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id)) #load user from database by ID for Flask-Login
@@ -38,6 +62,13 @@ def exercise():
             return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Date cannot be in the future")
         current_weight = float(request.form.get("weight"))
         notes = request.form.get("notes")
+        latitude, longitude, location_error = parse_location_fields(
+            request.form.get("latitude"),
+            request.form.get("longitude")
+        )
+
+        if location_error:
+            return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error=location_error)
 
         #get the repeated exercise rows from the form
         exercise_names = request.form.getlist("exercise[]")
@@ -52,6 +83,8 @@ def exercise():
             current_weight=current_weight,
             notes=notes,
             total_calories=0,
+            latitude=latitude,
+            longitude=longitude,
             user_id = user.id
         )
 
@@ -222,13 +255,48 @@ def profile():
     return render_template("profile.html", user=user, stats=stats, username=username)
 
 @app.route("/ranking")
+@login_required
 def ranking():
-    return render_template("ranking.html")
+    users = User.query.all()
+    ranking_data = []
+
+    for user in users:
+        sessions = ExerciseSession.query.filter_by(user_id=user.id).order_by(ExerciseSession.date.asc()).all()
+        latest_session = sessions[-1] if sessions else None
+        total_calories = sum(session.total_calories for session in sessions)
+        kg_lost = 0
+
+        if user.weight is not None and latest_session is not None:
+            kg_lost = user.weight - latest_session.current_weight
+
+        ranking_data.append({
+            "username": user.username,
+            "kg_lost": round(kg_lost, 1),
+            "total_calories": round(total_calories, 2),
+            "total_sessions": len(sessions)
+        })
+
+    ranking_data.sort(key=lambda item: (item["kg_lost"], item["total_calories"]), reverse=True)
+    return render_template("ranking.html", username=current_user.username, ranking_data=ranking_data)
 
 @app.route("/history")
 @login_required
 def history():
-    return render_template("history.html")
+    sessions = ExerciseSession.query.filter_by(user_id=current_user.id).order_by(ExerciseSession.date.desc()).all()
+    location_data = [
+        {
+            "id": session.id,
+            "date": session.date,
+            "current_weight": session.current_weight,
+            "total_calories": session.total_calories,
+            "notes": session.notes,
+            "latitude": session.latitude,
+            "longitude": session.longitude
+        }
+        for session in sessions
+        if session.latitude is not None and session.longitude is not None
+    ]
+    return render_template("history.html", username=current_user.username, sessions=sessions, location_data=location_data)
     
 @app.route("/", methods = ["GET", "POST"])
 @app.route("/login", methods = ["GET", "POST"])
@@ -256,8 +324,6 @@ def logout():
     logout_user()
     return redirect(url_for("login"))
 
-# with app.app_context():
-#     db.create_all()
-
 if __name__ == "__main__":
+    create_database_tables()
     app.run(debug=True)

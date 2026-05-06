@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    {% include 'navbar.html' %}
+
+    <div class="container py-4">
+        <div class="main-box">
+            <h1>Exercise History</h1>
+            <p class="text-muted">Your saved workout sessions appear here.</p>
+            <hr>
+
+            {% if sessions %}
+            <h4>Activity Map</h4>
+            {% if location_data %}
+            <div id="historyMap" class="history-map mb-4"></div>
+            {% else %}
+            <div class="alert alert-info">
+                No saved sessions have a recorded location yet.
+            </div>
+            {% endif %}
+
+            <div class="table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Weight</th>
+                            <th>Total Calories</th>
+                            <th>Location</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for session in sessions %}
+                        <tr>
+                            <td>{{ session.date }}</td>
+                            <td>{{ session.current_weight }} kg</td>
+                            <td>{{ session.total_calories }} kcal</td>
+                            <td>
+                                {% if session.latitude is not none and session.longitude is not none %}
+                                {{ "%.5f"|format(session.latitude) }}, {{ "%.5f"|format(session.longitude) }}
+                                {% else %}
+                                Not recorded
+                                {% endif %}
+                            </td>
+                            <td>{{ session.notes or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info mb-0">
+                No exercise sessions saved yet.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <script>
+        window.historyLocations = {{ location_data | tojson }};
+    </script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="{{ url_for('static', filename='js/map.js') }}"></script>
+</body>
+</html>
