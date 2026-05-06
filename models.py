@@ -43,7 +43,8 @@ class User(UserMixin, db.Model):
     weight = db.Column(db.Float)
     height = db.Column(db.Float)
     calorie_goal = db.Column(db.Integer, default = 1000)
-    
+    avatar = db.Column(db.String(255))
+
     sessions = db.relationship('ExerciseSession', backref='user', cascade="all, delete-orphan")
     
     #methods to set and check password using hashing for security
@@ -52,3 +53,10 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password, password)
+    
+class Friend(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    status = db.Column(db.String(20))  # pending / accepted
+    __table_args__ = (db.UniqueConstraint('sender_id', 'receiver_id', name='unique_friend'),)
