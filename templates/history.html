@@ -18,14 +18,11 @@
             <hr>
 
             {% if sessions %}
-            <h4>Activity Map</h4>
-            {% if location_data %}
-            <div id="historyMap" class="history-map mb-4"></div>
-            {% else %}
-            <div class="alert alert-info">
-                No saved sessions have a recorded location yet.
+            <div id="locationMapPanel" class="mb-4" hidden>
+                <h4>Activity Location</h4>
+                <p class="text-muted" id="historyMapStatus">Select a saved session location to view it on the map.</p>
+                <div id="historyMap" class="history-map"></div>
             </div>
-            {% endif %}
 
             <div class="table-responsive">
                 <table class="table table-striped align-middle">
@@ -46,7 +43,11 @@
                             <td>{{ session.total_calories }} kcal</td>
                             <td>
                                 {% if session.latitude is not none and session.longitude is not none %}
-                                {{ "%.5f"|format(session.latitude) }}, {{ "%.5f"|format(session.longitude) }}
+                                <button type="button"
+                                        class="btn btn-outline-primary btn-sm check-location-btn"
+                                        data-session-id="{{ session.id }}">
+                                    Check Location
+                                </button>
                                 {% else %}
                                 Not recorded
                                 {% endif %}

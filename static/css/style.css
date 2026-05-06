@@ -23,7 +23,7 @@ body {
   background: #7793ae;
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 1000;
 }
 
 .ep-brand {
@@ -256,6 +256,15 @@ body {
   border: 1px solid #cccccc;
   border-radius: 10px;
   overflow: hidden;
+}
+
+.activity-map .leaflet-pane,
+.activity-map .leaflet-top,
+.activity-map .leaflet-bottom,
+.history-map .leaflet-pane,
+.history-map .leaflet-top,
+.history-map .leaflet-bottom {
+  z-index: 1;
 }
 
 /* ── Utility ─────────────────────────────────────────────── */

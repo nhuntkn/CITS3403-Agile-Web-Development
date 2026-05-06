@@ -59,10 +59,10 @@ Do not commit the real `.env` file to GitHub.
 ### 5. Initialise the database
 
 ```powershell
-py init_db.py
+py -m flask --app app db upgrade
 ```
 
-This creates the local SQLite database tables. The database file is stored in the Flask `instance/` folder, which is ignored by Git.
+This applies the Flask-Migrate database migrations and creates the local SQLite database schema. The database file is stored in the Flask `instance/` folder, which is ignored by Git.
 
 ### 6. Run the app
 
@@ -177,10 +177,10 @@ pip install -r requirements.txt
 
 ### `sqlite3.OperationalError: no such table: user`
 
-Initialise the database:
+Apply the database migrations:
 
 ```powershell
-py init_db.py
+py -m flask --app app db upgrade
 ```
 
 Then restart the app with:

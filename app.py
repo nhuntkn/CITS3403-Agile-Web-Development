@@ -24,10 +24,6 @@ migrate = Migrate(app, db) #set up Flask-Migrate for database migrations
 login_manager = LoginManager(app) #set up Flask-Login for user session management
 login_manager.login_view = 'login' #redirect to login page if user tries to access protected routes
 
-def create_database_tables():
-    with app.app_context():
-        db.create_all()
-
 def parse_location_fields(latitude_raw, longitude_raw):
     if not latitude_raw and not longitude_raw:
         return None, None, None
@@ -327,5 +323,4 @@ def logout():
     return redirect(url_for("login"))
 
 if __name__ == "__main__":
-    create_database_tables()
     app.run(debug=True)

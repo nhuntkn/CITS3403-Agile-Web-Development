@@ -131,16 +131,25 @@ function initHistoryLocationMap() {
     return;
   }
 
-  const map = createBaseMap("historyMap");
+  const mapPanel = document.getElementById("locationMapPanel");
+  const mapStatus = document.getElementById("historyMapStatus");
   const locations = window.historyLocations || [];
+  let map = null;
+  let marker = null;
 
-  if (locations.length === 0) {
-    return;
+  function ensureHistoryMap() {
+    if (!map) {
+      map = createBaseMap("historyMap");
+    }
+
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 0);
+
+    return map;
   }
 
-  const bounds = [];
-
-  locations.forEach((session) => {
+  function showSessionLocation(session) {
     const latitude = Number(session.latitude);
     const longitude = Number(session.longitude);
 
@@ -148,19 +157,36 @@ function initHistoryLocationMap() {
       return;
     }
 
-    const marker = L.marker([latitude, longitude]).addTo(map);
+    mapPanel.hidden = false;
+    const historyMap = ensureHistoryMap();
+
+    if (marker) {
+      marker.remove();
+    }
+
+    marker = L.marker([latitude, longitude]).addTo(historyMap);
     marker.bindPopup(`
       <strong>${escapeHtml(session.date)}</strong><br>
       Calories: ${escapeHtml(session.total_calories)} kcal<br>
       Weight: ${escapeHtml(session.current_weight)} kg<br>
       Notes: ${escapeHtml(session.notes || "-")}
-    `);
-    bounds.push([latitude, longitude]);
-  });
+    `).openPopup();
 
-  if (bounds.length > 0) {
-    map.fitBounds(bounds, { padding: [30, 30] });
+    historyMap.setView([latitude, longitude], 15);
+    mapStatus.textContent = `Showing location for session on ${session.date}.`;
+    mapPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
+
+  document.querySelectorAll(".check-location-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+      const sessionId = Number(button.dataset.sessionId);
+      const session = locations.find((item) => Number(item.id) === sessionId);
+
+      if (session) {
+        showSessionLocation(session);
+      }
+    });
+  });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
