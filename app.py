@@ -1,5 +1,7 @@
 #setup Flask app and routes, connects to database, handles form submission and rendering templates
 
+import os
+
 from flask import Flask, render_template, request, redirect, url_for
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_migrate import Migrate
@@ -10,7 +12,7 @@ from datetime import date as current_date
 
 app = Flask(__name__)
 
-app.config['SECRET_KEY'] = '1234'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-me')
 
 #configure SQLite database, SQLAlchemy will store the database file inside the Flask instance folder
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///exercise_planner.db'

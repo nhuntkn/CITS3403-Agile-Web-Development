@@ -38,7 +38,25 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. Initialise the database
+### 4. Configure environment variables
+
+Create a local `.env` file based on `.env.example`, or set `SECRET_KEY` in your terminal before running the app.
+
+Windows PowerShell:
+
+```powershell
+$env:SECRET_KEY="replace-this-with-a-long-random-secret-key"
+```
+
+macOS / Linux:
+
+```bash
+export SECRET_KEY="replace-this-with-a-long-random-secret-key"
+```
+
+Do not commit the real `.env` file to GitHub.
+
+### 5. Initialise the database
 
 ```powershell
 py init_db.py
@@ -46,7 +64,7 @@ py init_db.py
 
 This creates the local SQLite database tables. The database file is stored in the Flask `instance/` folder, which is ignored by Git.
 
-### 5. Run the app
+### 6. Run the app
 
 ```powershell
 py app.py
