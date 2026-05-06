@@ -1,15 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Sign Up</title>
+{% extends "base.html" %}
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
+{% block title %}Sign Up{% endblock %}
 
-<body>
-
+{% block content %}
 <!-- top bar -->
 <div style="background-color: #7793ae; padding: 10px 0; text-align: center;">
   <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Exercise Planner" style="height:100px; width:auto;">
@@ -107,6 +100,4 @@
     </div>
 
 </div>
-
-</body>
-</html>
+{% endblock %}

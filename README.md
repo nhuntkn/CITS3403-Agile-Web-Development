@@ -158,6 +158,7 @@ Weight today (kg) input
 | Layer | Technology |
 |---|---|
 | Frontend | HTML, JavaScript |
+| Templates | Jinja templates with base template inheritance |
 | CSS Framework | Bootstrap |
 | Charting | Chart.js |
 | Mapping | Leaflet, OpenStreetMap |

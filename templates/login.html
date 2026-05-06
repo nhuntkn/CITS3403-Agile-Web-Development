@@ -1,13 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Exercise Planner</title>
-    <!-- Shared styles (for .btn-pink) -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-</head>
+{% extends "base.html" %}
 
-<body style="font-family: Arial; text-align: center;">
+{% block title %}Exercise Planner{% endblock %}
 
+{% block content %}
 <div style="background-color: #7793ae; padding: 10px 0; text-align: center;">
   <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Exercise Planner" style="height:100px; width:auto;">
 </div>
@@ -63,6 +58,4 @@ save your routines and see your progress everyday. JOIN NOW !!!
     </div>
 
 </div>
-
-</body>
-</html>
+{% endblock %}
