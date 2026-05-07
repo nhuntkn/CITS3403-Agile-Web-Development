@@ -38,8 +38,20 @@ def exercise():
         date = request.form.get("date")
         if date > current_date.today().isoformat():
             return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Date cannot be in the future")
-        current_weight = float(request.form.get("weight"))
-        notes = request.form.get("notes")
+
+        try:
+            current_weight = float(request.form.get("weight"))
+        except (TypeError, ValueError):
+            return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Invalid weight entered")
+        
+        if current_weight < 1 or current_weight > 300:
+            return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Weight must be between 1 and 300 kg")
+        
+        current_weight = round(current_weight, 2)
+
+        notes = request.form.get("notes", "").strip()
+        if len(notes) > 800:
+            return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Notes cannot exceed 800 characters")
 
         #get the repeated exercise rows from the form
         exercise_names = request.form.getlist("exercise[]")
@@ -67,8 +79,13 @@ def exercise():
         for i in range(len(exercise_names)):
             exercise_name = exercise_names[i]
             activity_level = activity_levels[i]
-            minutes = int(minutes_list[i])
+            try:
+                minutes = int(minutes_list[i])
+            except (TypeError, ValueError):
+                return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Exercise duration must be a valid number.")
 
+            if minutes < 1 or minutes > 300:
+                return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Exercise duration must be between 1 and 300 minutes.")
             #find MET value for the exercise and activity level
             met_value = exercise_data[exercise_name][activity_level]
 
