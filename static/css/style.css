@@ -258,6 +258,24 @@ body {
   overflow: hidden;
 }
 
+.history-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.history-notes {
+  width: 35%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.history-map .leaflet-popup-content {
+  max-width: 240px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .activity-map .leaflet-pane,
 .activity-map .leaflet-top,
 .activity-map .leaflet-bottom,

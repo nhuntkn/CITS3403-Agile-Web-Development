@@ -169,7 +169,7 @@ function initHistoryLocationMap() {
       <strong>${escapeHtml(session.date)}</strong><br>
       Calories: ${escapeHtml(session.total_calories)} kcal<br>
       Weight: ${escapeHtml(session.current_weight)} kg<br>
-      Notes: ${escapeHtml(session.notes || "-")}
+      Location: ${formatCoordinate(latitude)}, ${formatCoordinate(longitude)}
     `).openPopup();
 
     historyMap.setView([latitude, longitude], 15);
