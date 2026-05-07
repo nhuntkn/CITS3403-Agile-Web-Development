@@ -20,7 +20,7 @@
       <div class="alert alert-success d-flex align-items-center justify-content-between">
         <span>{{ message }}</span>
         {% if new_session_id %}
-        <button class = "btn-pink ms-3"data-bs-toggle = "modal" data-bs-target = "#shareModal">Share </button>
+        <button type="button" class="btn-pink ms-3" data-bs-toggle="modal" data-bs-target="#shareModal">Share</button>
         {% endif %}
       </div>
       {% endif %}
@@ -41,7 +41,7 @@
         <div class="col-md-4">
           <label class="form-label">Current Weight</label>
           <div class="input-group">
-            <input type="number" class="form-control" id="weight" name="weight" placeholder="Enter weight" required>
+            <input type="number" class="form-control" id="weight" name="weight" placeholder="Enter weight" step="0.01" min="1" max="300" required>
             <span class="input-group-text">kg</span>
           </div>
         </div>
@@ -57,14 +57,17 @@
 
         <div class="col-md-5">
           <h4>Notes</h4>
-          <textarea class="form-control notes-box" name="notes" placeholder="Write any notes here..."></textarea>
+          <div class="notes-wrapper">
+            <textarea class="form-control notes-box" name="notes" maxlength="800" placeholder="Write any notes here..."></textarea>
+            <small class="notes-limit">Maximum 800 characters.</small>
+          </div>
         </div>
       </div>
 
       <!-- calculate calories section -->
       <div class="row align-items-center mb-4">
         <div class="col-md-auto">
-          <button type="button" class="btn btn-primary" onclick="calculateCalories()">Calculate Session Calories</button>
+          <button type="button" class="btn btn-outline-dark" id="calculateCaloriesBtn" onclick="calculateCalories()">Calculate Session Calories</button>
         </div>
 
         <div class="col-md">
@@ -99,7 +102,7 @@
         </div>
       </div>
 
-      <button type="submit" class="btn btn-outline-dark">Add to Record</button>
+      <button type="submit" class="btn btn-success" id="addToRecordBtn">Add to Record</button>
     </form>
 
     {% if new_session_id %}

@@ -33,7 +33,7 @@ function addExerciseRow() {
 
         <div class="col-md-3">
           <label class="form-label">Minutes</label>
-          <input type="number" class="form-control" name="minutes[]" id="minutes${rowCount}" placeholder="0" min="1" required>
+          <input type="number" class="form-control" name="minutes[]" id="minutes${rowCount}" placeholder="0" min="1" max="300" step="1" required>
         </div>
 
         <div class="col-md-1 d-flex align-items-end">
