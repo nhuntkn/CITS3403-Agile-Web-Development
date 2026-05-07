@@ -315,6 +315,7 @@ body {
 .notes-box {
   height: 220px;
   resize: none;
+  padding-bottom: 2rem;
 }
 
 .profile-circle {
@@ -397,6 +398,20 @@ body {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.notes-wrapper {
+  position: relative;
+}
+
+.notes-limit {
+  position: absolute;
+  bottom: 10px;
+  right: 12px;
+  font-size: 0.8rem;
+  color: #666;
+  pointer-events: none;
+  background: transparent;
 }
 
 /* ── Forum page ──────────────────────────────────────────── */
