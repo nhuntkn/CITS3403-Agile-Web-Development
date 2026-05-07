@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Forum{% endblock %}
+
+{% block navbar %}
+    {% include 'navbar.html' %}
+{% endblock %}
+
+{% block content %}
+    <div class = "container py-4">
+        <div class = "d-flex gap-4 forum-layout">
+            <div class = "d-flex flex-column gap-2 pe-4 forum-sidebar">
+                <a href = "{{ url_for('forum', tab = 'sent')}}" class = "forum-tab-link">
+                    <button class = "forum-tab-btn {{ 'active' if tab == 'sent'}}">Sent</button>
+                </a>
+                <a href = "{{url_for('forum', tab = 'received')}}" class = "forum-tab-link">
+                    <button class = "forum-tab-btn {{ 'active' if tab == 'received'}}">Received</button>
+                </a>
+            </div>
+
+            <div class = "d-flex flex-column gap-3 flex-grow-1">
+                {% if tab == 'sent' %}
+                    {% for share in sent %}
+                    <div class = "post-card">
+                        <div class = "post-meta">
+                            <div class = "post-date">{{ share.session.date }}</div>
+                            <div class = "post-from-to">From: Me<br>To: {{share.receiver.username}}</div>
+                        </div>
+                        <div class = "post-divider"></div>
+                        <div class = "flex-grow-1">
+                            <ul class = "list-unstyled mb-0 mt-1">
+                                {% for ex in share.session.exercises %}
+                                <li>
+                                    <div class = "exercise-name">{{ex.exercise_name}}</div>
+                                    <div class = "exercise-detail">{{ex.activity_level}} - {{ex.minutes}} min</div>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            <div class = "post-total">
+                                Total: {{share.session.total_calories}} kcal
+                            </div>
+                        </div>
+                        {% if share.liked %}
+                        <span class = "share-liked-icon"> ❤️ </span>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <p class = "text-muted">You haven't shared anything yet.</p>
+                    {% endfor %}
+
+                {% else %}
+                    {% for share in received %}
+                    <div class = "post-card">
+                        <div class = "post-meta">
+                            <div class = "post-date">{{ share.session.date }}</div>
+                            <div class = "post-from-to">From: {{share.sender.username}}<br>To: Me</div>
+                        </div>
+                        <div class = "post-divider"></div>
+                        <div class = "flex-grow-1">
+                            <ul class = "list-unstyled mb-0 mt-1">
+                                {% for ex in share.session.exercises %}
+                                <li>
+                                    <div class = "exercise-name">{{ex.exercise_name}}</div>
+                                    <div class = "exercise-detail">{{ex.activity_level}} - {{ex.minutes}} min</div>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            <div class = "post-total">
+                                Total: {{share.session.total_calories}} kcal
+                            </div>
+                        </div>
+                        <form method = "POST" action ="{{url_for('forum')}}">
+                            <input type = "hidden" name = "share_id" value = "{{share.id}}">
+                            <button class = "like-btn {{ 'liked' if share.liked }}" type = "submit"> ❤️ </button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <p class = "text-muted">No posts received yet.</p>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
