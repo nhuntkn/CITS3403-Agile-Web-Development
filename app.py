@@ -3,7 +3,7 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_migrate import Migrate
-from models import db, ExerciseSession, SessionExercise, User, Friend
+from models import db, ExerciseSession, SessionExercise, User, Share, Friend
 from data import exercise_data
 from utils import calculate_calories
 from datetime import date as current_date
@@ -96,8 +96,16 @@ def exercise():
 
         #save everything to the database
         db.session.commit()
+
+        friends = User.query.join(Friend, (
+            ((Friend.sender_id == current_user.id) & (Friend.receiver_id == User.id)) |
+            ((Friend.receiver_id == current_user.id) & (Friend.sender_id == User.id))
+        )).filter(Friend.status == "accepted").all()
+
         #reload page and show success message
-        return render_template("exercise.html", message="Session added successfully.", exercise_data = exercise_data, username=current_user.username)
+        return render_template("exercise.html", message="Session added successfully.", 
+                               exercise_data = exercise_data, username=current_user.username,
+                               new_session_id = new_session.id, friends = friends)
 
     #display the Add Session page before the form is submitted
     return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username)
@@ -213,8 +221,46 @@ def logout():
     logout_user()
     return redirect(url_for("login"))
 
+@app.route("/forum", methods = ["GET", "POST"])
+@login_required
+def forum():
+    if request.method == "POST":
+        action = request.form.get("action", "like") 
+        
+        if action == "share":
+            session_id = request.form.get("session_id")
+            receiver_id = request.form.get("receiver_id")
+            if session_id and receiver_id:
+                friendship = Friend.query.filter(
+                    ((Friend.sender_id == current_user.id) & (Friend.receiver_id == int(receiver_id))) |
+                    ((Friend.sender_id == int(receiver_id)) & (Friend.receiver_id == current_user.id)),
+                    Friend.status == "accepted"
+                ).first()
+                session = db.session.get(ExerciseSession, int(session_id))
+                if friendship and session and session.user_id == current_user.id:
+                    share = Share(sender_id = current_user.id,
+                                  receiver_id = int(receiver_id),
+                                  session_id = int(session_id))
+                    db.session.add(share)
+                    db.session.commit()
+            return redirect(url_for('forum', tab = 'sent'))
+        
+        else:
+            share_id = request.form.get("share_id")
+            if share_id:
+                share = db.session.get(Share, int(share_id))
+                if share and share.receiver_id == current_user.id:
+                    share.liked = not share.liked
+                    db.session.commit()
+            return redirect(url_for('forum', tab = 'received'))
+        
+    tab = request.args.get('tab', 'sent')
+    sent = Share.query.filter_by(sender_id = current_user.id).order_by(Share.created_at.desc()).all()
+    received = Share.query.filter_by(receiver_id = current_user.id).order_by(Share.created_at.desc()).all()
+    return render_template("forum.html", tab = tab, sent = sent, 
+                           received = received, username = current_user.username)
 
-#-------!!  account  -------#
+
 @app.route("/account", methods=["GET","POST"])
 @login_required
 def account():
@@ -481,10 +527,6 @@ def reject_friend():
     # return result
     return jsonify({"message": "request rejected"}), 200
 
-
-
-with app.app_context():
-    db.create_all()
 
 if __name__ == "__main__":
     app.run(debug=True)

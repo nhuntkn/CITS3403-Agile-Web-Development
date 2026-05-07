@@ -4,6 +4,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 
 #create the SQLAlchemy instance, will be attached to Flask app in app.py
 db = SQLAlchemy()
@@ -54,6 +55,18 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password, password)
     
+class Share(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = False)
+    session_id = db.Column(db.Integer, db.ForeignKey('exercise_session.id'), nullable = False)
+    liked = db.Column(db.Boolean, default = False)
+    created_at = db.Column(db.DateTime, default = datetime.utcnow)
+
+    sender = db.relationship('User', foreign_keys = [sender_id], backref = 'sent_shares')
+    receiver = db.relationship('User', foreign_keys = [receiver_id], backref = 'received_shares')
+    session = db.relationship('ExerciseSession', backref = 'shares')
+
 class Friend(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
