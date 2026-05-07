@@ -7,6 +7,90 @@ Exercise Planner is a focused weight loss companion. Users register with their p
 
 **Core goal**: track calories burned through exercise, monitor weight changes, and stay consistent.
 
+## Quick Start
+
+### 1. Clone the project
+
+```powershell
+git clone <repository-url>
+cd CITS3403-Agile-Web-Development
+```
+
+### 2. Create and activate a virtual environment
+
+Windows PowerShell:
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+macOS / Linux:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### 3. Install dependencies
+
+```powershell
+pip install -r requirements.txt
+```
+
+### 4. Configure environment variables
+
+Create a local `.env` file based on `.env.example`, or set `SECRET_KEY` in your terminal before running the app.
+
+Windows PowerShell:
+
+```powershell
+$env:SECRET_KEY="replace-this-with-a-long-random-secret-key"
+```
+
+macOS / Linux:
+
+```bash
+export SECRET_KEY="replace-this-with-a-long-random-secret-key"
+```
+
+Do not commit the real `.env` file to GitHub.
+
+### 5. Initialise the database
+
+```powershell
+py -m flask --app app db upgrade
+```
+
+This applies the Flask-Migrate database migrations and creates the local SQLite database schema. The database file is stored in the Flask `instance/` folder, which is ignored by Git.
+
+### 6. Run the app
+
+```powershell
+py app.py
+```
+
+Open the local website:
+
+```text
+http://127.0.0.1:5000/
+```
+
+If `py` does not work on your machine, use `python` or `python3` instead.
+
+## First Use
+
+1. Open `http://127.0.0.1:5000/`
+2. Click **Sign Up** and create a new account
+3. Use the dashboard and **Create Exercise** page to add workout sessions
+
+Password rules:
+
+- At least 6 characters
+- At least one uppercase letter
+- At least one lowercase letter
+- At least one special character
+
 ## Pages & Features
 ### Main Page (Home)
 
@@ -44,6 +128,10 @@ Exercise Planner is a focused weight loss companion. Users register with their p
 Free-text field ("How today feel?")
 Weight today (kg) input
 
+- **Activity Location** map:
+  - Uses Leaflet and OpenStreetMap
+  - Click the map to save the activity location
+  - Optional current-location button using the browser's geolocation feature
 
 - **Logged session** list — shows each added exercise with duration, intensity, and kcal burned
 - **Estimated calories** burned — running total shown prominently at the bottom
@@ -51,9 +139,14 @@ Weight today (kg) input
 
 ### Ranking Page
 
-- Displays users ranked by kg lost/ calories burned and current streak
-- Toggle between weekly, monthly, and all-time views
-- Badges awarded for milestones: first workout, 7-day streak, 10 workouts, top 3kg lost, 30-day log
+- Displays users ranked by kg lost and calories burned
+- Shows each user's total sessions
+
+### History Page
+
+- Displays the logged-in user's saved workout sessions
+- Shows date, weight, calories burned, and notes
+- Displays saved activity locations on an interactive map
 
 ### Profile Page
 
@@ -65,7 +158,37 @@ Weight today (kg) input
 | Layer | Technology |
 |---|---|
 | Frontend | HTML, JavaScript |
+| Templates | Jinja templates with base template inheritance |
 | CSS Framework | Bootstrap |
 | Charting | Chart.js |
+| Mapping | Leaflet, OpenStreetMap |
 | Design | Figma |
-| Auth & Database |  |   
+| Auth & Database | Flask-Login, Flask-SQLAlchemy, SQLite |
+
+## Troubleshooting
+
+### `ModuleNotFoundError`
+
+Install the dependencies again:
+
+```powershell
+pip install -r requirements.txt
+```
+
+### `sqlite3.OperationalError: no such table: user`
+
+Apply the database migrations:
+
+```powershell
+py -m flask --app app db upgrade
+```
+
+Then restart the app with:
+
+```powershell
+py app.py
+```
+
+### Page shows a Flask debugger error
+
+Check the terminal where the app is running. The error usually points to a missing dependency, missing template, or database setup issue.

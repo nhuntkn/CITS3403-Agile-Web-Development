@@ -1,5 +1,7 @@
 #setup Flask app and routes, connects to database, handles form submission and rendering templates
 
+import os
+
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_migrate import Migrate
@@ -8,11 +10,10 @@ from data import exercise_data
 from utils import calculate_calories
 from datetime import date as current_date
 from werkzeug.utils import secure_filename
-import os
 
 app = Flask(__name__)
 
-app.config['SECRET_KEY'] = '1234'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-me')
 
 #configure SQLite database, SQLAlchemy will store the database file inside the Flask instance folder
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///exercise_planner.db'
@@ -23,6 +24,26 @@ db.init_app(app) #attach SQLAlchemy to Flask app
 migrate = Migrate(app, db) #set up Flask-Migrate for database migrations
 login_manager = LoginManager(app) #set up Flask-Login for user session management
 login_manager.login_view = 'login' #redirect to login page if user tries to access protected routes
+
+def parse_location_fields(latitude_raw, longitude_raw):
+    if not latitude_raw and not longitude_raw:
+        return None, None, None
+
+    if not latitude_raw or not longitude_raw:
+        return None, None, "Please select both latitude and longitude for the activity location"
+
+    try:
+        latitude = float(latitude_raw)
+        longitude = float(longitude_raw)
+    except ValueError:
+        return None, None, "Activity location is invalid"
+
+    if latitude < -90 or latitude > 90:
+        return None, None, "Latitude must be between -90 and 90"
+    if longitude < -180 or longitude > 180:
+        return None, None, "Longitude must be between -180 and 180"
+
+    return latitude, longitude, None
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -43,39 +64,30 @@ def exercise():
             current_weight = float(request.form.get("weight"))
         except (TypeError, ValueError):
             return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Invalid weight entered")
-        
+
         if current_weight < 1 or current_weight > 300:
             return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Weight must be between 1 and 300 kg")
-        
+
         current_weight = round(current_weight, 2)
 
         notes = request.form.get("notes", "").strip()
         if len(notes) > 800:
             return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Notes cannot exceed 800 characters")
 
+        latitude, longitude, location_error = parse_location_fields(
+            request.form.get("latitude"),
+            request.form.get("longitude")
+        )
+
+        if location_error:
+            return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error=location_error)
+
         #get the repeated exercise rows from the form
         exercise_names = request.form.getlist("exercise[]")
         activity_levels = request.form.getlist("level[]")
         minutes_list = request.form.getlist("minutes[]")
 
-        user = current_user
-
-        #create the main exercise session record
-        new_session = ExerciseSession(
-            date=date,
-            current_weight=current_weight,
-            notes=notes,
-            total_calories=0,
-            user_id = user.id
-        )
-
-        #add the session first to get an ID, ID needed for the foreign key in exercises
-        db.session.add(new_session)
-        db.session.flush()
-
-        total_calories = 0
-
-        #save each exercise row that belongs to this session
+        parsed_exercises = []
         for i in range(len(exercise_names)):
             exercise_name = exercise_names[i]
             activity_level = activity_levels[i]
@@ -86,6 +98,30 @@ def exercise():
 
             if minutes < 1 or minutes > 300:
                 return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Exercise duration must be between 1 and 300 minutes.")
+
+            parsed_exercises.append((exercise_name, activity_level, minutes))
+
+        user = current_user
+
+        #create the main exercise session record
+        new_session = ExerciseSession(
+            date=date,
+            current_weight=current_weight,
+            notes=notes,
+            total_calories=0,
+            latitude=latitude,
+            longitude=longitude,
+            user_id = user.id
+        )
+
+        #add the session first to get an ID, ID needed for the foreign key in exercises
+        db.session.add(new_session)
+        db.session.flush()
+
+        total_calories = 0
+
+        #save each exercise row that belongs to this session
+        for exercise_name, activity_level, minutes in parsed_exercises:
             #find MET value for the exercise and activity level
             met_value = exercise_data[exercise_name][activity_level]
 
@@ -120,7 +156,7 @@ def exercise():
         )).filter(Friend.status == "accepted").all()
 
         #reload page and show success message
-        return render_template("exercise.html", message="Session added successfully.", 
+        return render_template("exercise.html", message="Session added successfully.",
                                exercise_data = exercise_data, username=current_user.username,
                                new_session_id = new_session.id, friends = friends)
 
@@ -152,6 +188,8 @@ def dashboard():
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
+    today = current_date.today().isoformat()
+
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
@@ -163,17 +201,17 @@ def signup():
         height = request.form.get("height")
 
         if not password or len(password) < 6:
-            return render_template("signup.html", error="Password must be at least 6 characters long")
+            return render_template("signup.html", today=today, error="Password must be at least 6 characters long")
 
         if not any(char.isalpha() for char in password):
-            return render_template("signup.html", error="Password must contain at least one letter")
+            return render_template("signup.html", today=today, error="Password must contain at least one letter")
 
         if password != confirm:
-            return render_template("signup.html", error="Passwords do not match")
+            return render_template("signup.html", today=today, error="Passwords do not match")
 
         existing = User.query.filter_by(username=username).first()
         if existing:
-            return render_template("signup.html", error="Username already exists")
+            return render_template("signup.html", today=today, error="Username already exists")
 
         new_user = User(
             username=username,
@@ -191,7 +229,7 @@ def signup():
         login_user(new_user)
         return redirect(url_for('dashboard'))
 
-    return render_template("signup.html")
+    return render_template("signup.html", today=today)
 
 @app.route('/check_username')
 def check_username():
@@ -204,13 +242,48 @@ def check_username():
     })
 
 @app.route("/ranking")
+@login_required
 def ranking():
-    return render_template("ranking.html")
+    users = User.query.all()
+    ranking_data = []
+
+    for user in users:
+        sessions = ExerciseSession.query.filter_by(user_id=user.id).order_by(ExerciseSession.date.asc()).all()
+        latest_session = sessions[-1] if sessions else None
+        total_calories = sum(session.total_calories for session in sessions)
+        kg_lost = 0
+
+        if user.weight is not None and latest_session is not None:
+            kg_lost = user.weight - latest_session.current_weight
+
+        ranking_data.append({
+            "username": user.username,
+            "kg_lost": round(kg_lost, 1),
+            "total_calories": round(total_calories, 2),
+            "total_sessions": len(sessions)
+        })
+
+    ranking_data.sort(key=lambda item: (item["kg_lost"], item["total_calories"]), reverse=True)
+    return render_template("ranking.html", username=current_user.username, ranking_data=ranking_data)
 
 @app.route("/history")
 @login_required
 def history():
-    return render_template("history.html")
+    sessions = ExerciseSession.query.filter_by(user_id=current_user.id).order_by(ExerciseSession.date.desc()).all()
+    location_data = [
+        {
+            "id": session.id,
+            "date": session.date,
+            "current_weight": session.current_weight,
+            "total_calories": session.total_calories,
+            "notes": session.notes,
+            "latitude": session.latitude,
+            "longitude": session.longitude
+        }
+        for session in sessions
+        if session.latitude is not None and session.longitude is not None
+    ]
+    return render_template("history.html", username=current_user.username, sessions=sessions, location_data=location_data)
     
 @app.route("/", methods = ["GET", "POST"])
 @app.route("/login", methods = ["GET", "POST"])
@@ -242,8 +315,8 @@ def logout():
 @login_required
 def forum():
     if request.method == "POST":
-        action = request.form.get("action", "like") 
-        
+        action = request.form.get("action", "like")
+
         if action == "share":
             session_id = request.form.get("session_id")
             receiver_id = request.form.get("receiver_id")
@@ -261,7 +334,7 @@ def forum():
                     db.session.add(share)
                     db.session.commit()
             return redirect(url_for('forum', tab = 'sent'))
-        
+
         else:
             share_id = request.form.get("share_id")
             if share_id:
@@ -270,14 +343,15 @@ def forum():
                     share.liked = not share.liked
                     db.session.commit()
             return redirect(url_for('forum', tab = 'received'))
-        
+
     tab = request.args.get('tab', 'sent')
     sent = Share.query.filter_by(sender_id = current_user.id).order_by(Share.created_at.desc()).all()
     received = Share.query.filter_by(receiver_id = current_user.id).order_by(Share.created_at.desc()).all()
-    return render_template("forum.html", tab = tab, sent = sent, 
+    return render_template("forum.html", tab = tab, sent = sent,
                            received = received, username = current_user.username)
 
 
+#-------!!  account  -------#
 @app.route("/account", methods=["GET","POST"])
 @login_required
 def account():
@@ -301,18 +375,20 @@ def account():
             height = request.form.get("height")
             calorie = request.form.get("calorie_goal")
 
-            if dob and dob > current_date.today().isoformat():
-                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, error="Invalid DOB")
+            today = current_date.today().isoformat()
+
+            if dob and dob > today:
+                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Invalid DOB")
 
             if gender not in ["Male","Female","",None]:
-                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, error="Invalid gender")
+                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Invalid gender")
 
             try:
                 user.weight = float(weight) if weight and float(weight)>0 else None
                 user.height = float(height) if height and float(height)>0 else None
                 user.calorie_goal = int(calorie) if calorie and int(calorie)>0 else user.calorie_goal
             except:
-                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, error="Invalid number")
+                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Invalid number")
 
             user.dob, user.gender = dob, gender
 
@@ -320,7 +396,7 @@ def account():
             f = request.files.get('avatar')
             if f and f.filename:
                 if f.filename.rsplit('.',1)[-1].lower() not in ['jpg','jpeg','png']:
-                    return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, error="Invalid image")
+                    return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Invalid image")
 
                 # create upload folder if not exists
                 upload_path = os.path.join(app.root_path, 'static', 'uploads')
@@ -345,15 +421,16 @@ def account():
         elif form == "change_password":
             pw = request.form.get("new_password","").strip()
             cf = request.form.get("confirm_password","").strip()
+            today = current_date.today().isoformat()
 
             if not pw or len(pw)<6 or not any(c.isalpha() for c in pw):
-                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, error="Invalid password")
+                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Invalid password")
 
             if pw != cf:
-                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, error="Mismatch")
+                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Mismatch")
 
             if user.check_password(pw):
-                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, error="Same as old")
+                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Same as old")
 
             user.set_password(pw)
 
@@ -364,7 +441,8 @@ def account():
         user=user,
         bmi=bmi,
         total_calories=total_calories,
-        total_sessions=total_sessions
+        total_sessions=total_sessions,
+        current_date=current_date.today().isoformat()
     )
 
 #---!  add friend  ---#
@@ -543,7 +621,6 @@ def reject_friend():
 
     # return result
     return jsonify({"message": "request rejected"}), 200
-
 
 if __name__ == "__main__":
     app.run(debug=True)

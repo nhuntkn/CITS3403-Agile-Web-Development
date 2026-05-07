@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}History{% endblock %}
+
+{% block head %}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
+
+{% block navbar %}
+    {% include 'navbar.html' %}
+{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="main-box">
+            <h1>Exercise History</h1>
+            <p class="text-muted">Your saved workout sessions appear here.</p>
+            <hr>
+
+            {% if sessions %}
+            <div id="locationMapPanel" class="mb-4" hidden>
+                <h4>Activity Location</h4>
+                <p class="text-muted" id="historyMapStatus">Select a saved session location to view it on the map.</p>
+                <div id="historyMap" class="history-map"></div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Weight</th>
+                            <th>Total Calories</th>
+                            <th>Location</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for session in sessions %}
+                        <tr>
+                            <td>{{ session.date }}</td>
+                            <td>{{ session.current_weight }} kg</td>
+                            <td>{{ session.total_calories }} kcal</td>
+                            <td>
+                                {% if session.latitude is not none and session.longitude is not none %}
+                                <button type="button"
+                                        class="btn btn-outline-primary btn-sm check-location-btn"
+                                        data-session-id="{{ session.id }}">
+                                    Check Location
+                                </button>
+                                {% else %}
+                                Not recorded
+                                {% endif %}
+                            </td>
+                            <td>{{ session.notes or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info mb-0">
+                No exercise sessions saved yet.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        window.historyLocations = {{ location_data | tojson }};
+    </script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="{{ url_for('static', filename='js/map.js') }}"></script>
+{% endblock %}

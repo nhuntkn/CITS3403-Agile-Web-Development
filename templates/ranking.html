@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Ranking{% endblock %}
+
+{% block navbar %}
+    {% include 'navbar.html' %}
+{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <div class="main-box">
+            <h1>Ranking</h1>
+            <p class="text-muted">Compare users by weight change and total calories burned.</p>
+            <hr>
+
+            {% if ranking_data %}
+            <div class="table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>User</th>
+                            <th>Kg Lost</th>
+                            <th>Total Calories</th>
+                            <th>Sessions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in ranking_data %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.kg_lost }}</td>
+                            <td>{{ user.total_calories }}</td>
+                            <td>{{ user.total_sessions }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info mb-0">
+                No users have workout data yet.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
