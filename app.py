@@ -236,7 +236,8 @@ def forum():
                     ((Friend.sender_id == int(receiver_id)) & (Friend.receiver_id == current_user.id)),
                     Friend.status == "accepted"
                 ).first()
-                if friendship:
+                session = db.session.get(ExerciseSession, int(session_id))
+                if friendship and session and session.user_id == current_user.id:
                     share = Share(sender_id = current_user.id,
                                   receiver_id = int(receiver_id),
                                   session_id = int(session_id))
@@ -526,9 +527,6 @@ def reject_friend():
     # return result
     return jsonify({"message": "request rejected"}), 200
 
-
-with app.app_context():
-    db.create_all()
 
 if __name__ == "__main__":
     app.run(debug=True)

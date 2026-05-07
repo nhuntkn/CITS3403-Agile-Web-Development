@@ -12,12 +12,12 @@
     {% include 'navbar.html' %}
 
     <div class = "container py-4">
-        <div class = "d-flex gap-4" style = "min-height: calc(100vh - 90px);">
-            <div class = "d-flex flex-column gap-2 pe-4" style = "min-width: 120px; border-right: 2px solid #000000;">
-                <a href = "{{ url_for('forum', tab = 'sent')}}" style = "text-decoration:none;">
-                    <button class = "forum-tab-btn {{ 'active' if tab == 'sent'}}">Sent</button> 
+        <div class = "d-flex gap-4 forum-layout">
+            <div class = "d-flex flex-column gap-2 pe-4 forum-sidebar">
+                <a href = "{{ url_for('forum', tab = 'sent')}}" class = "forum-tab-link">
+                    <button class = "forum-tab-btn {{ 'active' if tab == 'sent'}}">Sent</button>
                 </a>
-                <a href = "{{url_for('forum', tab = 'received')}}" style = "text-decoration:none;">
+                <a href = "{{url_for('forum', tab = 'received')}}" class = "forum-tab-link">
                     <button class = "forum-tab-btn {{ 'active' if tab == 'received'}}">Received</button>
                 </a>
             </div>
@@ -26,26 +26,26 @@
                 {% if tab == 'sent' %}
                     {% for share in sent %}
                     <div class = "post-card">
-                        <div style = "min-width:130px;">
-                            <div style = "font-size:0.92rem;">{{ share.session.date }}</div>
-                            <div style = "font-size:0.9rem; margin-top:0.2rem;">From: Me<br>To: {{share.receiver.username}}</div>
+                        <div class = "post-meta">
+                            <div class = "post-date">{{ share.session.date }}</div>
+                            <div class = "post-from-to">From: Me<br>To: {{share.receiver.username}}</div>
                         </div>
-                        <div style = "width: 1px; background: #bbb; align-self: stretch;"></div>    
+                        <div class = "post-divider"></div>
                         <div class = "flex-grow-1">
                             <ul class = "list-unstyled mb-0 mt-1">
                                 {% for ex in share.session.exercises %}
                                 <li>
-                                    <div style = "font-size:0.95rem; font-weight:600;">{{ex.exercise_name}}</div>
-                                    <div style = "color: #666; font-size: 0.9rem;">{{ex.activity_level}} - {{ex.minutes}} min</div>
+                                    <div class = "exercise-name">{{ex.exercise_name}}</div>
+                                    <div class = "exercise-detail">{{ex.activity_level}} - {{ex.minutes}} min</div>
                                 </li>
                                 {% endfor %}
                             </ul>
-                            <div style = "font-size: 0.9rem; font-weight: 550; color:#444; margin-top: 0.4rem;">
+                            <div class = "post-total">
                                 Total: {{share.session.total_calories}} kcal
                             </div>
                         </div>
                         {% if share.liked %}
-                        <span style = "font-size:1.3rem;"> ❤️ </span>
+                        <span class = "share-liked-icon"> ❤️ </span>
                         {% endif %}
                     </div>
                     {% else %}
@@ -55,23 +55,23 @@
                 {% else %}
                     {% for share in received %}
                     <div class = "post-card">
-                        <div style = "min-width:130px;">
-                            <div style = "font-size:0.92rem;">{{ share.session.date }}</div>
-                            <div style = "font-size:0.9rem; margin-top:0.2rem;">From: {{share.sender.username}}<br>To: Me</div>
+                        <div class = "post-meta">
+                            <div class = "post-date">{{ share.session.date }}</div>
+                            <div class = "post-from-to">From: {{share.sender.username}}<br>To: Me</div>
                         </div>
-                        <div style = "width: 1px; background: #bbb; align-self: stretch;"></div>    
+                        <div class = "post-divider"></div>
                         <div class = "flex-grow-1">
                             <ul class = "list-unstyled mb-0 mt-1">
                                 {% for ex in share.session.exercises %}
                                 <li>
-                                    <div style = "font-size:0.95rem; font-weight:600;">{{ex.exercise_name}}</div>
-                                    <div style = "color: #666; font-size: 0.9rem;">{{ex.activity_level}} - {{ex.minutes}} min</div>
+                                    <div class = "exercise-name">{{ex.exercise_name}}</div>
+                                    <div class = "exercise-detail">{{ex.activity_level}} - {{ex.minutes}} min</div>
                                 </li>
                                 {% endfor %}
                             </ul>
-                            <div style = "font-size: 0.9rem; font-weight: 550; color:#444; margin-top: 0.4rem;">
+                            <div class = "post-total">
                                 Total: {{share.session.total_calories}} kcal
-                            </div>                            
+                            </div>
                         </div>
                         <form method = "POST" action ="{{url_for('forum')}}">
                             <input type = "hidden" name = "share_id" value = "{{share.id}}">
