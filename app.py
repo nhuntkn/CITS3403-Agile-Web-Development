@@ -168,7 +168,13 @@ def signup():
 
 @app.route('/check_username')
 def check_username():
-    username = request.args.get('username')
+    username = request.args.get('username', '').strip()
+
+    # prevent empty username query
+    if not username:
+        return jsonify({
+            "exists": False
+        })
 
     user = User.query.filter_by(username=username).first()
 
