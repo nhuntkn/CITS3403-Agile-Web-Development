@@ -265,6 +265,12 @@ body {
 
 .history-notes {
   width: 35%;
+}
+
+.history-notes-box {
+  max-height: 96px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
   white-space: normal;
   overflow-wrap: anywhere;
   word-break: break-word;
