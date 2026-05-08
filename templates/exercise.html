@@ -1,29 +1,34 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Add Session</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
+{% extends "base.html" %}
 
-<body>
-  
+{% block title %}Add Session{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
+
+{% block navbar %}
   {% include 'navbar.html' %}
+{% endblock %}
 
+{% block content %}
   <!-- main content -->
   <div class="container py-4">
     <form class="main-box" method="POST" action="{{ url_for('exercise') }}">
       <h1>Add Session</h1>
 
       {% if message %}
-        <div class="alert alert-success">{{ message }}</div>
+      <div class="alert alert-success d-flex align-items-center justify-content-between">
+        <span>{{ message }}</span>
+        {% if new_session_id %}
+        <button type="button" class="btn-pink ms-3" data-bs-toggle="modal" data-bs-target="#shareModal">Share</button>
+        {% endif %}
+      </div>
       {% endif %}
 
       {% if error %}
         <div class="alert alert-danger">{{ error }}</div>
       {% endif %}
+
       <hr>
 
       <!-- data and weight section -->
@@ -36,7 +41,7 @@
         <div class="col-md-4">
           <label class="form-label">Current Weight</label>
           <div class="input-group">
-            <input type="number" class="form-control" id="weight" name="weight" placeholder="Enter weight" required>
+            <input type="number" class="form-control" id="weight" name="weight" placeholder="Enter weight" step="0.01" min="1" max="300" required>
             <span class="input-group-text">kg</span>
           </div>
         </div>
@@ -52,14 +57,17 @@
 
         <div class="col-md-5">
           <h4>Notes</h4>
-          <textarea class="form-control notes-box" name="notes" placeholder="Write any notes here..."></textarea>
+          <div class="notes-wrapper">
+            <textarea class="form-control notes-box" name="notes" maxlength="800" placeholder="Write any notes here..."></textarea>
+            <small class="notes-limit">Maximum 800 characters.</small>
+          </div>
         </div>
       </div>
 
       <!-- calculate calories section -->
       <div class="row align-items-center mb-4">
         <div class="col-md-auto">
-          <button type="button" class="btn btn-primary" onclick="calculateCalories()">Calculate Session Calories</button>
+          <button type="button" class="btn btn-outline-dark" id="calculateCaloriesBtn" onclick="calculateCalories()">Calculate Session Calories</button>
         </div>
 
         <div class="col-md">
@@ -69,10 +77,70 @@
         </div>
       </div>
 
-      <button type="submit" class="btn btn-outline-dark">Add to Record</button>
+      <!-- optional activity location -->
+      <div class="mb-4">
+        <input type="hidden" id="latitude" name="latitude">
+        <input type="hidden" id="longitude" name="longitude">
+
+        <button type="button" class="btn btn-outline-primary" id="toggleLocationMap">
+          Add activity location
+        </button>
+        <span class="text-muted ms-2" id="locationStatus">No location selected.</span>
+
+        <div id="activityLocationPanel" class="activity-location-panel mt-3" hidden>
+          <h4>Activity Location</h4>
+          <p class="text-muted mb-2">Optional: click the map to record where this activity happened.</p>
+          <div id="activityMap" class="activity-map mb-2"></div>
+          <div class="d-flex gap-2 flex-wrap align-items-center">
+            <button type="button" class="btn btn-outline-primary btn-sm" id="useCurrentLocation">
+              Use my current location
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="clearLocation">
+              Clear location
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-success" id="addToRecordBtn">Add to Record</button>
     </form>
+
+    {% if new_session_id %}
+      <div class = "modal fade" id = "shareModal" tabindex = "-1">
+        <div class = "modal-dialog">
+          <div class = "modal-content">
+            <div class = "modal-header">
+              <h5 class = "modal-title">Share this session </h5>
+              <button type = "button" class = "btn-close" data-bs-dismiss = "modal"></button>
+            </div>
+            <form method = "POST" action = "{{url_for('forum')}}">
+              <input type = "hidden" name = "action" value = "share">
+              <input type = "hidden" name = "session_id" value = "{{new_session_id}}">
+              <div class = "modal-body">
+                <label class = "form-label fw-bold">Share with</label>
+                <select name = "receiver_id" class = "form-select" required>
+                  <option value = "">- select a friend -</option>
+                  {% for f in friends %}
+                  <option value = "{{f.id}}">{{f.username}}</option>
+                  {% endfor %}
+                </select>
+                {% if not friends %}
+                <p class = "text-muted mt-2" style = "font-size: 0.85rem;">You have no friends yet. Add some from the Account page.</p>
+                {% endif %}
+              </div>
+              <div class = "modal-footer">
+                <button type = "button" class = "btn btn-secondary" data-bs-dismiss = "modal">Cancel</button>
+                <button type = "submit" class = "btn-pink" {% if not friends %}disabled{% endif %}>Share</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% endif %}
   </div>
-  
+{% endblock %}
+
+{% block scripts %}
   <script id="exercise-data" type="application/json"> {{ exercise_data | tojson }} </script>
   
   <script>
@@ -81,6 +149,7 @@
     sessionDateInput.max = today;
   </script>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="{{ url_for('static', filename='js/exercise.js') }}"></script>
-</body>
-</html>
+  <script src="{{ url_for('static', filename='js/map.js') }}"></script>
+{% endblock %}

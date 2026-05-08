@@ -23,7 +23,7 @@ body {
   background: #7793ae;
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 1000;
 }
 
 .ep-brand {
@@ -235,6 +235,38 @@ body {
   padding: 0.75rem 0.5rem 0.5rem;
 }
 
+.activity-map {
+  height: 320px;
+  width: 100%;
+  border: 1px solid #cccccc;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.activity-location-panel {
+  background: #f8f9fa;
+  border: 1px solid #dddddd;
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.history-map {
+  height: 360px;
+  width: 100%;
+  border: 1px solid #cccccc;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.activity-map .leaflet-pane,
+.activity-map .leaflet-top,
+.activity-map .leaflet-bottom,
+.history-map .leaflet-pane,
+.history-map .leaflet-top,
+.history-map .leaflet-bottom {
+  z-index: 1;
+}
+
 /* ── Utility ─────────────────────────────────────────────── */
 .text-pink  { color: #e91e8c; }
 .btn-pink {
@@ -315,6 +347,7 @@ body {
 .notes-box {
   height: 220px;
   resize: none;
+  padding-bottom: 2rem;
 }
 
 .profile-circle {
@@ -359,4 +392,110 @@ body {
 .site-logo {
   height: 80px;
   width: auto;
+}
+
+.forum-tab-btn {
+  background: #d0d0d0;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}
+
+.forum-tab-btn.active {
+  background: #555;
+  color: #fff;
+}
+
+.like-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.4rem;
+  color: #aaa;
+  padding: 0;
+  align-self: center;
+}
+
+.like-btn.liked {
+  color: #e91e8c
+}
+
+.post-card {
+  background: #e0e0e0;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.notes-wrapper {
+  position: relative;
+}
+
+.notes-limit {
+  position: absolute;
+  bottom: 10px;
+  right: 12px;
+  font-size: 0.8rem;
+  color: #666;
+  pointer-events: none;
+  background: transparent;
+}
+
+/* ── Forum page ──────────────────────────────────────────── */
+.forum-layout {
+  min-height: calc(100vh - 90px);
+}
+
+.forum-sidebar {
+  min-width: 120px;
+  border-right: 2px solid #000000;
+}
+
+.forum-tab-link {
+  text-decoration: none;
+}
+
+.post-meta {
+  min-width: 130px;
+}
+
+.post-date {
+  font-size: 0.92rem;
+}
+
+.post-from-to {
+  font-size: 0.9rem;
+  margin-top: 0.2rem;
+}
+
+.post-divider {
+  width: 1px;
+  background: #bbb;
+  align-self: stretch;
+}
+
+.exercise-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.exercise-detail {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.post-total {
+  font-size: 0.9rem;
+  font-weight: 550;
+  color: #444;
+  margin-top: 0.4rem;
+}
+
+.share-liked-icon {
+  font-size: 1.3rem;
 }
