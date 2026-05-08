@@ -188,8 +188,6 @@ def dashboard():
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
-    today = current_date.today().isoformat()
-
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
@@ -201,17 +199,17 @@ def signup():
         height = request.form.get("height")
 
         if not password or len(password) < 6:
-            return render_template("signup.html", today=today, error="Password must be at least 6 characters long")
+            return render_template("signup.html", error="Password must be at least 6 characters long")
 
         if not any(char.isalpha() for char in password):
-            return render_template("signup.html", today=today, error="Password must contain at least one letter")
+            return render_template("signup.html", error="Password must contain at least one letter")
 
         if password != confirm:
-            return render_template("signup.html", today=today, error="Passwords do not match")
+            return render_template("signup.html", error="Passwords do not match")
 
         existing = User.query.filter_by(username=username).first()
         if existing:
-            return render_template("signup.html", today=today, error="Username already exists")
+            return render_template("signup.html", error="Username already exists")
 
         new_user = User(
             username=username,
@@ -229,11 +227,17 @@ def signup():
         login_user(new_user)
         return redirect(url_for('dashboard'))
 
-    return render_template("signup.html", today=today)
+    return render_template("signup.html", today=current_date.today().isoformat())
 
 @app.route('/check_username')
 def check_username():
-    username = request.args.get('username')
+    username = request.args.get('username', '').strip()
+
+    # prevent empty username query
+    if not username:
+        return jsonify({
+            "exists": False
+        })
 
     user = User.query.filter_by(username=username).first()
 

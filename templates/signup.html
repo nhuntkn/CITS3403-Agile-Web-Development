@@ -51,7 +51,7 @@
                     </div>
 
                     <div id="rule-letter" style="color:red;">
-                        • Contains a letter
+                        • Contains at least one letter
                     </div>
                 </div>
             </div>
@@ -108,7 +108,13 @@
 
             </div>
 
-            <button type="submit" class="btn btn-primary">Sign Up</button>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Sign Up</button>
+
+                <a href="{{ url_for('login') }}" class="btn btn-secondary">
+                    Back to Login
+                </a>
+            </div>
 
         </form>
 
@@ -126,23 +132,15 @@ const confirmInput = document.getElementById("confirm");
 const ruleLength = document.getElementById("rule-length");
 const ruleLetter = document.getElementById("rule-letter");
 
-// Password rules
+// Password rules (length + at least one letter)
 pwd.addEventListener("input", () => {
     const value = pwd.value;
 
-    // length
-    if (value.length >= 6) {
-        ruleLength.style.color = "green";
-    } else {
-        ruleLength.style.color = "red";
-    }
+    // length rule
+    ruleLength.style.color = value.length >= 6 ? "green" : "red";
 
-    // letter
-    if (/[A-Za-z]/.test(value)) {
-        ruleLetter.style.color = "green";
-    } else {
-        ruleLetter.style.color = "red";
-    }
+    // at least one letter (case-insensitive)
+    ruleLetter.style.color = /[A-Za-z]/.test(value) ? "green" : "red";
 });
 
 // ===== Confirm password check =====
@@ -184,5 +182,29 @@ if (dobInput) {
     const today = new Date().toISOString().split("T")[0];
     dobInput.setAttribute("max", today);
 }
+
+// ===== check validation before submit =====
+const submitBtn = document.querySelector("button[type='submit'], button.btn-primary");
+
+function checkFormValid() {
+    const value = pwd.value;
+
+    const validLength = value.length >= 6;
+    const validLetter = /[A-Za-z]/.test(value);
+    const match = confirmInput.value === value;
+
+    if (validLength && validLetter && match) {
+        submitBtn.disabled = false;
+    } else {
+        submitBtn.disabled = true;
+    }
+}
+
+// trigger on input
+pwd.addEventListener("input", checkFormValid);
+confirmInput.addEventListener("input", checkFormValid);
+
+// initial state
+submitBtn.disabled = true;
 </script>
 {% endblock %}
