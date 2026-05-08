@@ -1,16 +1,19 @@
 #setup Flask app and routes, connects to database, handles form submission and rendering templates
 
+import os
+
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_migrate import Migrate
-from models import db, ExerciseSession, SessionExercise, User
+from models import db, ExerciseSession, SessionExercise, User, Share, Friend
 from data import exercise_data
 from utils import calculate_calories
 from datetime import date as current_date
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
-app.config['SECRET_KEY'] = '1234'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-me')
 
 #configure SQLite database, SQLAlchemy will store the database file inside the Flask instance folder
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///exercise_planner.db'
@@ -21,6 +24,26 @@ db.init_app(app) #attach SQLAlchemy to Flask app
 migrate = Migrate(app, db) #set up Flask-Migrate for database migrations
 login_manager = LoginManager(app) #set up Flask-Login for user session management
 login_manager.login_view = 'login' #redirect to login page if user tries to access protected routes
+
+def parse_location_fields(latitude_raw, longitude_raw):
+    if not latitude_raw and not longitude_raw:
+        return None, None, None
+
+    if not latitude_raw or not longitude_raw:
+        return None, None, "Please select both latitude and longitude for the activity location"
+
+    try:
+        latitude = float(latitude_raw)
+        longitude = float(longitude_raw)
+    except ValueError:
+        return None, None, "Activity location is invalid"
+
+    if latitude < -90 or latitude > 90:
+        return None, None, "Latitude must be between -90 and 90"
+    if longitude < -180 or longitude > 180:
+        return None, None, "Longitude must be between -180 and 180"
+
+    return latitude, longitude, None
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -36,13 +59,47 @@ def exercise():
         date = request.form.get("date")
         if date > current_date.today().isoformat():
             return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Date cannot be in the future")
-        current_weight = float(request.form.get("weight"))
-        notes = request.form.get("notes")
+
+        try:
+            current_weight = float(request.form.get("weight"))
+        except (TypeError, ValueError):
+            return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Invalid weight entered")
+
+        if current_weight < 1 or current_weight > 300:
+            return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Weight must be between 1 and 300 kg")
+
+        current_weight = round(current_weight, 2)
+
+        notes = request.form.get("notes", "").strip()
+        if len(notes) > 800:
+            return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Notes cannot exceed 800 characters")
+
+        latitude, longitude, location_error = parse_location_fields(
+            request.form.get("latitude"),
+            request.form.get("longitude")
+        )
+
+        if location_error:
+            return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error=location_error)
 
         #get the repeated exercise rows from the form
         exercise_names = request.form.getlist("exercise[]")
         activity_levels = request.form.getlist("level[]")
         minutes_list = request.form.getlist("minutes[]")
+
+        parsed_exercises = []
+        for i in range(len(exercise_names)):
+            exercise_name = exercise_names[i]
+            activity_level = activity_levels[i]
+            try:
+                minutes = int(minutes_list[i])
+            except (TypeError, ValueError):
+                return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Exercise duration must be a valid number.")
+
+            if minutes < 1 or minutes > 300:
+                return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Exercise duration must be between 1 and 300 minutes.")
+
+            parsed_exercises.append((exercise_name, activity_level, minutes))
 
         user = current_user
 
@@ -52,6 +109,8 @@ def exercise():
             current_weight=current_weight,
             notes=notes,
             total_calories=0,
+            latitude=latitude,
+            longitude=longitude,
             user_id = user.id
         )
 
@@ -62,11 +121,7 @@ def exercise():
         total_calories = 0
 
         #save each exercise row that belongs to this session
-        for i in range(len(exercise_names)):
-            exercise_name = exercise_names[i]
-            activity_level = activity_levels[i]
-            minutes = int(minutes_list[i])
-
+        for exercise_name, activity_level, minutes in parsed_exercises:
             #find MET value for the exercise and activity level
             met_value = exercise_data[exercise_name][activity_level]
 
@@ -94,8 +149,16 @@ def exercise():
 
         #save everything to the database
         db.session.commit()
+
+        friends = User.query.join(Friend, (
+            ((Friend.sender_id == current_user.id) & (Friend.receiver_id == User.id)) |
+            ((Friend.receiver_id == current_user.id) & (Friend.sender_id == User.id))
+        )).filter(Friend.status == "accepted").all()
+
         #reload page and show success message
-        return render_template("exercise.html", message="Session added successfully.", exercise_data = exercise_data, username=current_user.username)
+        return render_template("exercise.html", message="Session added successfully.",
+                               exercise_data = exercise_data, username=current_user.username,
+                               new_session_id = new_session.id, friends = friends)
 
     #display the Add Session page before the form is submitted
     return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username)
@@ -182,62 +245,49 @@ def check_username():
         "exists": True if user else False
     })
 
-@app.route("/account", methods=["GET", "POST"])
-@login_required
-def account():
-    user = current_user
-    username = current_user.username
-
-    sessions = ExerciseSession.query.filter_by(user_id = user.id).all()
-    total_calories = sum(s.total_calories for s in sessions)
-    total_sessions = len(sessions)
-
-    stats = {
-        "total_calories": round(total_calories, 2),
-        "total_sessions": total_sessions
-    }
-
-    if request.method == 'POST':
-        user.dob = request.form.get('dob')
-        user.gender = request.form.get('gender')
-
-        weight = request.form.get('weight')
-        height = request.form.get('height')
-
-        user.weight = float(weight) if weight else None
-        user.height = float(height) if height else None
-
-        calorie_goal = request.form.get("calorie_goal")
-        user.calorie_goal = int(calorie_goal) if calorie_goal else 1000
-
-        new_password = request.form.get('new_password')
-        confirm_password = request.form.get('confirm_password')
-
-        if new_password:
-            if len(new_password) < 6:
-                return render_template("account.html", user=user, stats=stats, error="Password must be more than 6 characters long")
-            if not any(char.isupper() for char in new_password):
-                return render_template("account.html", user=user, stats=stats, error="Password must include at least one uppercase letter")
-            if not any(char.islower() for char in new_password):
-                return render_template("account.html", user=user, stats=stats, error="Password must include at least one lowercase letter")
-            if not any(char in "!@#$%^&*()_+-=[]{}|;':\",./<>?" for char in new_password):
-                return render_template("account.html", user=user, stats=stats, error="Password must include at least one special character")
-            if new_password != confirm_password:
-                return render_template("account.html", user=user, stats=stats, error="Passwords do not match")
-            user.set_password(new_password)
-
-        db.session.commit()
-
-    return render_template("account.html", user=user, stats=stats, username=username)
-
 @app.route("/ranking")
+@login_required
 def ranking():
-    return render_template("ranking.html")
+    users = User.query.all()
+    ranking_data = []
+
+    for user in users:
+        sessions = ExerciseSession.query.filter_by(user_id=user.id).order_by(ExerciseSession.date.asc()).all()
+        latest_session = sessions[-1] if sessions else None
+        total_calories = sum(session.total_calories for session in sessions)
+        kg_lost = 0
+
+        if user.weight is not None and latest_session is not None:
+            kg_lost = user.weight - latest_session.current_weight
+
+        ranking_data.append({
+            "username": user.username,
+            "kg_lost": round(kg_lost, 1),
+            "total_calories": round(total_calories, 2),
+            "total_sessions": len(sessions)
+        })
+
+    ranking_data.sort(key=lambda item: (item["kg_lost"], item["total_calories"]), reverse=True)
+    return render_template("ranking.html", username=current_user.username, ranking_data=ranking_data)
 
 @app.route("/history")
 @login_required
 def history():
-    return render_template("history.html")
+    sessions = ExerciseSession.query.filter_by(user_id=current_user.id).order_by(ExerciseSession.date.desc()).all()
+    location_data = [
+        {
+            "id": session.id,
+            "date": session.date,
+            "current_weight": session.current_weight,
+            "total_calories": session.total_calories,
+            "notes": session.notes,
+            "latitude": session.latitude,
+            "longitude": session.longitude
+        }
+        for session in sessions
+        if session.latitude is not None and session.longitude is not None
+    ]
+    return render_template("history.html", username=current_user.username, sessions=sessions, location_data=location_data)
     
 @app.route("/", methods = ["GET", "POST"])
 @app.route("/login", methods = ["GET", "POST"])
@@ -265,8 +315,316 @@ def logout():
     logout_user()
     return redirect(url_for("login"))
 
-# with app.app_context():
-#     db.create_all()
+@app.route("/forum", methods = ["GET", "POST"])
+@login_required
+def forum():
+    if request.method == "POST":
+        action = request.form.get("action", "like")
+
+        if action == "share":
+            session_id = request.form.get("session_id")
+            receiver_id = request.form.get("receiver_id")
+            if session_id and receiver_id:
+                friendship = Friend.query.filter(
+                    ((Friend.sender_id == current_user.id) & (Friend.receiver_id == int(receiver_id))) |
+                    ((Friend.sender_id == int(receiver_id)) & (Friend.receiver_id == current_user.id)),
+                    Friend.status == "accepted"
+                ).first()
+                session = db.session.get(ExerciseSession, int(session_id))
+                if friendship and session and session.user_id == current_user.id:
+                    share = Share(sender_id = current_user.id,
+                                  receiver_id = int(receiver_id),
+                                  session_id = int(session_id))
+                    db.session.add(share)
+                    db.session.commit()
+            return redirect(url_for('forum', tab = 'sent'))
+
+        else:
+            share_id = request.form.get("share_id")
+            if share_id:
+                share = db.session.get(Share, int(share_id))
+                if share and share.receiver_id == current_user.id:
+                    share.liked = not share.liked
+                    db.session.commit()
+            return redirect(url_for('forum', tab = 'received'))
+
+    tab = request.args.get('tab', 'sent')
+    sent = Share.query.filter_by(sender_id = current_user.id).order_by(Share.created_at.desc()).all()
+    received = Share.query.filter_by(receiver_id = current_user.id).order_by(Share.created_at.desc()).all()
+    return render_template("forum.html", tab = tab, sent = sent,
+                           received = received, username = current_user.username)
+
+
+#-------!!  account  -------#
+@app.route("/account", methods=["GET","POST"])
+@login_required
+def account():
+    user = current_user
+
+    # stats
+    sessions = ExerciseSession.query.filter_by(user_id=user.id).all()
+    total_calories = round(sum(s.total_calories for s in sessions),2)
+    total_sessions = len(sessions)
+    bmi = round(user.weight/((user.height/100)**2),2) if user.weight and user.height else None
+
+    if request.method == "POST":
+        form = request.form.get("form_type")
+
+        # update profile
+        if form == "update_profile":
+
+            dob = request.form.get("dob")
+            gender = request.form.get("gender")
+            weight = request.form.get("weight")
+            height = request.form.get("height")
+            calorie = request.form.get("calorie_goal")
+
+            today = current_date.today().isoformat()
+
+            if dob and dob > today:
+                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Invalid DOB")
+
+            if gender not in ["Male","Female","",None]:
+                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Invalid gender")
+
+            try:
+                user.weight = float(weight) if weight and float(weight)>0 else None
+                user.height = float(height) if height and float(height)>0 else None
+                user.calorie_goal = int(calorie) if calorie and int(calorie)>0 else user.calorie_goal
+            except:
+                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Invalid number")
+
+            user.dob, user.gender = dob, gender
+
+            # avatar
+            f = request.files.get('avatar')
+            if f and f.filename:
+                if f.filename.rsplit('.',1)[-1].lower() not in ['jpg','jpeg','png']:
+                    return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Invalid image")
+
+                # create upload folder if not exists
+                upload_path = os.path.join(app.root_path, 'static', 'uploads')
+                os.makedirs(upload_path, exist_ok=True)
+
+                # delete old avatar
+                if user.avatar:
+                    old_path = os.path.join(upload_path, user.avatar)
+                    if os.path.exists(old_path):
+                        os.remove(old_path)
+
+                # generate unique filename
+                import time
+                name = str(int(time.time())) + "_" + secure_filename(f.filename)
+
+                # save new avatar
+                f.save(os.path.join(upload_path, name))
+                user.avatar = name
+            db.session.commit()
+
+        # change password
+        elif form == "change_password":
+            pw = request.form.get("new_password","").strip()
+            cf = request.form.get("confirm_password","").strip()
+            today = current_date.today().isoformat()
+
+            if not pw or len(pw)<6 or not any(c.isalpha() for c in pw):
+                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Invalid password")
+
+            if pw != cf:
+                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Mismatch")
+
+            if user.check_password(pw):
+                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Same as old")
+
+            user.set_password(pw)
+
+        db.session.commit()
+        return redirect(url_for("account"))
+
+    return render_template("account.html",
+        user=user,
+        bmi=bmi,
+        total_calories=total_calories,
+        total_sessions=total_sessions,
+        current_date=current_date.today().isoformat()
+    )
+
+#---!  add friend  ---#
+@app.route('/api/search_users')
+@login_required
+def search_users():
+    query = request.args.get('query', '').strip()
+
+    if not query:
+        return jsonify([])
+
+    users = User.query.filter(
+        User.username.ilike(f"%{query}%"),
+        User.username != current_user.username
+    ).limit(10).all()
+
+    result = [{"username": u.username} for u in users]
+
+    return jsonify(result)
+
+@app.route('/api/add_friend', methods=['POST'])
+@login_required
+def add_friend():
+    data = request.get_json()
+    username = data.get("username", "").strip()
+
+    # find target user by username
+    target = User.query.filter_by(username=username).first()
+    if not target:
+        return jsonify({"error": "invalid user"}), 404
+
+    # prevent adding yourself
+    if target.id == current_user.id:
+        return jsonify({"error": "cannot add yourself"}), 400
+
+    # check existing relationship (both directions)
+    existing = Friend.query.filter(
+        ((Friend.sender_id == current_user.id) & (Friend.receiver_id == target.id)) |
+        ((Friend.sender_id == target.id) & (Friend.receiver_id == current_user.id))
+    ).first()
+
+    if existing:
+        # already friends
+        if existing.status == "accepted":
+            return jsonify({"message": "already friends"}), 200
+
+        # request already sent by current user
+        if existing.sender_id == current_user.id:
+            return jsonify({"message": "already sent"}), 200
+
+        # target has sent request → auto accept
+        if existing.sender_id == target.id:
+            existing.status = "accepted"
+            db.session.commit()
+            return jsonify({"message": "friend added"}), 200
+
+    # create new friend request
+    new_req = Friend(
+        sender_id=current_user.id,
+        receiver_id=target.id,
+        status="pending"
+    )
+
+    db.session.add(new_req)
+    db.session.commit()
+
+    return jsonify({"message": "request sent"}), 200
+
+@app.route('/api/friends')
+@login_required
+def get_friends():
+
+    # get current user id
+    user_id = current_user.id
+
+    # find pending requests sent to current user
+    pending_reqs = Friend.query.filter_by(
+        receiver_id=user_id,
+        status="pending"
+    ).all()
+
+    # collect pending usernames
+    pending = []
+    for r in pending_reqs:
+        sender = User.query.get(r.sender_id)
+        if sender:
+            pending.append(sender.username)
+
+    # find all accepted relationships
+    relations = Friend.query.filter_by(status="accepted").all()
+
+    # collect friend usernames (both directions)
+    friends = []
+    for r in relations:
+
+        # current user is sender → friend is receiver
+        if r.sender_id == user_id:
+            u = User.query.get(r.receiver_id)
+            if u:
+                friends.append(u.username)
+
+        # current user is receiver → friend is sender
+        elif r.receiver_id == user_id:
+            u = User.query.get(r.sender_id)
+            if u:
+                friends.append(u.username)
+
+    # sort lists for stable display
+    pending.sort()
+    friends.sort()
+
+    # return result for frontend
+    return jsonify({
+        "pending": pending,
+        "friends": friends
+    })
+
+@app.route('/api/accept_friend', methods=['POST'])
+@login_required
+def accept_friend():
+
+    # get request data
+    data = request.get_json()
+    username = data.get("username", "").strip()
+
+    # find target user by username
+    target = User.query.filter_by(username=username).first()
+    if not target:
+        return jsonify({"error": "invalid user"}), 404
+
+    # find pending request sent to current user
+    req = Friend.query.filter_by(
+        sender_id=target.id,
+        receiver_id=current_user.id,
+        status="pending"
+    ).first()
+
+    # check if request exists
+    if not req:
+        return jsonify({"error": "no request found"}), 404
+
+    # accept request
+    req.status = "accepted"
+    db.session.commit()
+
+    # return result
+    return jsonify({"message": "friend added"}), 200
+
+@app.route('/api/reject_friend', methods=['POST'])
+@login_required
+def reject_friend():
+
+    # get request data
+    data = request.get_json()
+    username = data.get("username", "").strip()
+
+    # find target user by username
+    target = User.query.filter_by(username=username).first()
+    if not target:
+        return jsonify({"error": "invalid user"}), 404
+
+    # find pending request sent to current user
+    req = Friend.query.filter_by(
+        sender_id=target.id,
+        receiver_id=current_user.id,
+        status="pending"
+    ).first()
+
+    # check if request exists
+    if not req:
+        return jsonify({"error": "no request found"}), 404
+
+    # delete request
+    db.session.delete(req)
+    db.session.commit()
+
+    # return result
+    return jsonify({"message": "request rejected"}), 200
 
 if __name__ == "__main__":
     app.run(debug=True)
