@@ -40,6 +40,7 @@ class SessionExercise(db.Model):
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
     dob = db.Column(db.String(20))
     gender = db.Column(db.String(10))
@@ -47,6 +48,7 @@ class User(UserMixin, db.Model):
     height = db.Column(db.Float)
     calorie_goal = db.Column(db.Integer, default = 1000)
     avatar = db.Column(db.String(255))
+    
 
     sessions = db.relationship('ExerciseSession', backref='user', cascade="all, delete-orphan")
     

@@ -32,6 +32,18 @@
                 <small id="usernameFeedback" style="color:red;"></small>
             </div>
 
+            <!-- Email -->
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+
+                <input
+                    type="email"
+                    class="form-control"
+                    name="email"
+                    required
+                >
+            </div>
+
             <!-- Password -->
             <div class="mb-3">
                 <label class="form-label">Password</label>
@@ -47,11 +59,15 @@
                 <!-- Password rules -->
                 <div class="form-text mt-2">
                     <div id="rule-length" style="color:red;">
-                        • At least 6 characters
+                        • At least 12 characters
                     </div>
 
                     <div id="rule-letter" style="color:red;">
                         • Contains at least one letter
+                    </div>
+
+                    <div id="rule-special" style="color:red;">
+                        • Contains at least one special character (!@#$%^&*)
                     </div>
                 </div>
             </div>
@@ -131,16 +147,23 @@ const confirmInput = document.getElementById("confirm");
 
 const ruleLength = document.getElementById("rule-length");
 const ruleLetter = document.getElementById("rule-letter");
+const ruleSpecial = document.getElementById("rule-special");
 
 // Password rules (length + at least one letter)
 pwd.addEventListener("input", () => {
     const value = pwd.value;
 
     // length rule
-    ruleLength.style.color = value.length >= 6 ? "green" : "red";
+    ruleLength.style.color = value.length >= 12 ? "green" : "red";
 
     // at least one letter (case-insensitive)
     ruleLetter.style.color = /[A-Za-z]/.test(value) ? "green" : "red";
+
+    // special character
+    ruleSpecial.style.color =
+    /[!@#$%^&*]/.test(value)
+    ? "green"
+    : "red";
 });
 
 // ===== Confirm password check =====
@@ -189,11 +212,13 @@ const submitBtn = document.querySelector("button[type='submit'], button.btn-prim
 function checkFormValid() {
     const value = pwd.value;
 
-    const validLength = value.length >= 6;
+    const validLength = value.length >= 12;
     const validLetter = /[A-Za-z]/.test(value);
+    const validSpecial = /[!@#$%^&*]/.test(value);
+
     const match = confirmInput.value === value;
 
-    if (validLength && validLetter && match) {
+    if (validLength && validLetter && validSpecial && match) {
         submitBtn.disabled = false;
     } else {
         submitBtn.disabled = true;
