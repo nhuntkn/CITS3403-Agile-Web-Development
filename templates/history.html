@@ -25,7 +25,7 @@
             </div>
 
             <div class="table-responsive">
-                <table class="table table-striped align-middle">
+                <table class="table table-striped align-middle history-table">
                     <thead>
                         <tr>
                             <th>Date</th>
@@ -33,6 +33,7 @@
                             <th>Total Calories</th>
                             <th>Location</th>
                             <th>Notes</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -52,7 +53,14 @@
                                 Not recorded
                                 {% endif %}
                             </td>
-                            <td>{{ session.notes or '-' }}</td>
+                            <td class="history-notes">
+                                <div class="history-notes-box">{{ session.notes or '-' }}</div>
+                            </td>
+                            <td>
+                                <form method="POST" action="{{ url_for('delete_session', session_id=session.id) }}" onsubmit="return confirm('Delete this session?');">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                                </form>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
