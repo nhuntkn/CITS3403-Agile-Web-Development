@@ -2,60 +2,63 @@
 
 {% block title %}Exercise Planner{% endblock %}
 
+{% block navbar %}
+    <div class="login-navbar">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Exercise Planner">
+    </div>
+{% endblock %}
+
 {% block content %}
-<div style="background-color: #7793ae; padding: 10px 0; text-align: center;">
-  <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Exercise Planner" style="height:100px; width:auto;">
-</div>
+<div class="login-page">
+    <div class="login-wrapper">
 
-<p>
-This website will help you keep track of the total calories burned through your exercises,
-save your routines and see your progress everyday. JOIN NOW !!!
-</p>
+        <section class="login-info-box">
+            <h1>Track your training progress.</h1>
 
-<div style="display: flex; justify-content: center; gap: 40px; margin-top: 40px;">
+            <p class="login-description">
+                Record your weight, exercises, calories, and notes to monitor cutting, bulking, or general fitness progress over time.
+            </p>
 
-    <!-- BMI -->
-    <div style="background-color: #c6d6e5; padding: 30px; width: 300px; border-radius: 12px;">
-        <h2>BMI Calculator</h2>
+            <div class="login-step-list">
+                <p><span>1</span><strong>Sign up or sign in</strong> to keep your records saved.</p>
+                <p><span>2</span><strong>Add sessions</strong> with weight, exercise duration, and optional notes or location.</p>
+                <p><span>3</span><strong>View progress</strong> through your Dashboard and History pages.</p>
+                <p><span>4</span><strong>Share sessions</strong> with friends and view received shared records.</p>
+                <p><span>5</span><strong>Compare rankings</strong> using saved exercise data after signing in.</p>
+            </div>
+        </section>
 
-        <p>Weight (kg)</p>
-        <input type="text">
+        <section class="login-box">
+            <h2>Sign In</h2>
+            <p class="login-hint">Continue to your exercise planner.</p>
 
-        <p>Height (cm)</p>
-        <input type="text">
+            {% if error %}
+                <p class="login-error">{{ error }}</p>
+            {% endif %}
 
-        <br><br>
-        <button class="btn-blue">Calculate</button>
+            <form method="POST" action="{{ url_for('login') }}">
+                <label for="username">Username</label>
+                <input id="username" class="app-input" type="text" name="username" required>
 
-        <div style="margin-top:20px; background:#ccc; padding:10px; border-radius: 8px;">
-            Result
-        </div>
+                <label for="password">Password</label>
+                <input id="password" class="app-input" type="password" name="password" required>
+
+                <button type="submit" class="app-btn login-submit-btn">Sign In</button>
+            </form>
+
+            <p class="login-links">
+                <a href="#">Forgot password?</a>
+            </p>
+
+            <div class="login-divider">
+                <span>or</span>
+            </div>
+
+            <p class="login-links">
+                <a href="{{ url_for('signup') }}">Create an account</a>
+            </p>
+        </section>
+
     </div>
-
-    <!-- Login -->
-    <div style="background-color: #e0e0e0; padding: 30px; width: 300px; border-radius: 12px;">
-        <h2>Sign In</h2>
-
-        {% if error %}
-        <p style = "color: red;">{{error}}</p>
-        {% endif %}
-        
-        <form method = "POST" action = "/login">
-            <p>Username</p>
-            <input type="text" name = "username">
-
-            <p>Password</p>
-            <input type="password" name = "password">
-
-            <br><br>
-            <button type = "submit" class="btn-blue">Sign In</button>
-        </form>
-
-        <p>
-            Don't have an account?
-            <a href="{{ url_for('signup') }}">Sign Up</a>
-        </p>
-    </div>
-
 </div>
 {% endblock %}
