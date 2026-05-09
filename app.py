@@ -3,6 +3,7 @@
 import os
 
 from flask import Flask, render_template, request, redirect, url_for, jsonify, abort
+from flask_wtf.csrf import CSRFProtect, CSRFError
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_migrate import Migrate
 from models import db, ExerciseSession, SessionExercise, User, Share, Friend
@@ -19,11 +20,19 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-m
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///exercise_planner.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+csrf = CSRFProtect(app) #protect all modifying form and JSON requests with CSRF tokens
 db.init_app(app) #attach SQLAlchemy to Flask app
 
 migrate = Migrate(app, db) #set up Flask-Migrate for database migrations
 login_manager = LoginManager(app) #set up Flask-Login for user session management
 login_manager.login_view = 'login' #redirect to login page if user tries to access protected routes
+
+@app.errorhandler(CSRFError)
+def handle_csrf_error(error):
+    message = "Your form expired or was invalid. Please refresh the page and try again."
+    if request.is_json or request.path.startswith("/api/"):
+        return jsonify({"error": message}), 400
+    return message, 400
 
 def parse_location_fields(latitude_raw, longitude_raw):
     if not latitude_raw and not longitude_raw:

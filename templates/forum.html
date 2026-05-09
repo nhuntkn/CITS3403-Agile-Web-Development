@@ -70,6 +70,7 @@
                             </div>
                         </div>
                         <form method = "POST" action ="{{url_for('forum')}}">
+                            <input type = "hidden" name = "csrf_token" value = "{{ csrf_token() }}">
                             <input type = "hidden" name = "share_id" value = "{{share.id}}">
                             <button class = "like-btn {{ 'liked' if share.liked }}" type = "submit"> ❤️ </button>
                         </form>

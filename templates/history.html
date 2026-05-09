@@ -58,6 +58,7 @@
                             </td>
                             <td>
                                 <form method="POST" action="{{ url_for('delete_session', session_id=session.id) }}" onsubmit="return confirm('Delete this session?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
                                 </form>
                             </td>
