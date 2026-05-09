@@ -6,7 +6,7 @@ import time
 import smtplib
 
 from email.message import EmailMessage
-from flask import Flask, render_template, request, redirect, url_for, jsonify, session
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session, abort
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_migrate import Migrate
 from models import db, ExerciseSession, SessionExercise, User, Share, Friend
@@ -327,7 +327,6 @@ def history():
             "date": session.date,
             "current_weight": session.current_weight,
             "total_calories": session.total_calories,
-            "notes": session.notes,
             "latitude": session.latitude,
             "longitude": session.longitude
         }
@@ -335,6 +334,20 @@ def history():
         if session.latitude is not None and session.longitude is not None
     ]
     return render_template("history.html", username=current_user.username, sessions=sessions, location_data=location_data)
+
+@app.route("/history/<int:session_id>/delete", methods=["POST"])
+@login_required
+def delete_session(session_id):
+    session = db.session.get(ExerciseSession, session_id)
+
+    if session is None or session.user_id != current_user.id:
+        abort(404)
+
+    Share.query.filter_by(session_id=session.id).delete()
+    db.session.delete(session)
+    db.session.commit()
+
+    return redirect(url_for("history"))
     
 @app.route("/", methods = ["GET", "POST"])
 @app.route("/login", methods = ["GET", "POST"])
