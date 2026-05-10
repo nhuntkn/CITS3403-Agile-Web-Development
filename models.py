@@ -75,3 +75,15 @@ class Friend(db.Model):
     receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     status = db.Column(db.String(20))  # pending / accepted
     __table_args__ = (db.UniqueConstraint('sender_id', 'receiver_id', name='unique_friend'),)
+
+# Adds AI-generated feedback for a user based on their exercise sessions for the week.
+class AIFeedback(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    week_start_date = db.Column(db.String(20), nullable=False)
+    generated_date = db.Column(db.String(20), nullable=False)
+    data_hash = db.Column(db.String(100), nullable=True)
+    feedback_text = db.Column(db.Text, nullable=False)
+
+    user = db.relationship("User", backref="ai_feedback")

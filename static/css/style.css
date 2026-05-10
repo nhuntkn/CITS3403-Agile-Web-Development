@@ -665,3 +665,70 @@ body {
   padding: 0.8rem;
   margin-bottom: 1rem;
 }
+
+/* Dashboard addon layout and AI feedback */
+
+.dashboard-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.dashboard-subtitle,
+.ai-feedback-header p {
+  color: #666666;
+  margin-bottom: 0;
+}
+
+.dashboard-calorie-box {
+  width: 360px;
+  max-width: 100%;
+}
+
+.metric-card {
+  min-height: 95px;
+  padding: 0.9rem 1rem;
+}
+
+.calorie-box .progress-bar,
+.ai-feedback-btn {
+  background: #7793ae;
+}
+
+.ai-feedback-section {
+  margin-top: 1.5rem;
+  background: #f3f3f3;
+  border: 1px solid #dddddd;
+  border-radius: 14px;
+  padding: 1.2rem;
+}
+
+.ai-feedback-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.ai-feedback-header h4 {
+  margin-bottom: 0.25rem;
+}
+
+.ai-feedback-btn {
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 0.75rem 1.2rem;
+  font-weight: bold;
+}
+
+.ai-feedback-box {
+  background: white;
+  border: 1px solid #dddddd;
+  border-radius: 12px;
+  padding: 1rem;
+  color: #333333;
+}
