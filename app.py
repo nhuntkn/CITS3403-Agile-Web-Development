@@ -5,19 +5,17 @@ import os
 from flask import Flask, render_template, request, redirect, url_for, jsonify, abort
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_migrate import Migrate
-from models import db, ExerciseSession, SessionExercise, User, Share, Friend
+from models import db, ExerciseSession, SessionExercise, User, Share, Friend, AIFeedback
 from data import exercise_data
-from utils import calculate_calories
+from utils import calculate_calories, generateAiFeedbackText, getStartWeek, buildFeedback, buildFeedbackHash
 from datetime import date as current_date, timedelta
 from werkzeug.utils import secure_filename
+from dotenv import load_dotenv
+
+load_dotenv() #load environment variables from .env file
 
 app = Flask(__name__)
-
-secret_key = os.environ.get('SECRET_KEY')
-if not secret_key:
-    raise RuntimeError("SECRET_KEY environment variable must be set before starting the app")
-
-app.config['SECRET_KEY'] = secret_key
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-me')
 
 #configure SQLite database, SQLAlchemy will store the database file inside the Flask instance folder
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///exercise_planner.db'
@@ -48,6 +46,82 @@ def parse_location_fields(latitude_raw, longitude_raw):
         return None, None, "Longitude must be between -180 and 180"
 
     return latitude, longitude, None
+
+@app.route("/dashboard/ai-feedback", methods=["POST"])
+@login_required
+def dashAiFeedback():
+    today = current_date.today()
+    today_str = today.isoformat()
+    week_start = getStartWeek(today)
+    week_start_str = week_start.isoformat()
+
+    weekly_sessions = ExerciseSession.query.filter(
+        ExerciseSession.user_id == current_user.id,
+        ExerciseSession.date >= week_start_str,
+        ExerciseSession.date <= today_str
+    ).order_by(ExerciseSession.date.asc()).all()
+
+    if not weekly_sessions:
+        return jsonify({
+            "error": "No exercise sessions found for this week yet. Add a session first, then generate feedback."
+        }), 400
+
+    current_data_hash = buildFeedbackHash(weekly_sessions)
+
+    existing_feedback = AIFeedback.query.filter_by(
+        user_id=current_user.id,
+        generated_date=today_str
+    ).first()
+
+    if existing_feedback and existing_feedback.data_hash == current_data_hash:
+        return jsonify({
+            "feedback": existing_feedback.feedback_text,
+            "cached": True
+        })
+
+    prompt = buildFeedback(
+        current_user,
+        weekly_sessions,
+        week_start,
+        today
+    )
+
+    try:
+        feedback_text = generateAiFeedbackText(prompt)
+
+    except Exception as error:
+        error_text = str(error)
+
+        if "insufficient_quota" in error_text or "exceeded your current quota" in error_text:
+            message = "AI feedback is currently unavailable because the API quota has been reached. Please try again later."
+        else:
+            message = "AI feedback could not be generated right now. Please try again later."
+
+        return jsonify({
+            "error": message
+        }), 500
+
+    if existing_feedback:
+        existing_feedback.week_start_date = week_start_str
+        existing_feedback.data_hash = current_data_hash
+        existing_feedback.feedback_text = feedback_text
+    else:
+        saved_feedback = AIFeedback(
+            user_id=current_user.id,
+            week_start_date=week_start_str,
+            generated_date=today_str,
+            data_hash=current_data_hash,
+            feedback_text=feedback_text
+        )
+
+        db.session.add(saved_feedback)
+
+    db.session.commit()
+
+    return jsonify({
+        "feedback": feedback_text,
+        "cached": False
+    })
 
 @login_manager.user_loader
 def load_user(user_id):
