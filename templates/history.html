@@ -57,14 +57,56 @@
                                 <div class="history-notes-box">{{ session.notes or '-' }}</div>
                             </td>
                             <td>
-                                <form method="POST" action="{{ url_for('delete_session', session_id=session.id) }}" onsubmit="return confirm('Delete this session?');">
-                                    <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
-                                </form>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <button type="button"
+                                            class="btn-pink btn-sm history-share-btn"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#historyShareModal"
+                                            data-session-id="{{ session.id }}"
+                                            data-session-date="{{ session.date }}">
+                                        Share
+                                    </button>
+                                    <form method="POST" action="{{ url_for('delete_session', session_id=session.id) }}" onsubmit="return confirm('Delete this session?');">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
+
+            <div class="modal fade" id="historyShareModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Share this session</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form method="POST" action="{{ url_for('forum') }}">
+                            <input type="hidden" name="action" value="share">
+                            <input type="hidden" name="session_id" id="historyShareSessionId">
+                            <div class="modal-body">
+                                <p class="text-muted" id="historyShareSessionLabel">Select a friend to share this session with.</p>
+                                <label class="form-label fw-bold">Share with</label>
+                                <select name="receiver_id" class="form-select" required>
+                                    <option value="">- select a friend -</option>
+                                    {% for f in friends %}
+                                    <option value="{{ f.id }}">{{ f.username }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% if not friends %}
+                                <p class="text-muted mt-2" style="font-size: 0.85rem;">You have no friends yet. Add some from the Account page.</p>
+                                {% endif %}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn-pink" {% if not friends %}disabled{% endif %}>Share</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
             {% else %}
             <div class="alert alert-info mb-0">
@@ -78,6 +120,12 @@
 {% block scripts %}
     <script>
         window.historyLocations = {{ location_data | tojson }};
+        document.querySelectorAll(".history-share-btn").forEach((button) => {
+            button.addEventListener("click", () => {
+                document.getElementById("historyShareSessionId").value = button.dataset.sessionId;
+                document.getElementById("historyShareSessionLabel").textContent = `Share session from ${button.dataset.sessionDate}.`;
+            });
+        });
     </script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="{{ url_for('static', filename='js/map.js') }}"></script>

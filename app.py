@@ -291,6 +291,10 @@ def ranking():
 @login_required
 def history():
     sessions = ExerciseSession.query.filter_by(user_id=current_user.id).order_by(ExerciseSession.date.desc()).all()
+    friends = User.query.join(Friend, (
+        ((Friend.sender_id == current_user.id) & (Friend.receiver_id == User.id)) |
+        ((Friend.receiver_id == current_user.id) & (Friend.sender_id == User.id))
+    )).filter(Friend.status == "accepted").all()
     location_data = [
         {
             "id": session.id,
@@ -303,7 +307,8 @@ def history():
         for session in sessions
         if session.latitude is not None and session.longitude is not None
     ]
-    return render_template("history.html", username=current_user.username, sessions=sessions, location_data=location_data)
+    return render_template("history.html", username=current_user.username, sessions=sessions,
+                           location_data=location_data, friends=friends)
 
 @app.route("/history/<int:session_id>/delete", methods=["POST"])
 @login_required
