@@ -8,7 +8,7 @@ from flask_migrate import Migrate
 from models import db, ExerciseSession, SessionExercise, User, Share, Friend
 from data import exercise_data
 from utils import calculate_calories
-from datetime import date as current_date
+from datetime import date as current_date, timedelta
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -248,27 +248,44 @@ def check_username():
 @app.route("/ranking")
 @login_required
 def ranking():
+    period_options = {
+        "all": ("All Time", None),
+        "daily": ("Daily", 0),
+        "weekly": ("Weekly", 6),
+        "monthly": ("Monthly", 29),
+        "half_year": ("Half Yearly", 182)
+    }
+    selected_period = request.args.get("period", "all")
+    if selected_period not in period_options:
+        selected_period = "all"
+
+    today = current_date.today()
+    period_label, days_back = period_options[selected_period]
+    start_date = None if days_back is None else (today - timedelta(days=days_back)).isoformat()
+    end_date = today.isoformat()
+
     users = User.query.all()
     ranking_data = []
 
     for user in users:
         sessions = ExerciseSession.query.filter_by(user_id=user.id).order_by(ExerciseSession.date.asc()).all()
-        latest_session = sessions[-1] if sessions else None
-        total_calories = sum(session.total_calories for session in sessions)
-        kg_lost = 0
-
-        if user.weight is not None and latest_session is not None:
-            kg_lost = user.weight - latest_session.current_weight
+        filtered_sessions = [
+            session for session in sessions
+            if start_date is None or (start_date <= session.date <= end_date)
+        ]
+        total_calories = sum(session.total_calories for session in filtered_sessions)
 
         ranking_data.append({
             "username": user.username,
-            "kg_lost": round(kg_lost, 1),
             "total_calories": round(total_calories, 2),
-            "total_sessions": len(sessions)
+            "total_sessions": len(filtered_sessions),
+            "has_sessions": len(filtered_sessions) > 0
         })
 
-    ranking_data.sort(key=lambda item: (item["kg_lost"], item["total_calories"]), reverse=True)
-    return render_template("ranking.html", username=current_user.username, ranking_data=ranking_data)
+    ranking_data.sort(key=lambda item: (item["has_sessions"], item["total_calories"]), reverse=True)
+    return render_template("ranking.html", username=current_user.username, ranking_data=ranking_data,
+                           period_options=period_options, selected_period=selected_period,
+                           period_label=period_label)
 
 @app.route("/history")
 @login_required
