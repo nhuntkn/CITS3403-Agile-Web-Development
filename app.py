@@ -15,7 +15,11 @@ from dotenv import load_dotenv
 load_dotenv() #load environment variables from .env file
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-me')
+secret_key = os.environ.get('SECRET_KEY')
+if not secret_key:
+    raise RuntimeError("SECRET_KEY environment variable must be set before starting the app")
+
+app.config['SECRET_KEY'] = secret_key
 
 #configure SQLite database, SQLAlchemy will store the database file inside the Flask instance folder
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///exercise_planner.db'

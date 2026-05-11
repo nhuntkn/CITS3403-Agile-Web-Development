@@ -737,3 +737,113 @@ body {
   padding: 1rem;
   color: #333333;
 }
+
+/* Account page */
+
+.account-page .main-box {
+  background: #ffffff;
+  padding: 28px;
+  border-radius: 12px;
+}
+
+.account-page .card {
+  border-radius: 12px;
+  border: 1px solid #eeeeee;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+}
+
+.title-main {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.title-section {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.info-label,
+.stat-label {
+  color: #777777;
+}
+
+.info-label {
+  font-size: 15px;
+}
+
+.info-value {
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.avatar-placeholder {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: #6c757d;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+}
+
+.avatar-preview {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  margin: 10px auto;
+}
+
+.btn-save {
+  background: linear-gradient(135deg,#4e73df,#6c8cff);
+  border: none;
+  color: white;
+  padding: 10px 26px;
+  border-radius: 8px;
+}
+
+.stats-box {
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 15px;
+}
+
+.stat-value {
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.account-toggle {
+  cursor: pointer;
+}
+
+.account-collapsible-form {
+  display: none;
+  margin-top: 20px;
+}
+
+.account-hidden {
+  display: none;
+}
+
+.password-rules,
+.password-message {
+  font-size: 14px;
+  margin-bottom: 15px;
+}
+
+.account-rule-danger {
+  color: red;
+}
+
+.account-empty-message {
+  color: #777777;
+}
