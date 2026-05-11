@@ -53,7 +53,7 @@ body {
 
 .ep-nav-link:hover {
   color: #212529;
-  background: #f0f0f0;
+  background: #c5c4c4;
 }
 
 .ep-nav-link.active {
@@ -134,7 +134,12 @@ body {
 }
 
 .ep-nav-link.create-btn:hover {
-  background: #c91679;
+  background: #a81265;
+}
+
+.ep-nav-link.create-btn.active {
+  background: #128d2c;
+  font-weight: 700;
 }
 
 /* ── Page layout ─────────────────────────────────────────── */
