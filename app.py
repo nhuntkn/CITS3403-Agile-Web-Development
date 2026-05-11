@@ -497,7 +497,7 @@ def account():
     total_sessions = len(sessions)
     last_session = max(sessions, key=lambda s: s.date) if sessions else None
     current_weight = last_session.current_weight if last_session else user.weight
-    bmi = round(user.weight/((user.height/100)**2),2) if current_weight and user.height else None
+    bmi = round(current_weight/((user.height/100)**2),2) if current_weight and user.height else None
 
     if request.method == "POST":
         form = request.form.get("form_type")
