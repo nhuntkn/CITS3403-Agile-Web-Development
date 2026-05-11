@@ -5,6 +5,8 @@
 {% block head %}
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <!-- Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 {% endblock %}
 
 {% block navbar %}
@@ -38,6 +40,9 @@
   </div>
 
   <hr>
+
+  <!-- Alerts -->
+  <div id="alertBox" class="mb-3"></div>
 
   <!-- 4 Metric cards -->
   <h4>Your Stats</h4>
@@ -120,24 +125,26 @@
 
     //Metric cards
     const startWeight = {{start_weight | tojson}};
+    const userHeight = {{user_height | tojson}};
 
     const sorted = [...sessions].sort((a, b) => a.date.localeCompare(b.date));
     const last = sorted[sorted.length - 1];
+    const currentWeight = last ? last.current_weight : startWeight;
 
     if (startWeight !== null) {
       document.getElementById("startWeight").textContent = startWeight.toFixed(1);
     }
-    if (last) {
-      document.getElementById('currentWeight').textContent =last.current_weight.toFixed(1);
+
+    if (currentWeight !== null) {
+      document.getElementById('currentWeight').textContent = currentWeight.toFixed(1);
       if (startWeight !== null) {
-        const change = last.current_weight - startWeight;
+        const change = currentWeight - startWeight;
         document.getElementById('totalChanges').textContent =
-          (change >= 0 ? "+" : "") + change.toFixed(1);
+          (change >= 0 ? "+" : "") + change.toFixed(1); 
       }
-      const userHeight = {{ user_height | tojson}};
       if (userHeight) {
         const heightM = userHeight / 100;
-        const bmi = last.current_weight / (heightM * heightM);
+        const bmi = currentWeight / (heightM * heightM);
         document.getElementById("currentBMI").textContent = bmi.toFixed(1);
 
         let category = "";
@@ -146,6 +153,33 @@
         else if (bmi < 30)  category = "Overweight";
         else                category = "Obese";
         document.getElementById("bmiCategory").textContent = category;
+      }
+    }
+
+    //Notifications
+    const alerts = [];
+
+    if (currentWeight !== null && userHeight) {
+      const heightM = userHeight / 100;
+      const bmi = currentWeight / (heightM * heightM);
+      if (bmi < 18.5)
+        alerts.push({ cls: "warning", msg: `BMI Alert: Your BMI is ${bmi.toFixed(1)} (Underweight). Consider consulting a healthcare professional.` });
+      else if (bmi >= 30)
+        alerts.push({ cls: "danger",  msg: `BMI Alert: Your BMI is ${bmi.toFixed(1)} (Obese). Consider consulting a healthcare professional.` });
+      else if (bmi >= 25)
+        alerts.push({ cls: "warning", msg: `BMI Alert: Your BMI is ${bmi.toFixed(1)} (Overweight). Consider consulting a healthcare professional.` });
+    }
+
+    if (sorted.length >= 2) {
+      const now = new Date();
+      const cutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,'0')}-${String(cutoff.getDate()).padStart(2,'0')}`;
+      const older = sorted.filter(s => s.date <= cutoffStr);
+      if (older.length > 0) {
+        const refWeight = older[older.length - 1].current_weight;
+        const change = currentWeight - refWeight;
+        if (Math.abs(change) > 1)
+          alerts.push({ cls: "warning", msg: `Weight Alert: You have ${change < 0 ? "lost" : "gained"} ${Math.abs(change).toFixed(1)} kg in the last 7 days.` });
       }
     }
 
@@ -160,10 +194,24 @@
 
     const GOAL = {{ calorie_goal | tojson }};
     const pct = Math.min(100, (todayKcal / GOAL) * 100);
-    document.getElementById("goalCount").textContent = `${Math.round(todayKcal)} / ${GOAL} goal`;
+    document.getElementById("goalCount").textContent = `${Math.round(Math.min(todayKcal, GOAL))} / ${GOAL} goal`;
     const bar = document.getElementById("calorieBar");
     bar.style.width = pct + "%";
     bar.setAttribute("aria-valuenow", pct);
+
+    if (todayKcal >= GOAL) {
+      confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+      alerts.push({ cls: "success", msg: `🎉 Goal reached! You've burned ${Math.round(todayKcal)} kcal today — you hit your daily goal!` });
+    }
+
+    const alertBox = document.getElementById("alertBox");
+    alerts.forEach(a => {
+      const div = document.createElement("div");
+      div.className = `alert alert-${a.cls} alert-dismissible fade show`;
+      div.setAttribute("role", "alert");
+      div.innerHTML = `${a.msg}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+      alertBox.appendChild(div);
+    });
 
     //Weekly chart
     const weekDays = [];

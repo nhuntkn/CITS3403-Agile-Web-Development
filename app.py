@@ -229,6 +229,19 @@ def exercise():
         #store the total calories for the full session
         new_session.total_calories = round(total_calories, 2)
 
+        existing_day = db.session.query(
+            db.func.coalesce(db.func.sum(ExerciseSession.total_calories), 0)
+        ).filter(
+            ExerciseSession.user_id == user.id,
+            ExerciseSession.date == date,
+            ExerciseSession.id != new_session.id
+        ).scalar()
+        if existing_day + total_calories > 10000:
+            db.session.rollback()
+            return render_template("exercise.html", exercise_data=exercise_data,
+                                   username=current_user.username,
+                                   error="Daily calorie total cannot exceed 10,000 kcal")
+
         #save everything to the database
         db.session.commit()
 
@@ -482,7 +495,9 @@ def account():
     sessions = ExerciseSession.query.filter_by(user_id=user.id).all()
     total_calories = round(sum(s.total_calories for s in sessions),2)
     total_sessions = len(sessions)
-    bmi = round(user.weight/((user.height/100)**2),2) if user.weight and user.height else None
+    last_session = max(sessions, key=lambda s: s.date) if sessions else None
+    current_weight = last_session.current_weight if last_session else user.weight
+    bmi = round(current_weight/((user.height/100)**2),2) if current_weight and user.height else None
 
     if request.method == "POST":
         form = request.form.get("form_type")
@@ -563,6 +578,7 @@ def account():
         bmi=bmi,
         total_calories=total_calories,
         total_sessions=total_sessions,
+        current_weight=current_weight,
         current_date=current_date.today().isoformat()
     )
 
