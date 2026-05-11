@@ -60,8 +60,9 @@
 </div>
 
 <div class="col-md-3 text-center">
-{% if user.avatar %}
-<img src="{{ url_for('static', filename='uploads/' + user.avatar) }}" class="avatar-preview">
+{% set profile_avatar_url = user_avatar_url(user) %}
+{% if profile_avatar_url %}
+<img src="{{ profile_avatar_url }}" class="avatar-preview">
 {% else %}
 <div class="avatar-placeholder">{{ user.username[0]|upper }}</div>
 {% endif %}
@@ -306,6 +307,30 @@ if(type==="add"){
 let pending=[ ];
 let friends=[ ];
 
+function avatarNode(user){
+const avatar = document.createElement(user.avatar_url ? "img" : "span");
+avatar.className = user.avatar_url ? "user-avatar-small" : "user-avatar-small user-avatar-fallback";
+if(user.avatar_url){
+avatar.src = user.avatar_url;
+avatar.alt = user.username;
+} else {
+avatar.textContent = user.username ? user.username[0].toUpperCase() : "?";
+}
+return avatar;
+}
+
+function userLine(user){
+const wrapper = document.createElement("div");
+wrapper.className = "account-user-line";
+wrapper.appendChild(avatarNode(user));
+
+const name = document.createElement("span");
+name.textContent = user.username;
+wrapper.appendChild(name);
+
+return wrapper;
+}
+
 function searchUsers(){
 const keyword=document.getElementById("searchInput").value;
 if(!keyword.trim()) return;
@@ -331,17 +356,19 @@ list.forEach(u=>{
 
     const row = document.createElement("div");
     row.className="d-flex justify-content-between border-bottom py-2";
+    row.appendChild(userLine(u));
 
-    row.innerHTML=`
-    <span>${username}</span>
-    <button class="btn btn-save btn-sm" onclick="addFriend('${username}')">Add</button>
-    `;
+    const button = document.createElement("button");
+    button.className = "btn btn-save btn-sm";
+    button.textContent = "Add";
+    button.addEventListener("click", () => addFriend(username, button));
+    row.appendChild(button);
 
     box.appendChild(row);
 });
 }
 
-function addFriend(username){
+function addFriend(username, button){
 fetch('/api/add_friend',{
 method:'POST',
 headers:{'Content-Type':'application/json'},
@@ -351,21 +378,15 @@ body:JSON.stringify({username:username})
 .then(data => {
     alert(data.message);
 
-    const buttons = document.querySelectorAll("button");
+    if(button && data.message === "request sent"){
+        button.innerText = "Requested";
+        button.disabled = true;
+    }
 
-    buttons.forEach(btn=>{
-        if(btn.getAttribute("onclick")?.includes(`'${username}'`)){
-
-            if(data.message === "request sent"){
-                btn.innerText = "Requested";
-            }
-
-            if(data.message === "friend added"){
-                btn.innerText = "Friends";
-            }
-
-        }
-    });
+    if(button && data.message === "friend added"){
+        button.innerText = "Friends";
+        button.disabled = true;
+    }
 
     loadFriends();
 });
@@ -378,14 +399,23 @@ box.innerHTML="";
 pending.forEach(u=>{
 const row=document.createElement("div");
 row.className="d-flex justify-content-between border-bottom py-2";
+row.appendChild(userLine(u));
 
-row.innerHTML=`
-<span>${u}</span>
-<div>
-<button class="btn btn-success btn-sm" onclick="acceptFriend('${u}')">Accept</button>
-<button class="btn btn-danger btn-sm" onclick="rejectFriend('${u}')">Reject</button>
-</div>
-`;
+const actions = document.createElement("div");
+
+const accept = document.createElement("button");
+accept.className = "btn btn-success btn-sm";
+accept.textContent = "Accept";
+accept.addEventListener("click", () => acceptFriend(u.username));
+
+const reject = document.createElement("button");
+reject.className = "btn btn-danger btn-sm ms-2";
+reject.textContent = "Reject";
+reject.addEventListener("click", () => rejectFriend(u.username));
+
+actions.appendChild(accept);
+actions.appendChild(reject);
+row.appendChild(actions);
 
 box.appendChild(row);
 });
@@ -427,7 +457,7 @@ box.innerHTML="";
 friends.forEach(u=>{
 const row=document.createElement("div");
 row.className="border-bottom py-2";
-row.innerText=u;
+row.appendChild(userLine(u));
 box.appendChild(row);
 });
 }

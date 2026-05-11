@@ -24,7 +24,28 @@
                     <div class = "post-card">
                         <div class = "post-meta">
                             <div class = "post-date">{{ share.session.date }}</div>
-                            <div class = "post-from-to">From: Me<br>To: {{share.receiver.username}}</div>
+                            <div class = "post-from-to">
+                                <div class="shared-user-line">
+                                    <span>From:</span>
+                                    {% set current_avatar_url = user_avatar_url(current_user) %}
+                                    {% if current_avatar_url %}
+                                        <img src="{{ current_avatar_url }}" class="user-avatar-small" alt="{{ current_user.username }}">
+                                    {% else %}
+                                        <span class="user-avatar-small user-avatar-fallback">{{ current_user.username[0]|upper }}</span>
+                                    {% endif %}
+                                    <span>Me</span>
+                                </div>
+                                <div class="shared-user-line">
+                                    <span>To:</span>
+                                    {% set receiver_avatar_url = user_avatar_url(share.receiver) %}
+                                    {% if receiver_avatar_url %}
+                                        <img src="{{ receiver_avatar_url }}" class="user-avatar-small" alt="{{ share.receiver.username }}">
+                                    {% else %}
+                                        <span class="user-avatar-small user-avatar-fallback">{{ share.receiver.username[0]|upper }}</span>
+                                    {% endif %}
+                                    <span>{{ share.receiver.username }}</span>
+                                </div>
+                            </div>
                         </div>
                         <div class = "post-divider"></div>
                         <div class = "flex-grow-1">
@@ -53,7 +74,28 @@
                     <div class = "post-card">
                         <div class = "post-meta">
                             <div class = "post-date">{{ share.session.date }}</div>
-                            <div class = "post-from-to">From: {{share.sender.username}}<br>To: Me</div>
+                            <div class = "post-from-to">
+                                <div class="shared-user-line">
+                                    <span>From:</span>
+                                    {% set sender_avatar_url = user_avatar_url(share.sender) %}
+                                    {% if sender_avatar_url %}
+                                        <img src="{{ sender_avatar_url }}" class="user-avatar-small" alt="{{ share.sender.username }}">
+                                    {% else %}
+                                        <span class="user-avatar-small user-avatar-fallback">{{ share.sender.username[0]|upper }}</span>
+                                    {% endif %}
+                                    <span>{{ share.sender.username }}</span>
+                                </div>
+                                <div class="shared-user-line">
+                                    <span>To:</span>
+                                    {% set current_avatar_url = user_avatar_url(current_user) %}
+                                    {% if current_avatar_url %}
+                                        <img src="{{ current_avatar_url }}" class="user-avatar-small" alt="{{ current_user.username }}">
+                                    {% else %}
+                                        <span class="user-avatar-small user-avatar-fallback">{{ current_user.username[0]|upper }}</span>
+                                    {% endif %}
+                                    <span>Me</span>
+                                </div>
+                            </div>
                         </div>
                         <div class = "post-divider"></div>
                         <div class = "flex-grow-1">

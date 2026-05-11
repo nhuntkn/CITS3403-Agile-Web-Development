@@ -39,7 +39,16 @@
                         {% for user in ranking_data %}
                         <tr>
                             <td>{{ loop.index }}</td>
-                            <td>{{ user.username }}</td>
+                            <td>
+                                <div class="ranking-user">
+                                    {% if user.avatar_url %}
+                                        <img src="{{ user.avatar_url }}" class="user-avatar-small" alt="{{ user.username }}">
+                                    {% else %}
+                                        <div class="user-avatar-small user-avatar-fallback">{{ user.username[0]|upper }}</div>
+                                    {% endif %}
+                                    <span>{{ user.username }}</span>
+                                </div>
+                            </td>
                             <td>{{ user.total_calories }}</td>
                             <td>{{ user.total_sessions }}</td>
                         </tr>

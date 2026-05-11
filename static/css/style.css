@@ -733,6 +733,38 @@ body {
   color: #333333;
 }
 
+/* Shared user avatars */
+
+.user-avatar-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: 0 0 32px;
+}
+
+.user-avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #6c757d;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.ranking-user,
+.shared-user-line,
+.account-user-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.shared-user-line + .shared-user-line {
+  margin-top: 0.35rem;
+}
+
 /* Account page */
 
 .account-page .main-box {
