@@ -10,8 +10,19 @@
     <div class="container py-4">
         <div class="main-box">
             <h1>Ranking</h1>
-            <p class="text-muted">Compare users by weight change and total calories burned.</p>
+            <p class="text-muted">Compare users by total calories burned from saved exercise sessions.</p>
             <hr>
+
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                {% for value, option in period_options.items() %}
+                    <a href="{{ url_for('ranking', period=value) }}"
+                       class="btn btn-sm {{ 'btn-primary' if selected_period == value else 'btn-outline-primary' }}">
+                        {{ option[0] }}
+                    </a>
+                {% endfor %}
+            </div>
+
+            <p class="text-muted">Showing {{ period_label|lower }} results. Users with no sessions in this period are placed after users with saved session data.</p>
 
             {% if ranking_data %}
             <div class="table-responsive">
@@ -20,7 +31,6 @@
                         <tr>
                             <th>Rank</th>
                             <th>User</th>
-                            <th>Kg Lost</th>
                             <th>Total Calories</th>
                             <th>Sessions</th>
                         </tr>
@@ -30,7 +40,6 @@
                         <tr>
                             <td>{{ loop.index }}</td>
                             <td>{{ user.username }}</td>
-                            <td>{{ user.kg_lost }}</td>
                             <td>{{ user.total_calories }}</td>
                             <td>{{ user.total_sessions }}</td>
                         </tr>

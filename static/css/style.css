@@ -53,7 +53,7 @@ body {
 
 .ep-nav-link:hover {
   color: #212529;
-  background: #f0f0f0;
+  background: #c5c4c4;
 }
 
 .ep-nav-link.active {
@@ -134,7 +134,12 @@ body {
 }
 
 .ep-nav-link.create-btn:hover {
-  background: #c91679;
+  background: #a81265;
+}
+
+.ep-nav-link.create-btn.active {
+  background: #128d2c;
+  font-weight: 700;
 }
 
 /* ── Page layout ─────────────────────────────────────────── */
@@ -470,6 +475,9 @@ body {
   background: transparent;
 }
 
+.add-record-btn {
+  width: 100%;
+}
 /* ── Forum page ──────────────────────────────────────────── */
 .forum-layout {
   min-height: calc(100vh - 90px);
@@ -522,4 +530,320 @@ body {
 
 .share-liked-icon {
   font-size: 1.3rem;
+}
+
+/* Login page */
+
+.login-navbar {
+  background: #7793ae;
+  text-align: center;
+  padding: 10px;
+}
+
+.login-navbar img {
+  height: 100px;
+}
+
+.login-page {
+  min-height: calc(100vh - 120px);
+  background: #f7f7f5;
+  padding: 4rem 2rem;
+}
+
+.login-wrapper {
+  max-width: 1200px;
+  margin: auto;
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+}
+
+.login-info-box,
+.login-box {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 18px;
+  padding: 3rem;
+  flex: 1;
+}
+
+.login-box {
+  max-width: 420px;
+}
+
+.login-info-box h1,
+.login-box h2 {
+  font-size: 2.8rem;
+  color: #000000;
+}
+
+.login-description,
+.login-hint,
+.login-links {
+  color: #666;
+}
+
+.login-description {
+  margin-bottom: 3rem;
+  font-size: 1.15rem;
+}
+
+.login-step-list p {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.login-step-list span {
+  background: #7793ae;
+  color: white;
+  min-width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.login-step-list strong {
+  color: #222;
+}
+
+.login-submit-btn {
+  margin-top: 0.5rem;
+}
+
+.login-divider,
+.login-links {
+  text-align: center;
+}
+
+.login-divider {
+  color: #888;
+  margin: 1rem 0;
+}
+
+.login-links a {
+  color: #222;
+  font-weight: bold;
+}
+
+.login-error {
+  color: #b00020;
+  margin-bottom: 1rem;
+}
+
+/* Shared app styles */
+
+.app-input {
+  border: 1px solid #ccc;
+  border-radius: 10px;
+}
+
+.app-input:focus {
+  outline: none;
+  border-color: #7793ae;
+  box-shadow: 0 0 0 0.2rem rgba(119, 147, 174, 0.25);
+}
+
+.app-btn {
+  background: #7793ae;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 0.8rem;
+  font-weight: bold;
+}
+
+.app-btn:hover {
+  background: #6687a5;
+  color: white;
+}
+
+/* Login page only */
+
+.login-box .app-input,
+.login-box .app-btn {
+  width: 100%;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+/* Dashboard addon layout and AI feedback */
+
+.dashboard-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.dashboard-subtitle,
+.ai-feedback-header p {
+  color: #666666;
+  margin-bottom: 0;
+}
+
+.dashboard-calorie-box {
+  width: 360px;
+  max-width: 100%;
+}
+
+.metric-card {
+  min-height: 95px;
+  padding: 0.9rem 1rem;
+}
+
+.calorie-box .progress-bar,
+.ai-feedback-btn {
+  background: #7793ae;
+}
+
+.ai-feedback-section {
+  margin-top: 1.5rem;
+  background: #f3f3f3;
+  border: 1px solid #dddddd;
+  border-radius: 14px;
+  padding: 1.2rem;
+}
+
+.ai-feedback-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.ai-feedback-header h4 {
+  margin-bottom: 0.25rem;
+}
+
+.ai-feedback-btn {
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 0.75rem 1.2rem;
+  font-weight: bold;
+}
+
+.ai-feedback-box {
+  background: white;
+  border: 1px solid #dddddd;
+  border-radius: 12px;
+  padding: 1rem;
+  color: #333333;
+}
+
+/* Account page */
+
+.account-page .main-box {
+  background: #ffffff;
+  padding: 28px;
+  border-radius: 12px;
+}
+
+.account-page .card {
+  border-radius: 12px;
+  border: 1px solid #eeeeee;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+}
+
+.title-main {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.title-section {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.info-label,
+.stat-label {
+  color: #777777;
+}
+
+.info-label {
+  font-size: 15px;
+}
+
+.info-value {
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.avatar-placeholder {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: #6c757d;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+}
+
+.avatar-preview {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  margin: 10px auto;
+}
+
+.btn-save {
+  background: linear-gradient(135deg,#4e73df,#6c8cff);
+  border: none;
+  color: white;
+  padding: 10px 26px;
+  border-radius: 8px;
+}
+
+.stats-box {
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 15px;
+}
+
+.stat-value {
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.account-toggle {
+  cursor: pointer;
+}
+
+.account-collapsible-form {
+  display: none;
+  margin-top: 20px;
+}
+
+.account-hidden {
+  display: none;
+}
+
+.password-rules,
+.password-message {
+  font-size: 14px;
+  margin-bottom: 15px;
+}
+
+.account-rule-danger {
+  color: red;
+}
+
+.account-empty-message {
+  color: #777777;
 }

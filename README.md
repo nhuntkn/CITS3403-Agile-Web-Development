@@ -40,7 +40,7 @@ pip install -r requirements.txt
 
 ### 4. Configure environment variables
 
-Create a local `.env` file based on `.env.example`, or set `SECRET_KEY` in your terminal before running the app.
+Set `SECRET_KEY` in your terminal before running the app. The app will not start without this environment variable.
 
 Windows PowerShell:
 
@@ -77,6 +77,35 @@ http://127.0.0.1:5000/
 ```
 
 If `py` does not work on your machine, use `python` or `python3` instead.
+
+## Testing
+
+There are currently no automated unit or Selenium tests in the project.
+
+Before manually testing the app, make sure dependencies are installed, the database migrations have been applied, and `SECRET_KEY` is set in your terminal.
+
+Run a quick Python syntax check:
+
+```powershell
+py -m compileall app.py models.py data.py utils.py
+```
+
+Run the app locally:
+
+```powershell
+py app.py
+```
+
+Manual test checklist:
+
+- Open the login page and confirm it loads.
+- Sign up with a new user.
+- Log out and log back in.
+- Add an exercise session.
+- Check the dashboard charts and calorie goal.
+- Check the ranking page filters.
+- Check the history page and share a saved session with a friend.
+- Update profile details and change password from the account page.
 
 ## First Use
 

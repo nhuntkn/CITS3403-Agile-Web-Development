@@ -2,12 +2,12 @@
     <a href = "{{url_for('dashboard')}}" class = "ep-brand">
         <img src = "{{url_for('static', filename = 'images/logo.png')}}" alt = "EP">
     </a>
+    <div class = "ep-nav-spacer"></div>
     <a href = "{{url_for('dashboard')}}" class = "ep-nav-link {{'active' if request.endpoint == 'dashboard'}}">Dashboard</a>
     <a href = "{{url_for('ranking')}}" class = "ep-nav-link {{'active' if request.endpoint == 'ranking'}}">Ranking</a>
     <a href = "{{url_for('history')}}" class = "ep-nav-link {{'active' if request.endpoint == 'history'}}">History</a>
     <a href = "{{url_for('forum')}}" class = "ep-nav-link {{'active' if request.endpoint == 'forum'}}">Forum</a>
     <a href = "{{url_for('exercise')}}" class = "ep-nav-link create-btn {{'active' if request.endpoint == 'exercise'}}">Create Exercise</a>
-    <div class = "ep-nav-spacer"></div>
     <div class = "ep-user-menu">
         <div class="ep-user-avatar">
             {% if current_user.avatar %}

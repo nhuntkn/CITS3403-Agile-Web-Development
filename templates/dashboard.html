@@ -5,6 +5,8 @@
 {% block head %}
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <!-- Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 {% endblock %}
 
 {% block navbar %}
@@ -16,11 +18,34 @@
 <div class="container py-4">
   <div class="main-box">
 
-    <h1>Welcome!</h1>
-    <hr>
+  <div class="dashboard-top-row">
+    <div>
+      <h1>Welcome, {{ current_user.username }}!</h1>
+      <p class="dashboard-subtitle">
+        Track your training, weight changes, and weekly exercise progress.
+      </p>
+    </div>
 
-    <!-- 4 Metric cards -->
-    <h4>Your Stats</h4>
+    <!-- Calorie goal progress -->
+    <div class="calorie-box dashboard-calorie-box">
+      <div class="goal-row">
+        <span class="goal-label">Today's Calorie Goal</span>
+        <span class="goal-count" id="goalCount">0 / 500 goal</span>
+      </div>
+      <div class="progress">
+        <div class="progress-bar" id="calorieBar" role="progressbar"
+            style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- Alerts -->
+  <div id="alertBox" class="mb-3"></div>
+
+  <!-- 4 Metric cards -->
+  <h4>Your Stats</h4>
     <div class="row g-3 mb-4">
       <div class="col-6 col-md-3">
         <div class="metric-card">
@@ -45,26 +70,9 @@
       </div>
       <div class="col-6 col-md-3">
         <div class="metric-card">
-          <div class="card-title">Total Changes</div>
+          <div class="card-title">Total Change</div>
           <div class="card-value" id="totalChanges">—</div>
           <div class="card-sub">kg since start</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Calorie goal progress -->
-    <h4>Today's Calorie Goal</h4>
-    <div class="row mb-4">
-      <div class="col-12 col-md-8">
-        <div class="calorie-box">
-          <div class="goal-row">
-            <span class="goal-label">Calories burned</span>
-            <span class="goal-count" id="goalCount">0 / 500 goal</span>
-          </div>
-          <div class="progress">
-            <div class="progress-bar" id="calorieBar" role="progressbar"
-                 style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-          </div>
         </div>
       </div>
     </div>
@@ -90,6 +98,23 @@
       </div>
     </div>
 
+    <!-- Ai feedback section -->
+    <section class="ai-feedback-section">
+      <div class="ai-feedback-header">
+        <div>
+          <h4>Weekly AI Feedback</h4>
+          <p>Generate a short progress note from this week's weight and exercise data.</p>
+        </div>
+
+        <button type="button" class="ai-feedback-btn" id="generateAiFeedbackBtn">
+          Generate Weekly AI Feedback
+        </button>
+      </div>
+
+      <div class="ai-feedback-box" id="aiFeedbackBox">
+        Your weekly AI feedback will appear here.
+      </div>
+    </section>
   </div>
 </div><!-- /container -->
 {% endblock %}
@@ -100,24 +125,26 @@
 
     //Metric cards
     const startWeight = {{start_weight | tojson}};
+    const userHeight = {{user_height | tojson}};
 
     const sorted = [...sessions].sort((a, b) => a.date.localeCompare(b.date));
     const last = sorted[sorted.length - 1];
+    const currentWeight = last ? last.current_weight : startWeight;
 
     if (startWeight !== null) {
       document.getElementById("startWeight").textContent = startWeight.toFixed(1);
     }
-    if (last) {
-      document.getElementById('currentWeight').textContent =last.current_weight.toFixed(1);
+
+    if (currentWeight !== null) {
+      document.getElementById('currentWeight').textContent = currentWeight.toFixed(1);
       if (startWeight !== null) {
-        const change = last.current_weight - startWeight;
+        const change = currentWeight - startWeight;
         document.getElementById('totalChanges').textContent =
-          (change >= 0 ? "+" : "") + change.toFixed(1);
+          (change >= 0 ? "+" : "") + change.toFixed(1); 
       }
-      const userHeight = {{ user_height | tojson}};
       if (userHeight) {
         const heightM = userHeight / 100;
-        const bmi = last.current_weight / (heightM * heightM);
+        const bmi = currentWeight / (heightM * heightM);
         document.getElementById("currentBMI").textContent = bmi.toFixed(1);
 
         let category = "";
@@ -126,6 +153,33 @@
         else if (bmi < 30)  category = "Overweight";
         else                category = "Obese";
         document.getElementById("bmiCategory").textContent = category;
+      }
+    }
+
+    //Notifications
+    const alerts = [];
+
+    if (currentWeight !== null && userHeight) {
+      const heightM = userHeight / 100;
+      const bmi = currentWeight / (heightM * heightM);
+      if (bmi < 18.5)
+        alerts.push({ cls: "warning", msg: `BMI Alert: Your BMI is ${bmi.toFixed(1)} (Underweight). Consider consulting a healthcare professional.` });
+      else if (bmi >= 30)
+        alerts.push({ cls: "danger",  msg: `BMI Alert: Your BMI is ${bmi.toFixed(1)} (Obese). Consider consulting a healthcare professional.` });
+      else if (bmi >= 25)
+        alerts.push({ cls: "warning", msg: `BMI Alert: Your BMI is ${bmi.toFixed(1)} (Overweight). Consider consulting a healthcare professional.` });
+    }
+
+    if (sorted.length >= 2) {
+      const now = new Date();
+      const cutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,'0')}-${String(cutoff.getDate()).padStart(2,'0')}`;
+      const older = sorted.filter(s => s.date <= cutoffStr);
+      if (older.length > 0) {
+        const refWeight = older[older.length - 1].current_weight;
+        const change = currentWeight - refWeight;
+        if (Math.abs(change) > 1)
+          alerts.push({ cls: "warning", msg: `Weight Alert: You have ${change < 0 ? "lost" : "gained"} ${Math.abs(change).toFixed(1)} kg in the last 7 days.` });
       }
     }
 
@@ -140,10 +194,24 @@
 
     const GOAL = {{ calorie_goal | tojson }};
     const pct = Math.min(100, (todayKcal / GOAL) * 100);
-    document.getElementById("goalCount").textContent = `${Math.round(todayKcal)} / ${GOAL} goal`;
+    document.getElementById("goalCount").textContent = `${Math.round(Math.min(todayKcal, GOAL))} / ${GOAL} goal`;
     const bar = document.getElementById("calorieBar");
     bar.style.width = pct + "%";
     bar.setAttribute("aria-valuenow", pct);
+
+    if (todayKcal >= GOAL) {
+      confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+      alerts.push({ cls: "success", msg: `🎉 Goal reached! You've burned ${Math.round(todayKcal)} kcal today — you hit your daily goal!` });
+    }
+
+    const alertBox = document.getElementById("alertBox");
+    alerts.forEach(a => {
+      const div = document.createElement("div");
+      div.className = `alert alert-${a.cls} alert-dismissible fade show`;
+      div.setAttribute("role", "alert");
+      div.innerHTML = `${a.msg}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+      alertBox.appendChild(div);
+    });
 
     //Weekly chart
     const weekDays = [];
@@ -165,7 +233,7 @@
       data: {
         labels: weekLabels,
         datasets: [{ label: "Calories", data: weekData,
-                      backgroundColor: "#4caf50", borderRadius: 4}]
+                      backgroundColor: "#7793ae", borderRadius: 4}]
       },
       options: {
         responsive: true,
@@ -194,7 +262,7 @@
       data: {
         labels: Array.from({ length: daysInMonth}, (_, i) => i + 1),
         datasets: [{label: "Calories", data: monthData,
-                    backgroundColor: "#2196f3", borderRadius: 4}]
+                    backgroundColor: "#7793ae", borderRadius: 4}]
       },
       options: {
         responsive: true,
@@ -205,5 +273,47 @@
         }
       }
     });
+
+    //AI feedback button
+    const aiFeedbackBtn = document.getElementById("generateAiFeedbackBtn");
+    const aiFeedbackBox = document.getElementById("aiFeedbackBox");
+
+    if (aiFeedbackBtn && aiFeedbackBox) {
+      aiFeedbackBtn.addEventListener("click", async () => {
+        aiFeedbackBtn.disabled = true;
+        aiFeedbackBtn.textContent = "Generating...";
+        aiFeedbackBox.textContent = "Generating weekly feedback. Please wait...";
+
+        try {
+          const response = await fetch("{{ url_for('dashAiFeedback') }}", {
+            method: "POST"
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            aiFeedbackBox.textContent = data.error || "AI feedback could not be generated.";
+            aiFeedbackBtn.textContent = "Generate Weekly AI Feedback";
+            aiFeedbackBtn.disabled = false;
+            return;
+          }
+
+          aiFeedbackBox.textContent = data.feedback;
+
+          if (data.cached) {
+            aiFeedbackBtn.textContent = "Feedback already generated today";
+          } else {
+            aiFeedbackBtn.textContent = "Generated";
+          }
+
+          aiFeedbackBtn.disabled = true;
+
+        } catch (error) {
+          aiFeedbackBox.textContent = "AI feedback request failed. Please try again.";
+          aiFeedbackBtn.textContent = "Generate Weekly AI Feedback";
+          aiFeedbackBtn.disabled = false;
+        }
+      });
+    }
   </script>
 {% endblock %}

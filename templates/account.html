@@ -1,34 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Account</title>
+{% extends "base.html" %}
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% block title %}Account{% endblock %}
 
-<style>
-.main-box{background:#fff;padding:28px;border-radius:12px;}
-.title-main{font-size:22px;font-weight:600;margin-bottom:20px;}
-.title-section{font-size:18px;font-weight:600;}
-.info-label{font-size:15px;color:#777;}
-.info-value{font-size:17px;font-weight:500;}
-.card{border-radius:12px;border:1px solid #eee;box-shadow:0 3px 10px rgba(0,0,0,0.05);}
-.avatar-placeholder{width:90px;height:90px;border-radius:50%;background:#6c757d;color:white;display:flex;align-items:center;justify-content:center;font-size:32px;}
-.avatar-preview{width:140px;height:140px;border-radius:50%;object-fit:cover;display:block;margin:10px auto;}
-.btn-save{background:linear-gradient(135deg,#4e73df,#6c8cff);border:none;color:white;padding:10px 26px;border-radius:8px;}
-.stats-box{display:flex;justify-content:space-around;text-align:center;}
-.stat-label{font-size:15px;color:#777;}
-.stat-value{font-size:19px;font-weight:600;}
-</style>
-
-</head>
-
-<body>
-
+{% block navbar %}
 {% include 'navbar.html' %}
+{% endblock %}
 
-<div class="container-fluid">
+{% block content %}
+<div class="container-fluid account-page">
 <div class="row">
 
 <!-- SIDEBAR -->
@@ -75,7 +54,7 @@
 
 <div class="col-md-6 mb-3">
 <div class="info-label">Weight</div>
-<div class="info-value">{{ user.weight }} kg</div>
+<div class="info-value">{{ current_weight }} kg</div>
 </div>
 
 <div class="col-md-6 mb-3">
@@ -115,10 +94,10 @@
 
 <div class="d-flex justify-content-between">
 <div class="title-section">Edit Profile</div>
-<span onclick="toggleEdit()" style="cursor:pointer;">▼</span>
+<span class="account-toggle" onclick="toggleEdit()">▼</span>
 </div>
 
-<form method="POST" action="/account" enctype="multipart/form-data" id="editSection" style="display:none;margin-top:20px;">
+<form method="POST" action="/account" enctype="multipart/form-data" id="editSection" class="account-collapsible-form">
 
 <input type="hidden" name="form_type" value="update_profile">
 
@@ -151,7 +130,7 @@
 <input type="file" class="form-control mb-3" name="avatar" onchange="previewImage(event)">
 
 <div class="avatar-box mb-3 text-center">
-    <img id="previewBox" class="avatar-preview" style="display:none;">
+    <img id="previewBox" class="avatar-preview account-hidden">
 </div>
 
 <div class="text-center">
@@ -166,16 +145,17 @@
 
 <div class="d-flex justify-content-between">
 <div class="title-section">Change Password</div>
-<span onclick="togglePassword()" style="cursor:pointer;">▼</span>
+<span class="account-toggle" onclick="togglePassword()">▼</span>
 </div>
 
-<form method="POST" id="passwordSection" style="display:none;margin-top:20px;">
+<form method="POST" id="passwordSection" class="account-collapsible-form">
 
 <input type="hidden" name="form_type" value="change_password">
 
 <label>New Password</label>
 <input type="password" class="form-control mb-2" id="newPassword" name="new_password" onkeyup="validatePassword()">
 
+<<<<<<< forgot-password
 <div style="font-size:14px;margin-bottom:15px;">
 <div id="rule-length" style="color:red;">
 • At least 12 characters
@@ -188,12 +168,17 @@
 <div id="rule-special" style="color:red;">
 • Contains at least one special character (!@#$%^&*)
 </div>
+=======
+<div class="password-rules">
+<div id="rule-length" class="account-rule-danger">• At least 6 characters</div>
+<div id="rule-letter" class="account-rule-danger">• Contains a letter</div>
+>>>>>>> main
 </div>
 
 <label>Confirm Password</label>
 <input type="password" class="form-control mb-2" id="confirmPassword" name="confirm_password" onkeyup="checkMatch()">
 
-<div id="matchMessage" style="font-size:14px;margin-bottom:15px;"></div>
+<div id="matchMessage" class="password-message"></div>
 
 <div class="text-center">
 <button class="btn btn-save">Update Password</button>
@@ -206,7 +191,7 @@
 
 
 <!-- ADD FRIEND -->
-<div id="addSection" class="main-box" style="display:none;">
+<div id="addSection" class="main-box account-hidden">
 
 <div class="title-main">Add Friend</div>
 
@@ -233,6 +218,14 @@
 
 </div>
 
+<!-- /MAIN -->
+</div>
+</div>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
 <script>
 
 /* ================= PROFILE ================= */
@@ -371,7 +364,7 @@ const box=document.getElementById("searchResults");
 box.innerHTML="";
 
 if(list.length===0){
-box.innerHTML="<div style='color:#777;'>No users found</div>";
+box.innerHTML="<div class='account-empty-message'>No users found</div>";
 return;
 }
 
@@ -486,6 +479,4 @@ window.onload = function(){
 }
 
 </script>
-
-</body>
-</html>
+{% endblock %}

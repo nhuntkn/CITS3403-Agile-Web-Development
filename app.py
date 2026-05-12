@@ -9,16 +9,29 @@ from email.message import EmailMessage
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session, abort
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_migrate import Migrate
-from models import db, ExerciseSession, SessionExercise, User, Share, Friend
+from models import db, ExerciseSession, SessionExercise, User, Share, Friend, AIFeedback
 from data import exercise_data
-from utils import calculate_calories
-from datetime import date as current_date
+from utils import calculate_calories, generateAiFeedbackText, getStartWeek, buildFeedback, buildFeedbackHash
+from datetime import date as current_date, timedelta
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
+<<<<<<< forgot-password
 load_dotenv()
+=======
+
+load_dotenv() #load environment variables from .env file
+>>>>>>> main
 
 app = Flask(__name__)
+secret_key = os.environ.get('SECRET_KEY')
+if not secret_key:
+    raise RuntimeError("SECRET_KEY environment variable must be set before starting the app")
 
+<<<<<<< forgot-password
+=======
+app.config['SECRET_KEY'] = secret_key
+
+>>>>>>> main
 #configure SQLite database, SQLAlchemy will store the database file inside the Flask instance folder
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///exercise_planner.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -55,6 +68,7 @@ def parse_location_fields(latitude_raw, longitude_raw):
 
     return latitude, longitude, None
 
+<<<<<<< forgot-password
 
 def send_reset_email(to_email, code):
     msg = EmailMessage()
@@ -76,6 +90,83 @@ def send_reset_email(to_email, code):
 
         smtp.send_message(msg)
 
+=======
+@app.route("/dashboard/ai-feedback", methods=["POST"])
+@login_required
+def dashAiFeedback():
+    today = current_date.today()
+    today_str = today.isoformat()
+    week_start = getStartWeek(today)
+    week_start_str = week_start.isoformat()
+
+    weekly_sessions = ExerciseSession.query.filter(
+        ExerciseSession.user_id == current_user.id,
+        ExerciseSession.date >= week_start_str,
+        ExerciseSession.date <= today_str
+    ).order_by(ExerciseSession.date.asc()).all()
+
+    if not weekly_sessions:
+        return jsonify({
+            "error": "No exercise sessions found for this week yet. Add a session first, then generate feedback."
+        }), 400
+
+    current_data_hash = buildFeedbackHash(weekly_sessions)
+
+    existing_feedback = AIFeedback.query.filter_by(
+        user_id=current_user.id,
+        generated_date=today_str
+    ).first()
+
+    if existing_feedback and existing_feedback.data_hash == current_data_hash:
+        return jsonify({
+            "feedback": existing_feedback.feedback_text,
+            "cached": True
+        })
+
+    prompt = buildFeedback(
+        current_user,
+        weekly_sessions,
+        week_start,
+        today
+    )
+
+    try:
+        feedback_text = generateAiFeedbackText(prompt)
+
+    except Exception as error:
+        error_text = str(error)
+
+        if "insufficient_quota" in error_text or "exceeded your current quota" in error_text:
+            message = "AI feedback is currently unavailable because the API quota has been reached. Please try again later."
+        else:
+            message = "AI feedback could not be generated right now. Please try again later."
+
+        return jsonify({
+            "error": message
+        }), 500
+
+    if existing_feedback:
+        existing_feedback.week_start_date = week_start_str
+        existing_feedback.data_hash = current_data_hash
+        existing_feedback.feedback_text = feedback_text
+    else:
+        saved_feedback = AIFeedback(
+            user_id=current_user.id,
+            week_start_date=week_start_str,
+            generated_date=today_str,
+            data_hash=current_data_hash,
+            feedback_text=feedback_text
+        )
+
+        db.session.add(saved_feedback)
+
+    db.session.commit()
+
+    return jsonify({
+        "feedback": feedback_text,
+        "cached": False
+    })
+>>>>>>> main
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -178,6 +269,19 @@ def exercise():
 
         #store the total calories for the full session
         new_session.total_calories = round(total_calories, 2)
+
+        existing_day = db.session.query(
+            db.func.coalesce(db.func.sum(ExerciseSession.total_calories), 0)
+        ).filter(
+            ExerciseSession.user_id == user.id,
+            ExerciseSession.date == date,
+            ExerciseSession.id != new_session.id
+        ).scalar()
+        if existing_day + total_calories > 10000:
+            db.session.rollback()
+            return render_template("exercise.html", exercise_data=exercise_data,
+                                   username=current_user.username,
+                                   error="Daily calorie total cannot exceed 10,000 kcal")
 
         #save everything to the database
         db.session.commit()
@@ -295,32 +399,53 @@ def check_username():
 @app.route("/ranking")
 @login_required
 def ranking():
+    period_options = {
+        "all": ("All Time", None),
+        "daily": ("Daily", 0),
+        "weekly": ("Weekly", 6),
+        "monthly": ("Monthly", 29),
+        "half_year": ("Half Yearly", 182)
+    }
+    selected_period = request.args.get("period", "all")
+    if selected_period not in period_options:
+        selected_period = "all"
+
+    today = current_date.today()
+    period_label, days_back = period_options[selected_period]
+    start_date = None if days_back is None else (today - timedelta(days=days_back)).isoformat()
+    end_date = today.isoformat()
+
     users = User.query.all()
     ranking_data = []
 
     for user in users:
         sessions = ExerciseSession.query.filter_by(user_id=user.id).order_by(ExerciseSession.date.asc()).all()
-        latest_session = sessions[-1] if sessions else None
-        total_calories = sum(session.total_calories for session in sessions)
-        kg_lost = 0
-
-        if user.weight is not None and latest_session is not None:
-            kg_lost = user.weight - latest_session.current_weight
+        filtered_sessions = [
+            session for session in sessions
+            if start_date is None or (start_date <= session.date <= end_date)
+        ]
+        total_calories = sum(session.total_calories for session in filtered_sessions)
 
         ranking_data.append({
             "username": user.username,
-            "kg_lost": round(kg_lost, 1),
             "total_calories": round(total_calories, 2),
-            "total_sessions": len(sessions)
+            "total_sessions": len(filtered_sessions),
+            "has_sessions": len(filtered_sessions) > 0
         })
 
-    ranking_data.sort(key=lambda item: (item["kg_lost"], item["total_calories"]), reverse=True)
-    return render_template("ranking.html", username=current_user.username, ranking_data=ranking_data)
+    ranking_data.sort(key=lambda item: (item["has_sessions"], item["total_calories"]), reverse=True)
+    return render_template("ranking.html", username=current_user.username, ranking_data=ranking_data,
+                           period_options=period_options, selected_period=selected_period,
+                           period_label=period_label)
 
 @app.route("/history")
 @login_required
 def history():
     sessions = ExerciseSession.query.filter_by(user_id=current_user.id).order_by(ExerciseSession.date.desc()).all()
+    friends = User.query.join(Friend, (
+        ((Friend.sender_id == current_user.id) & (Friend.receiver_id == User.id)) |
+        ((Friend.receiver_id == current_user.id) & (Friend.sender_id == User.id))
+    )).filter(Friend.status == "accepted").all()
     location_data = [
         {
             "id": session.id,
@@ -333,7 +458,8 @@ def history():
         for session in sessions
         if session.latitude is not None and session.longitude is not None
     ]
-    return render_template("history.html", username=current_user.username, sessions=sessions, location_data=location_data)
+    return render_template("history.html", username=current_user.username, sessions=sessions,
+                           location_data=location_data, friends=friends)
 
 @app.route("/history/<int:session_id>/delete", methods=["POST"])
 @login_required
@@ -425,7 +551,9 @@ def account():
     sessions = ExerciseSession.query.filter_by(user_id=user.id).all()
     total_calories = round(sum(s.total_calories for s in sessions),2)
     total_sessions = len(sessions)
-    bmi = round(user.weight/((user.height/100)**2),2) if user.weight and user.height else None
+    last_session = max(sessions, key=lambda s: s.date) if sessions else None
+    current_weight = last_session.current_weight if last_session else user.weight
+    bmi = round(current_weight/((user.height/100)**2),2) if current_weight and user.height else None
 
     if request.method == "POST":
         form = request.form.get("form_type")
@@ -510,6 +638,7 @@ def account():
         bmi=bmi,
         total_calories=total_calories,
         total_sessions=total_sessions,
+        current_weight=current_weight,
         current_date=current_date.today().isoformat()
     )
 
