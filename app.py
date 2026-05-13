@@ -15,28 +15,20 @@ from utils import calculate_calories, generateAiFeedbackText, getStartWeek, buil
 from datetime import date as current_date, timedelta
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
-<<<<<<< forgot-password
-load_dotenv()
-=======
 
 load_dotenv() #load environment variables from .env file
->>>>>>> main
 
 app = Flask(__name__)
 secret_key = os.environ.get('SECRET_KEY')
 if not secret_key:
     raise RuntimeError("SECRET_KEY environment variable must be set before starting the app")
 
-<<<<<<< forgot-password
-=======
 app.config['SECRET_KEY'] = secret_key
 
->>>>>>> main
 #configure SQLite database, SQLAlchemy will store the database file inside the Flask instance folder
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///exercise_planner.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 #configure for forgot password function
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-me')
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
 #Avatar MAX content length
@@ -68,7 +60,6 @@ def parse_location_fields(latitude_raw, longitude_raw):
 
     return latitude, longitude, None
 
-<<<<<<< forgot-password
 
 def send_reset_email(to_email, code):
     msg = EmailMessage()
@@ -90,7 +81,6 @@ def send_reset_email(to_email, code):
 
         smtp.send_message(msg)
 
-=======
 @app.route("/dashboard/ai-feedback", methods=["POST"])
 @login_required
 def dashAiFeedback():
@@ -166,7 +156,6 @@ def dashAiFeedback():
         "feedback": feedback_text,
         "cached": False
     })
->>>>>>> main
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -913,7 +902,8 @@ def forgot_password():
 
             email = session.get("reset_email")
             user = User.query.filter_by(email=email).first()
-
+            if not user:
+                return redirect(url_for("forgot_password"))
             code = request.form.get("code", "").strip()
             new_password = request.form.get("new_password", "")
             confirm_password = request.form.get("confirm_password", "")
