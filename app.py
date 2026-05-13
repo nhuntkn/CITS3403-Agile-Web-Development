@@ -51,6 +51,26 @@ def parse_location_fields(latitude_raw, longitude_raw):
 
     return latitude, longitude, None
 
+def user_avatar_url(user):
+    if not user or not user.avatar:
+        return None
+
+    avatar_path = os.path.join(app.root_path, "static", "uploads", user.avatar)
+    if not os.path.isfile(avatar_path):
+        return None
+
+    return url_for("static", filename="uploads/" + user.avatar)
+
+@app.context_processor
+def inject_avatar_helpers():
+    return {"user_avatar_url": user_avatar_url}
+
+def user_avatar_payload(user):
+    return {
+        "username": user.username,
+        "avatar_url": user_avatar_url(user)
+    }
+
 @app.route("/dashboard/ai-feedback", methods=["POST"])
 @login_required
 def dashAiFeedback():
@@ -372,6 +392,7 @@ def ranking():
 
         ranking_data.append({
             "username": user.username,
+            "avatar_url": user_avatar_url(user),
             "total_calories": round(total_calories, 2),
             "total_sessions": len(filtered_sessions),
             "has_sessions": len(filtered_sessions) > 0
@@ -596,7 +617,7 @@ def search_users():
         User.username != current_user.username
     ).limit(10).all()
 
-    result = [{"username": u.username} for u in users]
+    result = [user_avatar_payload(u) for u in users]
 
     return jsonify(result)
 
@@ -666,7 +687,7 @@ def get_friends():
     for r in pending_reqs:
         sender = User.query.get(r.sender_id)
         if sender:
-            pending.append(sender.username)
+            pending.append(user_avatar_payload(sender))
 
     # find all accepted relationships
     relations = Friend.query.filter_by(status="accepted").all()
@@ -679,17 +700,17 @@ def get_friends():
         if r.sender_id == user_id:
             u = User.query.get(r.receiver_id)
             if u:
-                friends.append(u.username)
+                friends.append(user_avatar_payload(u))
 
         # current user is receiver → friend is sender
         elif r.receiver_id == user_id:
             u = User.query.get(r.sender_id)
             if u:
-                friends.append(u.username)
+                friends.append(user_avatar_payload(u))
 
     # sort lists for stable display
-    pending.sort()
-    friends.sort()
+    pending.sort(key=lambda item: item["username"].lower())
+    friends.sort(key=lambda item: item["username"].lower())
 
     # return result for frontend
     return jsonify({
