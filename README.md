@@ -80,23 +80,51 @@ If `py` does not work on your machine, use `python` or `python3` instead.
 
 ## Testing
 
-There are currently no automated unit or Selenium tests in the project.
+The project includes automated unit/integration tests and Selenium browser tests.
 
-Before manually testing the app, make sure dependencies are installed, the database migrations have been applied, and `SECRET_KEY` is set in your terminal.
+Before testing, make sure dependencies are installed and `SECRET_KEY` is set in your terminal.
 
-Run a quick Python syntax check:
+Windows PowerShell:
+
+```powershell
+$env:SECRET_KEY="test-secret-key"
+```
+
+macOS / Linux:
+
+```bash
+export SECRET_KEY="test-secret-key"
+```
+
+Run all automated tests:
+
+```powershell
+py -m pytest
+```
+
+Run only the unit and Flask route tests:
+
+```powershell
+py -m pytest tests/test_unit.py tests/test_flask_flows.py
+```
+
+Run only the Selenium browser test:
+
+```powershell
+py -m pytest tests/test_selenium.py
+```
+
+The tests use a separate SQLite database at `instance/test_exercise_planner.db`. This keeps test data away from the local development database at `instance/exercise_planner.db`.
+
+The Selenium test starts a Flask test server automatically on a free local port, then opens the app in a headless browser and checks signup, logout, login, dashboard, ranking, and history navigation flow. If Chrome or a compatible Chrome WebDriver cannot be started on the machine, the Selenium test is skipped with a clear reason.
+
+Run a quick Python syntax check when needed:
 
 ```powershell
 py -m compileall app.py models.py data.py utils.py
 ```
 
-Run the app locally:
-
-```powershell
-py app.py
-```
-
-Manual test checklist:
+Manual smoke test checklist:
 
 - Open the login page and confirm it loads.
 - Sign up with a new user.
@@ -115,10 +143,9 @@ Manual test checklist:
 
 Password rules:
 
-- At least 6 characters
-- At least one uppercase letter
-- At least one lowercase letter
-- At least one special character
+- At least 12 characters
+- At least one letter
+- At least one special character from `!@#$%^&*`
 
 ## Pages & Features
 ### Main Page (Home)
@@ -129,9 +156,10 @@ Password rules:
 
 ### Sign Up Page
 
-- Registration form collecting: username, password, confirm password, date of birth, sex, weight (kg), height (cm)
+- Registration form collecting: username, email, password, confirm password, date of birth, sex, weight (kg), height (cm)
 - Username has to be unique
-- Password validation: 6–20 characters, at least one uppercase letter and one number
+- Email has to be unique
+- Password validation: at least 12 characters, at least one letter, and at least one special character
 - Redirects to dashboard after successful registration
 
 ### Dashboard
