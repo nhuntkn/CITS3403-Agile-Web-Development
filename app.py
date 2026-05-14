@@ -26,7 +26,7 @@ if not secret_key:
 app.config['SECRET_KEY'] = secret_key
 
 #configure SQLite database, SQLAlchemy will store the database file inside the Flask instance folder
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///exercise_planner.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", "sqlite:///exercise_planner.db")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 #configure for forgot password function
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
@@ -191,7 +191,7 @@ def dashAiFeedback():
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id)) #load user from database by ID for Flask-Login
+    return db.session.get(User, int(user_id)) #load user from database by ID for Flask-Login
 
 @app.route("/exercise", methods=["GET", "POST"])
 @login_required
