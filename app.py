@@ -361,7 +361,7 @@ def signup():
 
         if not any(char.isalpha() for char in password):
             return render_template("signup.html", error="Password must contain at least one letter")
-        
+
         if not any(char in "!@#$%^&*" for char in password):
             return render_template(
                 "signup.html",
@@ -374,7 +374,7 @@ def signup():
         existing = User.query.filter_by(username=username).first()
         if existing:
             return render_template("signup.html", error="Username already exists")
-        
+
         existing_email = User.query.filter_by(email=email).first()
         if existing_email:
             return render_template(
