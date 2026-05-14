@@ -200,8 +200,17 @@ def exercise():
     
     if request.method == "POST":
         #get the main session data from the form
-        date = request.form.get("date")
-        if date > current_date.today().isoformat():
+        date = request.form.get("date", "").strip()
+
+        if not date:
+            return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Date is required")
+
+        try:
+            submitted_date = current_date.fromisoformat(date)
+        except ValueError:
+            return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Invalid date entered")
+
+        if submitted_date > current_date.today():
             return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Date cannot be in the future")
 
         try:
@@ -231,10 +240,26 @@ def exercise():
         activity_levels = request.form.getlist("level[]")
         minutes_list = request.form.getlist("minutes[]")
 
+        if not exercise_names:
+            return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Please add at least one exercise")
+
+        if not (len(exercise_names) == len(activity_levels) == len(minutes_list)):
+            return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Exercise details are incomplete")
+
         parsed_exercises = []
         for i in range(len(exercise_names)):
-            exercise_name = exercise_names[i]
-            activity_level = activity_levels[i]
+            exercise_name = exercise_names[i].strip()
+            activity_level = activity_levels[i].strip()
+
+            if not exercise_name or not activity_level:
+                return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Please complete all exercise fields")
+
+            if exercise_name not in exercise_data:
+                return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Invalid exercise selected")
+
+            if activity_level not in exercise_data[exercise_name]:
+                return render_template("exercise.html", exercise_data=exercise_data, username=current_user.username, error="Invalid activity level selected")
+
             try:
                 minutes = int(minutes_list[i])
             except (TypeError, ValueError):
