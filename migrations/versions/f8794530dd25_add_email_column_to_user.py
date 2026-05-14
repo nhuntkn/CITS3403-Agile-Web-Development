@@ -1,7 +1,7 @@
 """add email column to user
 
 Revision ID: f8794530dd25
-Revises: 182805b6caea
+Revises: 3118966b9573
 Create Date: 2026-05-12 12:28:41.647881
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'f8794530dd25'
-down_revision = '182805b6caea'
+down_revision = '3118966b9573'
 branch_labels = None
 depends_on = None
 

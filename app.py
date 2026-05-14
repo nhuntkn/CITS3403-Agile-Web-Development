@@ -2,7 +2,7 @@
 
 import os
 import random
-import time 
+import time
 import smtplib
 
 from email.message import EmailMessage
@@ -62,6 +62,9 @@ def parse_location_fields(latitude_raw, longitude_raw):
 
 
 def send_reset_email(to_email, code):
+    if not app.config["MAIL_USERNAME"] or not app.config["MAIL_PASSWORD"]:
+        raise RuntimeError("Email credentials are not configured")
+
     msg = EmailMessage()
 
     msg["Subject"] = "Password Reset Verification Code"
@@ -80,6 +83,16 @@ def send_reset_email(to_email, code):
         )
 
         smtp.send_message(msg)
+
+
+def clear_reset_session():
+    session.pop("reset_code", None)
+    session.pop("reset_email", None)
+    session.pop("reset_time", None)
+    session.pop("reset_attempts", None)
+    session.pop("reset_verified", None)
+
+
 def user_avatar_url(user):
     if not user or not user.avatar:
         return None
@@ -564,6 +577,17 @@ def account():
     current_weight = last_session.current_weight if last_session else user.weight
     bmi = round(current_weight/((user.height/100)**2),2) if current_weight and user.height else None
 
+    def render_account(error=None):
+        return render_template("account.html",
+            user=user,
+            bmi=bmi,
+            total_calories=total_calories,
+            total_sessions=total_sessions,
+            current_weight=current_weight,
+            current_date=current_date.today().isoformat(),
+            error=error
+        )
+
     if request.method == "POST":
         form = request.form.get("form_type")
 
@@ -579,17 +603,17 @@ def account():
             today = current_date.today().isoformat()
 
             if dob and dob > today:
-                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Invalid DOB")
+                return render_account("Invalid DOB")
 
             if gender not in ["Male","Female","",None]:
-                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Invalid gender")
+                return render_account("Invalid gender")
 
             try:
                 user.weight = float(weight) if weight and float(weight)>0 else None
                 user.height = float(height) if height and float(height)>0 else None
                 user.calorie_goal = int(calorie) if calorie and int(calorie)>0 else user.calorie_goal
             except:
-                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Invalid number")
+                return render_account("Invalid number")
 
             user.dob, user.gender = dob, gender
 
@@ -597,7 +621,7 @@ def account():
             f = request.files.get('avatar')
             if f and f.filename:
                 if f.filename.rsplit('.',1)[-1].lower() not in ['jpg','jpeg','png']:
-                    return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Invalid image")
+                    return render_account("Invalid image")
 
                 # create upload folder if not exists
                 upload_path = os.path.join(app.root_path, 'static', 'uploads')
@@ -629,27 +653,20 @@ def account():
                 or not any(c.isalpha() for c in pw)
                 or not any(c in "!@#$%^&*" for c in pw)
             ):
-                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Invalid password")
+                return render_account("Invalid password")
 
             if pw != cf:
-                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Mismatch")
+                return render_account("Mismatch")
 
             if user.check_password(pw):
-                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="New password cannot be the same as old password")
+                return render_account("New password cannot be the same as old password")
 
             user.set_password(pw)
 
         db.session.commit()
         return redirect(url_for("account"))
 
-    return render_template("account.html",
-        user=user,
-        bmi=bmi,
-        total_calories=total_calories,
-        total_sessions=total_sessions,
-        current_weight=current_weight,
-        current_date=current_date.today().isoformat()
-    )
+    return render_account()
 
 #---!  add friend  ---#
 @app.route('/api/search_users')
@@ -862,6 +879,7 @@ def forgot_password():
             session["reset_email"] = email
             session["reset_time"] = time.time()
             session["reset_attempts"] = 0
+            session["reset_verified"] = False
 
             return render_template(
                 "forgot_password.html",
@@ -878,10 +896,7 @@ def forgot_password():
 
             if attempts >= 5:
 
-                session.pop("reset_code", None)
-                session.pop("reset_email", None)
-                session.pop("reset_time", None)
-                session.pop("reset_attempts", None)
+                clear_reset_session()
 
                 return render_template(
                     "forgot_password.html",
@@ -890,10 +905,7 @@ def forgot_password():
 
             if time.time() - session.get("reset_time", 0) > 300:
 
-                session.pop("reset_code", None)
-                session.pop("reset_email", None)
-                session.pop("reset_time", None)
-                session.pop("reset_attempts", None)
+                clear_reset_session()
 
                 return render_template(
                     "forgot_password.html",
@@ -910,11 +922,12 @@ def forgot_password():
                     show_code=True
                 )
 
+            session["reset_verified"] = True
+
             return render_template(
                 "forgot_password.html",
                 show_code=True,
-                show_reset=True,
-                code=code
+                show_reset=True
             )
 
         # STEP 3: reset password
@@ -924,27 +937,23 @@ def forgot_password():
             user = User.query.filter_by(email=email).first()
             if not user:
                 return redirect(url_for("forgot_password"))
-            code = request.form.get("code", "").strip()
             new_password = request.form.get("new_password", "")
             confirm_password = request.form.get("confirm_password", "")
 
             if time.time() - session.get("reset_time", 0) > 300:
 
-                session.pop("reset_code", None)
-                session.pop("reset_email", None)
-                session.pop("reset_time", None)
-                session.pop("reset_attempts", None)
+                clear_reset_session()
 
                 return render_template(
                     "forgot_password.html",
                     error="Verification code expired"
                 )
 
-            if code != session.get("reset_code"):
+            if not session.get("reset_verified"):
 
                 return render_template(
                     "forgot_password.html",
-                    error="Invalid verification code",
+                    error="Please verify your code before resetting your password",
                     show_code=True
                 )
 
@@ -997,10 +1006,7 @@ def forgot_password():
 
             db.session.commit()
 
-            session.pop("reset_code", None)
-            session.pop("reset_email", None)
-            session.pop("reset_time", None)
-            session.pop("reset_attempts", None)
+            clear_reset_session()
 
             return redirect(url_for("login"))
 
