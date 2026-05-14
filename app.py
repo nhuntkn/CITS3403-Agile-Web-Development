@@ -870,6 +870,58 @@ def reject_friend():
     # return result
     return jsonify({"message": "request rejected"}), 200
 
+@app.route('/api/delete_friend', methods=['POST'])
+@login_required
+def delete_friend():
+
+    # get request data
+    data = request.get_json()
+    username = data.get("username", "").strip()
+
+    # find target user
+    target = User.query.filter_by(username=username).first()
+
+    if not target:
+        return jsonify({"error": "invalid user"}), 404
+
+    # find friendship (both directions)
+    friendship = Friend.query.filter(
+        (
+            (Friend.sender_id == current_user.id) &
+            (Friend.receiver_id == target.id)
+        )
+        |
+        (
+            (Friend.sender_id == target.id) &
+            (Friend.receiver_id == current_user.id)
+        ),
+        Friend.status == "accepted"
+    ).first()
+
+    # friendship not found
+    if not friendship:
+        return jsonify({"error": "friendship not found"}), 404
+
+    # delete related shares in both directions
+    Share.query.filter(
+        (
+            (Share.sender_id == current_user.id) &
+            (Share.receiver_id == target.id)
+        )
+        |
+        (
+            (Share.sender_id == target.id) &
+            (Share.receiver_id == current_user.id)
+        )
+    ).delete(synchronize_session=False)
+
+    # delete friendship
+    db.session.delete(friendship)
+
+    # save changes
+    db.session.commit()
+
+    return jsonify({"message": "friend deleted"}), 200
 
 @app.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
