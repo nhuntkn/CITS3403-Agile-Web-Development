@@ -40,6 +40,7 @@ class SessionExercise(db.Model):
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=True)
     password = db.Column(db.String(255), nullable=False)
     dob = db.Column(db.String(20))
     gender = db.Column(db.String(10))

@@ -1,8 +1,12 @@
 #setup Flask app and routes, connects to database, handles form submission and rendering templates
 
 import os
+import random
+import time
+import smtplib
 
-from flask import Flask, render_template, request, redirect, url_for, jsonify, abort
+from email.message import EmailMessage
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session, abort
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_migrate import Migrate
 from models import db, ExerciseSession, SessionExercise, User, Share, Friend, AIFeedback
@@ -24,6 +28,11 @@ app.config['SECRET_KEY'] = secret_key
 #configure SQLite database, SQLAlchemy will store the database file inside the Flask instance folder
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///exercise_planner.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+#configure for forgot password function
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+#Avatar MAX content length
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 
 db.init_app(app) #attach SQLAlchemy to Flask app
 
@@ -50,6 +59,39 @@ def parse_location_fields(latitude_raw, longitude_raw):
         return None, None, "Longitude must be between -180 and 180"
 
     return latitude, longitude, None
+
+
+def send_reset_email(to_email, code):
+    if not app.config["MAIL_USERNAME"] or not app.config["MAIL_PASSWORD"]:
+        raise RuntimeError("Email credentials are not configured")
+
+    msg = EmailMessage()
+
+    msg["Subject"] = "Password Reset Verification Code"
+    msg["From"] = app.config["MAIL_USERNAME"]
+    msg["To"] = to_email
+
+    msg.set_content(
+        f"Your verification code is: {code}\n\n"
+        "This code will expire in 5 minutes."
+    )
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        smtp.login(
+            app.config["MAIL_USERNAME"],
+            app.config["MAIL_PASSWORD"]
+        )
+
+        smtp.send_message(msg)
+
+
+def clear_reset_session():
+    session.pop("reset_code", None)
+    session.pop("reset_email", None)
+    session.pop("reset_time", None)
+    session.pop("reset_attempts", None)
+    session.pop("reset_verified", None)
+
 
 def user_avatar_url(user):
     if not user or not user.avatar:
@@ -305,6 +347,7 @@ def dashboard():
 def signup():
     if request.method == "POST":
         username = request.form.get("username")
+        email = request.form.get("email")
         password = request.form.get("password")
         confirm = request.form.get("confirm")
 
@@ -313,11 +356,17 @@ def signup():
         weight = request.form.get("weight")
         height = request.form.get("height")
 
-        if not password or len(password) < 6:
-            return render_template("signup.html", error="Password must be at least 6 characters long")
+        if not password or len(password) < 12:
+            return render_template("signup.html", error="Password must be at least 12 characters long")
 
         if not any(char.isalpha() for char in password):
             return render_template("signup.html", error="Password must contain at least one letter")
+
+        if not any(char in "!@#$%^&*" for char in password):
+            return render_template(
+                "signup.html",
+                error="Password must contain at least one special character"
+            )
 
         if password != confirm:
             return render_template("signup.html", error="Passwords do not match")
@@ -326,8 +375,16 @@ def signup():
         if existing:
             return render_template("signup.html", error="Username already exists")
 
+        existing_email = User.query.filter_by(email=email).first()
+        if existing_email:
+            return render_template(
+                "signup.html",
+                error="Email already exists"
+            )
+
         new_user = User(
             username=username,
+            email=email,
             dob=dob,
             gender=gender,
             weight=float(weight) if weight else None,
@@ -520,6 +577,17 @@ def account():
     current_weight = last_session.current_weight if last_session else user.weight
     bmi = round(current_weight/((user.height/100)**2),2) if current_weight and user.height else None
 
+    def render_account(error=None):
+        return render_template("account.html",
+            user=user,
+            bmi=bmi,
+            total_calories=total_calories,
+            total_sessions=total_sessions,
+            current_weight=current_weight,
+            current_date=current_date.today().isoformat(),
+            error=error
+        )
+
     if request.method == "POST":
         form = request.form.get("form_type")
 
@@ -535,17 +603,17 @@ def account():
             today = current_date.today().isoformat()
 
             if dob and dob > today:
-                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Invalid DOB")
+                return render_account("Invalid DOB")
 
             if gender not in ["Male","Female","",None]:
-                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Invalid gender")
+                return render_account("Invalid gender")
 
             try:
                 user.weight = float(weight) if weight and float(weight)>0 else None
                 user.height = float(height) if height and float(height)>0 else None
                 user.calorie_goal = int(calorie) if calorie and int(calorie)>0 else user.calorie_goal
             except:
-                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Invalid number")
+                return render_account("Invalid number")
 
             user.dob, user.gender = dob, gender
 
@@ -553,7 +621,7 @@ def account():
             f = request.files.get('avatar')
             if f and f.filename:
                 if f.filename.rsplit('.',1)[-1].lower() not in ['jpg','jpeg','png']:
-                    return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Invalid image")
+                    return render_account("Invalid image")
 
                 # create upload folder if not exists
                 upload_path = os.path.join(app.root_path, 'static', 'uploads')
@@ -572,7 +640,6 @@ def account():
                 # save new avatar
                 f.save(os.path.join(upload_path, name))
                 user.avatar = name
-            db.session.commit()
 
         # change password
         elif form == "change_password":
@@ -580,28 +647,26 @@ def account():
             cf = request.form.get("confirm_password","").strip()
             today = current_date.today().isoformat()
 
-            if not pw or len(pw)<6 or not any(c.isalpha() for c in pw):
-                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Invalid password")
+            if (
+                not pw
+                or len(pw) < 12
+                or not any(c.isalpha() for c in pw)
+                or not any(c in "!@#$%^&*" for c in pw)
+            ):
+                return render_account("Invalid password")
 
             if pw != cf:
-                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Mismatch")
+                return render_account("Mismatch")
 
             if user.check_password(pw):
-                return render_template("account.html", user=user, bmi=bmi, total_calories=total_calories, total_sessions=total_sessions, current_date=today, error="Same as old")
+                return render_account("New password cannot be the same as old password")
 
             user.set_password(pw)
 
         db.session.commit()
         return redirect(url_for("account"))
 
-    return render_template("account.html",
-        user=user,
-        bmi=bmi,
-        total_calories=total_calories,
-        total_sessions=total_sessions,
-        current_weight=current_weight,
-        current_date=current_date.today().isoformat()
-    )
+    return render_account()
 
 #---!  add friend  ---#
 @app.route('/api/search_users')
@@ -779,6 +844,177 @@ def reject_friend():
 
     # return result
     return jsonify({"message": "request rejected"}), 200
+
+
+@app.route("/forgot_password", methods=["GET", "POST"])
+def forgot_password():
+
+    if request.method == "POST":
+
+        action = request.form.get("action")
+
+        # STEP 1: send code
+        if action == "send_code":
+
+            email = request.form.get("email", "").strip()
+
+            user = User.query.filter_by(email=email).first()
+
+            if not user:
+                return render_template(
+                    "forgot_password.html",
+                    error="Email not found"
+                )
+
+            verification_code = str(random.randint(100000, 999999))
+            try:
+                send_reset_email(email, verification_code)
+            except:
+                return render_template(
+                    "forgot_password.html",
+                    error="Failed to send verification email"
+                )
+
+            session["reset_code"] = verification_code
+            session["reset_email"] = email
+            session["reset_time"] = time.time()
+            session["reset_attempts"] = 0
+            session["reset_verified"] = False
+
+            return render_template(
+                "forgot_password.html",
+                message="Verification code sent",
+                show_code=True
+            )
+
+        # STEP 2: verify code
+        elif action == "verify_code":
+
+            code = request.form.get("code", "").strip()
+
+            attempts = session.get("reset_attempts", 0)
+
+            if attempts >= 5:
+
+                clear_reset_session()
+
+                return render_template(
+                    "forgot_password.html",
+                    error="Too many incorrect attempts"
+                )
+
+            if time.time() - session.get("reset_time", 0) > 300:
+
+                clear_reset_session()
+
+                return render_template(
+                    "forgot_password.html",
+                    error="Verification code expired"
+                )
+
+            if code != session.get("reset_code"):
+
+                session["reset_attempts"] = attempts + 1
+
+                return render_template(
+                    "forgot_password.html",
+                    error="Invalid verification code",
+                    show_code=True
+                )
+
+            session["reset_verified"] = True
+
+            return render_template(
+                "forgot_password.html",
+                show_code=True,
+                show_reset=True
+            )
+
+        # STEP 3: reset password
+        elif action == "reset":
+
+            email = session.get("reset_email")
+            user = User.query.filter_by(email=email).first()
+            if not user:
+                return redirect(url_for("forgot_password"))
+            new_password = request.form.get("new_password", "")
+            confirm_password = request.form.get("confirm_password", "")
+
+            if time.time() - session.get("reset_time", 0) > 300:
+
+                clear_reset_session()
+
+                return render_template(
+                    "forgot_password.html",
+                    error="Verification code expired"
+                )
+
+            if not session.get("reset_verified"):
+
+                return render_template(
+                    "forgot_password.html",
+                    error="Please verify your code before resetting your password",
+                    show_code=True
+                )
+
+            if len(new_password) < 12:
+
+                return render_template(
+                    "forgot_password.html",
+                    error="Password must be at least 12 characters",
+                    show_code=True,
+                    show_reset=True
+                )
+
+            if not any(char.isalpha() for char in new_password):
+
+                return render_template(
+                    "forgot_password.html",
+                    error="Password must contain at least one letter",
+                    show_code=True,
+                    show_reset=True
+                )
+
+            if not any(char in "!@#$%^&*" for char in new_password):
+
+                return render_template(
+                    "forgot_password.html",
+                    error="Password must contain at least one special character",
+                    show_code=True,
+                    show_reset=True
+                )
+
+            if new_password != confirm_password:
+
+                return render_template(
+                    "forgot_password.html",
+                    error="Passwords do not match",
+                    show_code=True,
+                    show_reset=True
+                )
+
+            if user.check_password(new_password):
+
+                return render_template(
+                    "forgot_password.html",
+                    error="New password cannot be the same as old password",
+                    show_code=True,
+                    show_reset=True
+                )
+
+            user.set_password(new_password)
+
+            db.session.commit()
+
+            clear_reset_session()
+
+            return redirect(url_for("login"))
+
+    return render_template(
+        "forgot_password.html",
+        show_reset=False,
+        show_code=False
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)

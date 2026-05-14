@@ -25,6 +25,12 @@
 
 <div class="title-main">My Profile</div>
 
+{% if error %}
+<div class="alert alert-danger">
+    {{ error }}
+</div>
+{% endif %}
+
 <div class="card p-4 mb-4">
 <div class="row align-items-center">
 
@@ -54,6 +60,11 @@
 <div class="col-md-6 mb-3">
 <div class="info-label">Height</div>
 <div class="info-value">{{ user.height }} cm</div>
+</div>
+
+<div class="col-md-6 mb-3">
+<div class="info-label">Email</div>
+<div class="info-value">{{ user.email }}</div>
 </div>
 
 </div>
@@ -145,9 +156,18 @@
 <label>New Password</label>
 <input type="password" class="form-control mb-2" id="newPassword" name="new_password" onkeyup="validatePassword()">
 
-<div class="password-rules">
-<div id="rule-length" class="account-rule-danger">• At least 6 characters</div>
-<div id="rule-letter" class="account-rule-danger">• Contains a letter</div>
+<div style="font-size:14px;margin-bottom:15px;">
+<div id="rule-length" style="color:red;">
+• At least 12 characters
+</div>
+
+<div id="rule-letter" style="color:red;">
+• Contains at least one letter
+</div>
+
+<div id="rule-special" style="color:red;">
+• Contains at least one special character (!@#$%^&*)
+</div>
 </div>
 
 <label>Confirm Password</label>
@@ -226,26 +246,37 @@ img.style.display="block";
 reader.readAsDataURL(file);
 }
 
+
 function validatePassword(){
+
 const pw=document.getElementById("newPassword").value;
 
 const len=document.getElementById("rule-length");
 const lettr=document.getElementById("rule-letter");
+const special=document.getElementById("rule-special");
 
-if(pw.length>=6){
-len.style.color="green";
-len.innerHTML="✔ At least 6 characters";
+if(pw.length>=12){
+    len.style.color="green";
+    len.innerHTML="✔ At least 12 characters";
 }else{
-len.style.color="red";
-len.innerHTML="• At least 6 characters";
+    len.style.color="red";
+    len.innerHTML="• At least 12 characters";
 }
 
 if(/[a-zA-Z]/.test(pw)){
-lettr.style.color="green";
-lettr.innerHTML="✔ Contains a letter";
+    lettr.style.color="green";
+    lettr.innerHTML="✔ Contains at least one letter";
 }else{
-lettr.style.color="red";
-lettr.innerHTML="• Contains a letter";
+    lettr.style.color="red";
+    lettr.innerHTML="• Contains at least one letter";
+}
+
+if(/[!@#$%^&*]/.test(pw)){
+    special.style.color="green";
+    special.innerHTML="✔ Contains at least one special character (!@#$%^&*)";
+}else{
+    special.style.color="red";
+    special.innerHTML="• Contains at least one special character (!@#$%^&*)";
 }
 
 checkMatch();
@@ -258,16 +289,21 @@ const msg=document.getElementById("matchMessage");
 
 if(cf===""){
 msg.innerHTML="";
-return;
-}
-
-if(pw===cf){
+}else if(pw===cf){
 msg.style.color="green";
 msg.innerHTML="✔ Passwords match";
 }else{
 msg.style.color="red";
 msg.innerHTML="✖ Passwords do not match";
 }
+
+const valid =
+pw.length >= 12 &&
+/[a-zA-Z]/.test(pw) &&
+/[!@#$%^&*]/.test(pw) &&
+pw === cf;
+
+document.querySelector("#passwordSection button").disabled = !valid;
 }
 
 
