@@ -901,7 +901,7 @@ def delete_friend():
     # friendship not found
     if not friendship:
         return jsonify({"error": "friendship not found"}), 404
-    
+
     # delete related shares in both directions
     Share.query.filter(
         (
