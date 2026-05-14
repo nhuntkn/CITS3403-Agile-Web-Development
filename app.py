@@ -901,6 +901,19 @@ def delete_friend():
     # friendship not found
     if not friendship:
         return jsonify({"error": "friendship not found"}), 404
+    
+    # delete related shares in both directions
+    Share.query.filter(
+        (
+            (Share.sender_id == current_user.id) &
+            (Share.receiver_id == target.id)
+        )
+        |
+        (
+            (Share.sender_id == target.id) &
+            (Share.receiver_id == current_user.id)
+        )
+    ).delete(synchronize_session=False)
 
     # delete friendship
     db.session.delete(friendship)
