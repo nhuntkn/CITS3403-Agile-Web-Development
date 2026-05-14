@@ -486,14 +486,36 @@ renderFriends();
 });
 }
 
+function deleteFriend(username){
+if(!confirm("Are you sure you want to delete this friend?")) return;
+
+fetch('/api/delete_friend',{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({username:username})
+})
+.then(res=>res.json())
+.then(data=>{
+    alert(data.message || data.error);
+    loadFriends();
+});
+}
+
 function renderFriends(){
 const box=document.getElementById("friendsList");
 box.innerHTML="";
 
 friends.forEach(u=>{
 const row=document.createElement("div");
-row.className="border-bottom py-2";
+row.className="d-flex justify-content-between align-items-center border-bottom py-2";
 row.appendChild(userLine(u));
+
+const button = document.createElement("button");
+button.className = "btn btn-danger btn-sm";
+button.textContent = "Delete";
+button.addEventListener("click", () => deleteFriend(u.username));
+
+row.appendChild(button);
 box.appendChild(row);
 });
 }
