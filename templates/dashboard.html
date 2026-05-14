@@ -129,7 +129,7 @@
 
     const sorted = [...sessions].sort((a, b) => a.date.localeCompare(b.date));
     const last = sorted[sorted.length - 1];
-    const currentWeight = last ? last.current_weight : startWeight;
+    const currentWeight = {{ current_weight | tojson }};
 
     if (startWeight !== null) {
       document.getElementById("startWeight").textContent = startWeight.toFixed(1);
