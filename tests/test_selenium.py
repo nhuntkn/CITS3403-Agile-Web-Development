@@ -248,7 +248,7 @@ def test_account_search_finds_existing_user(live_server, app):
 
         driver.get(f"{live_server}/account")
         wait.until(EC.visibility_of_element_located((By.ID, "profileSection")))
-        driver.find_element(By.XPATH, "//button[normalize-space()='Add Friend']").click()
+        driver.find_element(By.XPATH, "//button[normalize-space()='Friend']").click()
         wait.until(EC.visibility_of_element_located((By.ID, "searchInput"))).send_keys("target")
         driver.find_element(By.XPATH, "//button[normalize-space()='Search']").click()
 

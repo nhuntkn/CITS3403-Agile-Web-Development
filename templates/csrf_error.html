@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Invalid Request{% endblock %}
+
+{% block navbar %}
+    <div class="login-navbar">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Exercise Planner">
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="main-box">
+        <h1>Invalid Request</h1>
+        <div class="alert alert-danger">
+            This form could not be submitted securely. Please refresh the page and try again.
+        </div>
+        {% if reason %}
+            <p class="text-muted">{{ reason }}</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

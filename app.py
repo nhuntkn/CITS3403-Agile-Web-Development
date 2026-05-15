@@ -9,6 +9,8 @@ from email.message import EmailMessage
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session, abort
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_migrate import Migrate
+from flask_wtf import CSRFProtect
+from flask_wtf.csrf import CSRFError
 from models import db, ExerciseSession, SessionExercise, User, Share, Friend, AIFeedback
 from data import exercise_data
 from utils import calculate_calories, generateAiFeedbackText, getStartWeek, buildFeedback, buildFeedbackHash
@@ -36,9 +38,17 @@ app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 
 db.init_app(app) #attach SQLAlchemy to Flask app
 
+csrf = CSRFProtect(app)
 migrate = Migrate(app, db) #set up Flask-Migrate for database migrations
 login_manager = LoginManager(app) #set up Flask-Login for user session management
 login_manager.login_view = 'login' #redirect to login page if user tries to access protected routes
+
+
+@app.errorhandler(CSRFError)
+def handle_csrf_error(error):
+    if request.is_json or request.path.startswith("/api/") or request.path == "/dashboard/ai-feedback":
+        return jsonify({"error": "Invalid or missing CSRF token"}), 400
+    return render_template("csrf_error.html", reason=error.description), 400
 
 def parse_location_fields(latitude_raw, longitude_raw):
     if not latitude_raw and not longitude_raw:
@@ -165,14 +175,16 @@ def dashAiFeedback():
     except Exception as error:
         error_text = str(error)
 
-        if "insufficient_quota" in error_text or "exceeded your current quota" in error_text:
+        if "API key is not set" in error_text:
+            message = "AI feedback is not configured yet. Please add the required API key in the .env file before using this feature."
+        elif "insufficient_quota" in error_text or "exceeded your current quota" in error_text:
             message = "AI feedback is currently unavailable because the API quota has been reached. Please try again later."
         else:
             message = "AI feedback could not be generated right now. Please try again later."
 
         return jsonify({
             "error": message
-        }), 500
+        }), 503
 
     if existing_feedback:
         existing_feedback.week_start_date = week_start_str
@@ -323,6 +335,9 @@ def exercise():
         #store the total calories for the full session
         new_session.total_calories = round(total_calories, 2)
 
+        # update current user weight
+        user.weight = current_weight
+
         existing_day = db.session.query(
             db.func.coalesce(db.func.sum(ExerciseSession.total_calories), 0)
         ).filter(
@@ -356,13 +371,13 @@ def exercise():
 @login_required
 def dashboard(): 
     user = current_user
-    username = current_user.username
 
-    start_weight = user.weight if user else None
+    start_weight = user.start_weight if user else None
     calorie_goal = user.calorie_goal if user and user.calorie_goal else 1000
 
     sessions = ExerciseSession.query.filter_by(user_id = user.id).order_by(ExerciseSession.date.asc()).all()
 
+    current_weight = user.weight if user else None
     sessions_data = [
         {
             "date" : s.date,
@@ -372,8 +387,14 @@ def dashboard():
         for s in sessions
     ]
 
-    return render_template("dashboard.html", username = username, sessions_data = sessions_data, start_weight = start_weight, 
-                           user_height = user.height if user else None, calorie_goal = calorie_goal)
+    return render_template(
+        "dashboard.html",
+        sessions_data=sessions_data,
+        start_weight=start_weight,
+        current_weight=current_weight,
+        user_height=user.height if user else None,
+        calorie_goal=calorie_goal
+    )
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
@@ -414,13 +435,37 @@ def signup():
                 error="Email already exists"
             )
 
+        try:
+            weight_value = float(weight)
+            height_value = float(height)
+        except (TypeError, ValueError):
+            return render_template("signup.html", today=current_date.today().isoformat(),
+                                   error="Weight and height must be valid numbers")
+
+        if weight_value < 1 or weight_value > 300:
+            return render_template("signup.html", today=current_date.today().isoformat(),
+                                   error="Weight must be between 1 and 300 kg")
+
+        if height_value < 50 or height_value > 250:
+            return render_template("signup.html", today=current_date.today().isoformat(),
+                                   error="Height must be between 50 and 250 cm")
+
+        if round(weight_value, 2) != weight_value:
+            return render_template("signup.html", today=current_date.today().isoformat(),
+                                   error="Weight can only have up to 2 decimal places")
+
+        if round(height_value, 2) != height_value:
+            return render_template("signup.html", today=current_date.today().isoformat(),
+                                   error="Height can only have up to 2 decimal places")
+
         new_user = User(
             username=username,
             email=email,
             dob=dob,
             gender=gender,
-            weight=float(weight) if weight else None,
-            height=float(height) if height else None
+            weight=weight_value,
+            start_weight=weight_value,
+            height=height_value
         )
 
         new_user.set_password(password)
@@ -604,21 +649,9 @@ def forum():
 def account():
     user = current_user
 
-    # stats
-    sessions = ExerciseSession.query.filter_by(user_id=user.id).all()
-    total_calories = round(sum(s.total_calories for s in sessions),2)
-    total_sessions = len(sessions)
-    last_session = max(sessions, key=lambda s: s.date) if sessions else None
-    current_weight = last_session.current_weight if last_session else user.weight
-    bmi = round(current_weight/((user.height/100)**2),2) if current_weight and user.height else None
-
     def render_account(error=None):
         return render_template("account.html",
             user=user,
-            bmi=bmi,
-            total_calories=total_calories,
-            total_sessions=total_sessions,
-            current_weight=current_weight,
             current_date=current_date.today().isoformat(),
             error=error
         )
@@ -632,6 +665,7 @@ def account():
             dob = request.form.get("dob")
             gender = request.form.get("gender")
             weight = request.form.get("weight")
+            start_weight = request.form.get("start_weight")
             height = request.form.get("height")
             calorie = request.form.get("calorie_goal")
 
@@ -644,10 +678,31 @@ def account():
                 return render_account("Invalid gender")
 
             try:
-                user.weight = float(weight) if weight and float(weight)>0 else None
-                user.height = float(height) if height and float(height)>0 else None
-                user.calorie_goal = int(calorie) if calorie and int(calorie)>0 else user.calorie_goal
-            except:
+                if weight:
+                    weight_value = round(float(weight), 2)
+                    if weight_value < 1 or weight_value > 300:
+                        return render_account("Current weight must be between 1 and 300 kg")
+                    user.weight = weight_value
+
+                if start_weight:
+                    start_weight_value = round(float(start_weight), 2)
+                    if start_weight_value < 1 or start_weight_value > 300:
+                        return render_account("Start weight must be between 1 and 300 kg")
+                    user.start_weight = start_weight_value
+
+                if height:
+                    height_value = round(float(height), 2)
+                    if height_value < 1 or height_value > 300:
+                        return render_account("Height must be between 1 and 300 cm")
+                    user.height = height_value
+
+                if calorie:
+                    calorie_value = int(calorie)
+                    if calorie_value <= 0:
+                        return render_account("Daily calorie goal must be greater than 0")
+                    user.calorie_goal = calorie_value
+
+            except ValueError:
                 return render_account("Invalid number")
 
             user.dob, user.gender = dob, gender
@@ -880,6 +935,58 @@ def reject_friend():
     # return result
     return jsonify({"message": "request rejected"}), 200
 
+@app.route('/api/delete_friend', methods=['POST'])
+@login_required
+def delete_friend():
+
+    # get request data
+    data = request.get_json()
+    username = data.get("username", "").strip()
+
+    # find target user
+    target = User.query.filter_by(username=username).first()
+
+    if not target:
+        return jsonify({"error": "invalid user"}), 404
+
+    # find friendship (both directions)
+    friendship = Friend.query.filter(
+        (
+            (Friend.sender_id == current_user.id) &
+            (Friend.receiver_id == target.id)
+        )
+        |
+        (
+            (Friend.sender_id == target.id) &
+            (Friend.receiver_id == current_user.id)
+        ),
+        Friend.status == "accepted"
+    ).first()
+
+    # friendship not found
+    if not friendship:
+        return jsonify({"error": "friendship not found"}), 404
+
+    # delete related shares in both directions
+    Share.query.filter(
+        (
+            (Share.sender_id == current_user.id) &
+            (Share.receiver_id == target.id)
+        )
+        |
+        (
+            (Share.sender_id == target.id) &
+            (Share.receiver_id == current_user.id)
+        )
+    ).delete(synchronize_session=False)
+
+    # delete friendship
+    db.session.delete(friendship)
+
+    # save changes
+    db.session.commit()
+
+    return jsonify({"message": "friend deleted"}), 200
 
 @app.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
