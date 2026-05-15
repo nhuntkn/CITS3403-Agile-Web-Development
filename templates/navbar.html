@@ -12,8 +12,7 @@
         <div class="ep-user-avatar">
             {% set nav_avatar_url = user_avatar_url(current_user) %}
             {% if nav_avatar_url %}
-                <img src="{{ nav_avatar_url }}"
-                    style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                <img src="{{ nav_avatar_url }}" alt="{{ current_user.username }}">
             {% else %}
                 {{ username[0].upper() if username }}
             {% endif %}

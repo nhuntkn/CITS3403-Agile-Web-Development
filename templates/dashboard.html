@@ -82,17 +82,25 @@
     <div class="row g-3">
       <div class="col-12 col-md-6">
         <div class="chart-card">
-          <div class="chart-title">Calories burned — the last 7 days</div>
+          <div class="chart-nav">
+            <button class="chart-nav-btn" id="weeklyPrev">&#8592;</button>
+            <span class="chart-title" id="weeklyTitle">Calories burned — the last 7 days</span>
+            <button class="chart-nav-btn" id="weeklyNext" disabled>&#8594;</button>
+          </div>
           <div class="chart-wrapper">
-            <canvas id="weeklyChart" height="160"></canvas>
+            <canvas id="weeklyChart"></canvas>
           </div>
         </div>
       </div>
       <div class="col-12 col-md-6">
         <div class="chart-card">
-          <div class="chart-title">Calories burned — this month</div>
+          <div class="chart-nav">
+            <button class="chart-nav-btn" id="monthlyPrev">&#8592;</button>
+            <span class="chart-title" id="monthlyTitle">Calories burned — this month</span>
+            <button class="chart-nav-btn" id="monthlyNext" disabled>&#8594;</button>
+          </div>
           <div class="chart-wrapper">
-            <canvas id="monthlyChart" height="160"></canvas>
+            <canvas id="monthlyChart"></canvas>
           </div>
         </div>
       </div>
@@ -121,203 +129,14 @@
 
 {% block scripts %}
   <script>
-    const sessions = {{ sessions_data | tojson }};
-
-    //Metric cards
-    const startWeight = {{start_weight | tojson}};
-    const userHeight = {{user_height | tojson}};
-
-    const sorted = [...sessions].sort((a, b) => a.date.localeCompare(b.date));
-    const last = sorted[sorted.length - 1];
-    const currentWeight = {{ current_weight | tojson }};
-
-    if (startWeight !== null) {
-      document.getElementById("startWeight").textContent = startWeight.toFixed(1);
-    }
-
-    if (currentWeight !== null) {
-      document.getElementById('currentWeight').textContent = currentWeight.toFixed(1);
-      if (startWeight !== null) {
-        const change = currentWeight - startWeight;
-        document.getElementById('totalChanges').textContent =
-          (change >= 0 ? "+" : "") + change.toFixed(1); 
-      }
-      if (userHeight) {
-        const heightM = userHeight / 100;
-        const bmi = currentWeight / (heightM * heightM);
-        document.getElementById("currentBMI").textContent = bmi.toFixed(1);
-
-        let category = "";
-        if (bmi < 18.5)     category = "Underweight";
-        else if (bmi < 25)  category = "Normal";
-        else if (bmi < 30)  category = "Overweight";
-        else                category = "Obese";
-        document.getElementById("bmiCategory").textContent = category;
-      }
-    }
-
-    //Notifications
-    const alerts = [];
-
-    if (currentWeight !== null && userHeight) {
-      const heightM = userHeight / 100;
-      const bmi = currentWeight / (heightM * heightM);
-      if (bmi < 18.5)
-        alerts.push({ cls: "warning", msg: `BMI Alert: Your BMI is ${bmi.toFixed(1)} (Underweight). Consider consulting a healthcare professional.` });
-      else if (bmi >= 30)
-        alerts.push({ cls: "danger",  msg: `BMI Alert: Your BMI is ${bmi.toFixed(1)} (Obese). Consider consulting a healthcare professional.` });
-      else if (bmi >= 25)
-        alerts.push({ cls: "warning", msg: `BMI Alert: Your BMI is ${bmi.toFixed(1)} (Overweight). Consider consulting a healthcare professional.` });
-    }
-
-    if (sorted.length >= 2) {
-      const now = new Date();
-      const cutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,'0')}-${String(cutoff.getDate()).padStart(2,'0')}`;
-      const older = sorted.filter(s => s.date <= cutoffStr);
-      if (older.length > 0) {
-        const refWeight = older[older.length - 1].current_weight;
-        const change = currentWeight - refWeight;
-        if (Math.abs(change) > 1)
-          alerts.push({ cls: "warning", msg: `Weight Alert: You have ${change < 0 ? "lost" : "gained"} ${Math.abs(change).toFixed(1)} kg in the last 7 days.` });
-      }
-    }
-
-    //Calorie goal bar
-    const today = (() => {
-      const d = new Date();
-      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2, '0')}`;
-    })();
-    const todayKcal = sessions
-      .filter(s => s.date === today)
-      .reduce((sum, s) => sum + s.total_calories, 0);
-
-    const GOAL = {{ calorie_goal | tojson }};
-    const pct = Math.min(100, (todayKcal / GOAL) * 100);
-    document.getElementById("goalCount").textContent = `${Math.round(Math.min(todayKcal, GOAL))} / ${GOAL} goal`;
-    const bar = document.getElementById("calorieBar");
-    bar.style.width = pct + "%";
-    bar.setAttribute("aria-valuenow", pct);
-
-    if (todayKcal >= GOAL) {
-      confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-      alerts.push({ cls: "success", msg: `🎉 Goal reached! You've burned ${Math.round(todayKcal)} kcal today — you hit your daily goal!` });
-    }
-
-    const alertBox = document.getElementById("alertBox");
-    alerts.forEach(a => {
-      const div = document.createElement("div");
-      div.className = `alert alert-${a.cls} alert-dismissible fade show`;
-      div.setAttribute("role", "alert");
-      div.innerHTML = `${a.msg}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
-      alertBox.appendChild(div);
-    });
-
-    //Weekly chart
-    const weekDays = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      weekDays.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2, '0')}`);
-    }
-    const weekLabels = weekDays.map(d => {
-      const dt = new Date(d + "T00:00:00");
-      return dt.toLocaleDateString("en-AU", {weekday: "short", day: "numeric"});
-    })
-    const weekData = weekDays.map(d =>
-      sessions.filter(s => s.date === d).reduce((sum, s) => sum + s.total_calories, 0)
-    );
-
-    new Chart(document.getElementById("weeklyChart"), {
-      type: "bar",
-      data: {
-        labels: weekLabels,
-        datasets: [{ label: "Calories", data: weekData,
-                      backgroundColor: "#7793ae", borderRadius: 4}]
-      },
-      options: {
-        responsive: true,
-        plugins: {legend: {display: false}},
-        scales: {
-          x: {ticks: {color: "#ccc"}, grid: {color: "rgba(255,255,255,0.1)"}},
-          y: {ticks: {color: "#ccc"}, grid: {color: "rgba(255,255,255,0.1)"}, beginAtZero: true }
-        }
-      }
-    });
-
-    //Monthly chart (current month)
-    const now = new Date();
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    const monthDays = Array.from({length: daysInMonth}, (_, i) => {
-      const day = String(i + 1).padStart(2, "0");
-      const mon = String(now.getMonth() + 1).padStart(2, "0");
-      return `${now.getFullYear()}-${mon}-${day}`;
-    });
-    const monthData = monthDays.map(d =>
-      sessions.filter(s => s.date === d).reduce((sum, s) => sum + s.total_calories, 0)
-    );
-    
-    new Chart(document.getElementById("monthlyChart"), {
-      type: "bar",
-      data: {
-        labels: Array.from({ length: daysInMonth}, (_, i) => i + 1),
-        datasets: [{label: "Calories", data: monthData,
-                    backgroundColor: "#7793ae", borderRadius: 4}]
-      },
-      options: {
-        responsive: true,
-        plugins: {legend: {display: false}},
-        scales: {
-          x: {ticks: {color: "#ccc"}, grid: {color: "rgba(255,255,255,0.1)"}},
-          y: {ticks: {color: "#ccc"}, grid: {color: "rgba(255,255,255,0.1)"}, beginAtZero: true }
-        }
-      }
-    });
-
-    //AI feedback button
-    const aiFeedbackBtn = document.getElementById("generateAiFeedbackBtn");
-    const aiFeedbackBox = document.getElementById("aiFeedbackBox");
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
-
-    if (aiFeedbackBtn && aiFeedbackBox) {
-      aiFeedbackBtn.addEventListener("click", async () => {
-        aiFeedbackBtn.disabled = true;
-        aiFeedbackBtn.textContent = "Generating...";
-        aiFeedbackBox.textContent = "Generating weekly feedback. Please wait...";
-
-        try {
-          const response = await fetch("{{ url_for('dashAiFeedback') }}", {
-            method: "POST",
-            headers: {
-              "X-CSRFToken": csrfToken
-            }
-          });
-
-          const data = await response.json();
-
-          if (!response.ok) {
-            aiFeedbackBox.textContent = data.error || "AI feedback could not be generated.";
-            aiFeedbackBtn.textContent = "Generate Weekly AI Feedback";
-            aiFeedbackBtn.disabled = false;
-            return;
-          }
-
-          aiFeedbackBox.textContent = data.feedback;
-
-          if (data.cached) {
-            aiFeedbackBtn.textContent = "Feedback already generated today";
-          } else {
-            aiFeedbackBtn.textContent = "Generated";
-          }
-
-          aiFeedbackBtn.disabled = true;
-
-        } catch (error) {
-          aiFeedbackBox.textContent = "AI feedback request failed. Please try again.";
-          aiFeedbackBtn.textContent = "Generate Weekly AI Feedback";
-          aiFeedbackBtn.disabled = false;
-        }
-      });
-    }
+    window.DASHBOARD_DATA = {
+      sessions:      {{ sessions_data | tojson }},
+      startWeight:   {{ start_weight | tojson }},
+      userHeight:    {{ user_height | tojson }},
+      currentWeight: {{ current_weight | tojson }},
+      calorieGoal:   {{ calorie_goal | tojson }},
+      aiFeedbackUrl: "{{ url_for('dashAiFeedback') }}"
+    };
   </script>
+  <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}
