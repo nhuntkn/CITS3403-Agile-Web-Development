@@ -20,6 +20,7 @@ flask_app.config.update(
     TESTING=True,
     MAIL_USERNAME="test@example.com",
     MAIL_PASSWORD="test-password",
+    WTF_CSRF_ENABLED=False,
 )
 
 

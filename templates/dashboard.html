@@ -277,6 +277,7 @@
     //AI feedback button
     const aiFeedbackBtn = document.getElementById("generateAiFeedbackBtn");
     const aiFeedbackBox = document.getElementById("aiFeedbackBox");
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
 
     if (aiFeedbackBtn && aiFeedbackBox) {
       aiFeedbackBtn.addEventListener("click", async () => {
@@ -286,7 +287,10 @@
 
         try {
           const response = await fetch("{{ url_for('dashAiFeedback') }}", {
-            method: "POST"
+            method: "POST",
+            headers: {
+              "X-CSRFToken": csrfToken
+            }
           });
 
           const data = await response.json();

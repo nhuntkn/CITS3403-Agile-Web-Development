@@ -93,6 +93,7 @@
 
 <form method="POST" action="/account" enctype="multipart/form-data" id="editSection" class="account-collapsible-form">
 
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 <input type="hidden" name="form_type" value="update_profile">
 
 <label>Date of Birth</label>
@@ -150,6 +151,7 @@
 
 <form method="POST" id="passwordSection" class="account-collapsible-form">
 
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 <input type="hidden" name="form_type" value="change_password">
 
 <label>New Password</label>
@@ -221,6 +223,11 @@
 
 {% block scripts %}
 <script>
+const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
+const csrfJsonHeaders = {
+    "Content-Type": "application/json",
+    "X-CSRFToken": csrfToken
+};
 
 /* ================= PROFILE ================= */
 function toggleEdit(){
@@ -406,7 +413,7 @@ list.forEach(u=>{
 function addFriend(username, button){
 fetch('/api/add_friend',{
 method:'POST',
-headers:{'Content-Type':'application/json'},
+headers:csrfJsonHeaders,
 body:JSON.stringify({username:username})
 })
 .then(res => res.json())
@@ -459,7 +466,7 @@ box.appendChild(row);
 function acceptFriend(username){
 fetch('/api/accept_friend',{
 method:'POST',
-headers:{'Content-Type':'application/json'},
+headers:csrfJsonHeaders,
 body:JSON.stringify({username:username})
 })
 .then(()=>loadFriends());
@@ -468,7 +475,7 @@ body:JSON.stringify({username:username})
 function rejectFriend(username){
 fetch('/api/reject_friend',{
 method:'POST',
-headers:{'Content-Type':'application/json'},
+headers:csrfJsonHeaders,
 body:JSON.stringify({username:username})
 })
 .then(()=>loadFriends());
@@ -490,7 +497,7 @@ if(!confirm("Are you sure you want to delete this friend?")) return;
 
 fetch('/api/delete_friend',{
 method:'POST',
-headers:{'Content-Type':'application/json'},
+headers:csrfJsonHeaders,
 body:JSON.stringify({username:username})
 })
 .then(res=>res.json())

@@ -1,4 +1,5 @@
 from datetime import date
+import re
 
 from models import db, ExerciseSession, SessionExercise, User
 from tests.conftest import create_user, login
@@ -66,6 +67,59 @@ def test_login_logout_and_protected_pages(client, app):
     response = client.get("/logout", follow_redirects=False)
     assert response.status_code == 302
     assert response.headers["Location"].endswith("/login")
+
+
+def test_csrf_protects_post_forms_when_enabled(client, app):
+    app.config["WTF_CSRF_ENABLED"] = True
+    try:
+        with app.app_context():
+            create_user(username="csrfuser", email="csrf@example.com", password="Validpass123!")
+
+        response = client.post(
+            "/login",
+            data={"username": "csrfuser", "password": "Validpass123!"},
+        )
+        assert response.status_code == 400
+        assert b"securely" in response.data or b"CSRF" in response.data
+
+        login_page = client.get("/login")
+        token_match = re.search(
+            rb'name="csrf_token" value="([^"]+)"',
+            login_page.data,
+        )
+        assert token_match is not None
+
+        response = client.post(
+            "/login",
+            data={
+                "username": "csrfuser",
+                "password": "Validpass123!",
+                "csrf_token": token_match.group(1).decode(),
+            },
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+        assert response.headers["Location"].endswith("/dashboard")
+
+        response = client.post("/dashboard/ai-feedback")
+        assert response.status_code == 400
+        assert response.get_json()["error"] == "Invalid or missing CSRF token"
+
+        dashboard = client.get("/dashboard")
+        meta_match = re.search(
+            rb'<meta name="csrf-token" content="([^"]+)"',
+            dashboard.data,
+        )
+        assert meta_match is not None
+
+        response = client.post(
+            "/dashboard/ai-feedback",
+            headers={"X-CSRFToken": meta_match.group(1).decode()},
+        )
+        assert response.status_code == 400
+        assert response.get_json()["error"] != "Invalid or missing CSRF token"
+    finally:
+        app.config["WTF_CSRF_ENABLED"] = False
 
 
 def test_exercise_session_is_saved_to_test_database(client, app):

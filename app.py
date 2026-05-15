@@ -9,6 +9,8 @@ from email.message import EmailMessage
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session, abort
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_migrate import Migrate
+from flask_wtf import CSRFProtect
+from flask_wtf.csrf import CSRFError
 from models import db, ExerciseSession, SessionExercise, User, Share, Friend, AIFeedback
 from data import exercise_data
 from utils import calculate_calories, generateAiFeedbackText, getStartWeek, buildFeedback, buildFeedbackHash
@@ -36,9 +38,17 @@ app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 
 db.init_app(app) #attach SQLAlchemy to Flask app
 
+csrf = CSRFProtect(app)
 migrate = Migrate(app, db) #set up Flask-Migrate for database migrations
 login_manager = LoginManager(app) #set up Flask-Login for user session management
 login_manager.login_view = 'login' #redirect to login page if user tries to access protected routes
+
+
+@app.errorhandler(CSRFError)
+def handle_csrf_error(error):
+    if request.is_json or request.path.startswith("/api/") or request.path == "/dashboard/ai-feedback":
+        return jsonify({"error": "Invalid or missing CSRF token"}), 400
+    return render_template("csrf_error.html", reason=error.description), 400
 
 def parse_location_fields(latitude_raw, longitude_raw):
     if not latitude_raw and not longitude_raw:
