@@ -282,7 +282,7 @@ def exercise():
             longitude=longitude,
             user_id = user.id
         )
-        
+
         #add the session first to get an ID, ID needed for the foreign key in exercises
         db.session.add(new_session)
         db.session.flush()
