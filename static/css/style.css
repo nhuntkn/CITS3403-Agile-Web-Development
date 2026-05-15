@@ -51,6 +51,7 @@ body {
   align-items: center;
   transition: background 0.12s;
   white-space: nowrap;
+  position: relative;
 }
 
 .ep-nav-link:hover {
@@ -224,7 +225,6 @@ body {
 }
 
 .calorie-box .progress-bar {
-  background: #4caf50;
   border-radius: 20px;
   transition: width 0.6s ease;
 }
@@ -247,6 +247,65 @@ body {
   background: #1e1e1e;
   border-radius: 8px;
   padding: 0.75rem 0.5rem 0.5rem;
+  position: relative;
+  height: 220px;
+}
+
+.chart-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.chart-nav .chart-title {
+  margin-bottom: 0;
+  flex: 1;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.chart-nav-btn {
+  background: #c8c8c8;
+  border: none;
+  border-radius: 6px;
+  padding: 0.2rem 0.65rem;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #333;
+  line-height: 1.4;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.chart-nav-btn:hover:not(:disabled) {
+  background: #b0b0b0;
+}
+
+.chart-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* ── Notification dot ────────────────────────────────────── */
+.notif-dot {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  background: #e03c31;
+  border-radius: 50%;
+  margin-left: 4px;
+  vertical-align: super;
+  flex-shrink: 0;
+}
+
+.ep-nav-link .notif-dot {
+  position: absolute;
+  top: -5.5px;
+  right: -5.5px;
+  margin-left: 0;
+  vertical-align: unset;
 }
 
 .chart-nav {
@@ -455,7 +514,7 @@ body {
   width: auto;
 }
 
-.forum-tab-btn {
+.shares-tab-btn {
   background: #d0d0d0;
   border: none;
   border-radius: 8px;
@@ -465,23 +524,35 @@ body {
   width: 100%;
 }
 
-.forum-tab-btn.active {
+.shares-tab-btn.active {
   background: #555;
   color: #fff;
 }
 
 .like-btn {
-  background: none;
-  border: none;
+  background: #f0f0f0;
+  border: 1.5px solid #ccc;
+  border-radius: 20px;
   cursor: pointer;
-  font-size: 1.4rem;
-  color: #aaa;
-  padding: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #888;
+  padding: 0.3rem 0.8rem;
   align-self: center;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.like-btn:hover:not(.liked) {
+  background: #ffe0ef;
+  border-color: #e91e8c;
+  color: #e91e8c;
 }
 
 .like-btn.liked {
-  color: #e91e8c
+  background: #ffe0ef;
+  border-color: #e91e8c;
+  color: #e91e8c;
 }
 
 .post-card {
@@ -510,17 +581,17 @@ body {
 .add-record-btn {
   width: 100%;
 }
-/* ── Forum page ──────────────────────────────────────────── */
-.forum-layout {
+/* ── Shares page ──────────────────────────────────────────── */
+.shares-layout {
   min-height: calc(100vh - 90px);
 }
 
-.forum-sidebar {
+.shares-sidebar {
   min-width: 120px;
   border-right: 2px solid #000000;
 }
 
-.forum-tab-link {
+.shares-tab-link {
   text-decoration: none;
 }
 
@@ -731,8 +802,13 @@ body {
   max-width: 100%;
 }
 
+<<<<<<< HEAD
 
 .calorie-box .progress-bar {
+=======
+.calorie-box .progress-bar,
+.ai-feedback-btn {
+>>>>>>> 7518f6073bb4190078995b36e34a26dbf5230faa
   background: #7793ae;
 }
 

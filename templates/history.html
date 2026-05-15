@@ -85,7 +85,7 @@
                             <h5 class="modal-title">Share this session</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
-                        <form method="POST" action="{{ url_for('forum') }}">
+                        <form method="POST" action="{{ url_for('shares') }}">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="action" value="share">
                             <input type="hidden" name="session_id" id="historyShareSessionId">
