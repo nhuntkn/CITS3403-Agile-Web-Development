@@ -18,7 +18,7 @@ depends_on = None
 
 def upgrade():
     with op.batch_alter_table('share', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('seen', sa.Boolean(), nullable=True))
+        batch_op.add_column(sa.Column('seen', sa.Boolean(), nullable=False, server_default=sa.false()))
 
 
 def downgrade():
