@@ -633,11 +633,31 @@ def account():
                 return render_account("Invalid gender")
 
             try:
-                user.weight = float(weight) if weight and float(weight)>0 else None
-                user.start_weight = float(start_weight) if start_weight and float(start_weight)>0 else None
-                user.height = float(height) if height and float(height)>0 else None
-                user.calorie_goal = int(calorie) if calorie and int(calorie)>0 else user.calorie_goal
-            except:
+                if weight:
+                    weight_value = round(float(weight), 2)
+                    if weight_value < 1 or weight_value > 300:
+                        return render_account("Current weight must be between 1 and 300 kg")
+                    user.weight = weight_value
+
+                if start_weight:
+                    start_weight_value = round(float(start_weight), 2)
+                    if start_weight_value < 1 or start_weight_value > 300:
+                        return render_account("Start weight must be between 1 and 300 kg")
+                    user.start_weight = start_weight_value
+
+                if height:
+                    height_value = round(float(height), 2)
+                    if height_value < 1 or height_value > 300:
+                        return render_account("Height must be between 1 and 300 cm")
+                    user.height = height_value
+
+                if calorie:
+                    calorie_value = int(calorie)
+                    if calorie_value <= 0:
+                        return render_account("Daily calorie goal must be greater than 0")
+                    user.calorie_goal = calorie_value
+
+            except ValueError:
                 return render_account("Invalid number")
 
             user.dob, user.gender = dob, gender
