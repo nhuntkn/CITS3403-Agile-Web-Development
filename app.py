@@ -418,14 +418,37 @@ def signup():
                 error="Email already exists"
             )
 
+        try:
+            weight_value = float(weight)
+            height_value = float(height)
+        except (TypeError, ValueError):
+            return render_template("signup.html", today=current_date.today().isoformat(),
+                                   error="Weight and height must be valid numbers")
+
+        if weight_value < 1 or weight_value > 300:
+            return render_template("signup.html", today=current_date.today().isoformat(),
+                                   error="Weight must be between 1 and 300 kg")
+
+        if height_value < 50 or height_value > 250:
+            return render_template("signup.html", today=current_date.today().isoformat(),
+                                   error="Height must be between 50 and 250 cm")
+
+        if round(weight_value, 2) != weight_value:
+            return render_template("signup.html", today=current_date.today().isoformat(),
+                                   error="Weight can only have up to 2 decimal places")
+
+        if round(height_value, 2) != height_value:
+            return render_template("signup.html", today=current_date.today().isoformat(),
+                                   error="Height can only have up to 2 decimal places")
+
         new_user = User(
             username=username,
             email=email,
             dob=dob,
             gender=gender,
-            weight=float(weight) if weight else None,
-            start_weight=float(weight) if weight else None,
-            height=float(height) if height else None
+            weight=weight_value,
+            start_weight=weight_value,
+            height=height_value
         )
 
         new_user.set_password(password)
