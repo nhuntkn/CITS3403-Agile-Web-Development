@@ -316,6 +316,9 @@ def exercise():
         #store the total calories for the full session
         new_session.total_calories = round(total_calories, 2)
 
+        # update current user weight
+        user.weight = current_weight
+
         existing_day = db.session.query(
             db.func.coalesce(db.func.sum(ExerciseSession.total_calories), 0)
         ).filter(
@@ -349,13 +352,13 @@ def exercise():
 @login_required
 def dashboard(): 
     user = current_user
-    username = current_user.username
 
-    start_weight = user.weight if user else None
+    start_weight = user.start_weight if user else None
     calorie_goal = user.calorie_goal if user and user.calorie_goal else 1000
 
     sessions = ExerciseSession.query.filter_by(user_id = user.id).order_by(ExerciseSession.date.asc()).all()
 
+    current_weight = user.weight if user else None
     sessions_data = [
         {
             "date" : s.date,
@@ -365,8 +368,14 @@ def dashboard():
         for s in sessions
     ]
 
-    return render_template("dashboard.html", username = username, sessions_data = sessions_data, start_weight = start_weight, 
-                           user_height = user.height if user else None, calorie_goal = calorie_goal)
+    return render_template(
+        "dashboard.html",
+        sessions_data=sessions_data,
+        start_weight=start_weight,
+        current_weight=current_weight,
+        user_height=user.height if user else None,
+        calorie_goal=calorie_goal
+    )
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
@@ -413,6 +422,7 @@ def signup():
             dob=dob,
             gender=gender,
             weight=float(weight) if weight else None,
+            start_weight=float(weight) if weight else None,
             height=float(height) if height else None
         )
 
@@ -594,21 +604,9 @@ def forum():
 def account():
     user = current_user
 
-    # stats
-    sessions = ExerciseSession.query.filter_by(user_id=user.id).all()
-    total_calories = round(sum(s.total_calories for s in sessions),2)
-    total_sessions = len(sessions)
-    last_session = max(sessions, key=lambda s: s.date) if sessions else None
-    current_weight = last_session.current_weight if last_session else user.weight
-    bmi = round(current_weight/((user.height/100)**2),2) if current_weight and user.height else None
-
     def render_account(error=None):
         return render_template("account.html",
             user=user,
-            bmi=bmi,
-            total_calories=total_calories,
-            total_sessions=total_sessions,
-            current_weight=current_weight,
             current_date=current_date.today().isoformat(),
             error=error
         )
@@ -622,6 +620,7 @@ def account():
             dob = request.form.get("dob")
             gender = request.form.get("gender")
             weight = request.form.get("weight")
+            start_weight = request.form.get("start_weight")
             height = request.form.get("height")
             calorie = request.form.get("calorie_goal")
 
@@ -634,10 +633,31 @@ def account():
                 return render_account("Invalid gender")
 
             try:
-                user.weight = float(weight) if weight and float(weight)>0 else None
-                user.height = float(height) if height and float(height)>0 else None
-                user.calorie_goal = int(calorie) if calorie and int(calorie)>0 else user.calorie_goal
-            except:
+                if weight:
+                    weight_value = round(float(weight), 2)
+                    if weight_value < 1 or weight_value > 300:
+                        return render_account("Current weight must be between 1 and 300 kg")
+                    user.weight = weight_value
+
+                if start_weight:
+                    start_weight_value = round(float(start_weight), 2)
+                    if start_weight_value < 1 or start_weight_value > 300:
+                        return render_account("Start weight must be between 1 and 300 kg")
+                    user.start_weight = start_weight_value
+
+                if height:
+                    height_value = round(float(height), 2)
+                    if height_value < 1 or height_value > 300:
+                        return render_account("Height must be between 1 and 300 cm")
+                    user.height = height_value
+
+                if calorie:
+                    calorie_value = int(calorie)
+                    if calorie_value <= 0:
+                        return render_account("Daily calorie goal must be greater than 0")
+                    user.calorie_goal = calorie_value
+
+            except ValueError:
                 return render_account("Invalid number")
 
             user.dob, user.gender = dob, gender

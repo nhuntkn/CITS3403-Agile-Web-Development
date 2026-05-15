@@ -45,6 +45,7 @@ class User(UserMixin, db.Model):
     dob = db.Column(db.String(20))
     gender = db.Column(db.String(10))
     weight = db.Column(db.Float)
+    start_weight = db.Column(db.Float)
     height = db.Column(db.Float)
     calorie_goal = db.Column(db.Integer, default = 1000)
     avatar = db.Column(db.String(255))
