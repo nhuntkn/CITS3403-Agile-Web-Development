@@ -1,3 +1,4 @@
+import time
 from datetime import date
 import re
 
@@ -21,6 +22,7 @@ def signup_data(**overrides):
 
 
 def test_signup_validation_and_duplicate_email(client, app):
+    # Password validations fail before the email-verified check, so no session setup needed
     response = client.post("/signup", data=signup_data(password="short!", confirm="short!"))
     assert response.status_code == 200
     assert b"Password must be at least 12 characters long" in response.data
@@ -30,6 +32,10 @@ def test_signup_validation_and_duplicate_email(client, app):
         data=signup_data(username="nospecial", email="nospecial@example.com", password="longpassword12", confirm="longpassword12"),
     )
     assert b"Password must contain at least one special character" in response.data
+
+    # Successful signup requires the email to be pre-verified in the session
+    with client.session_transaction() as sess:
+        sess["signup_verified_email"] = "alice@example.com"
 
     response = client.post("/signup", data=signup_data(), follow_redirects=False)
     assert response.status_code == 302
@@ -41,11 +47,9 @@ def test_signup_validation_and_duplicate_email(client, app):
         assert created.email == "alice@example.com"
         assert created.password != "Validpass123!"
 
+    # Duplicate email is checked before the verified-email gate, so no session needed
     client.get("/logout")
-    response = client.post(
-        "/signup",
-        data=signup_data(username="alice2"),
-    )
+    response = client.post("/signup", data=signup_data(username="alice2"))
     assert b"Email already exists" in response.data
 
 
@@ -220,3 +224,80 @@ def test_forgot_password_flow_allows_retry_after_validation_error(client, app, c
         user = User.query.filter_by(email="reset@example.com").one()
         assert user.password != old_hash
         assert user.check_password("Newvalidpass123!")
+
+
+def test_signup_blocked_without_verified_email(client, app):
+    response = client.post("/signup", data=signup_data())
+    assert response.status_code == 200
+    assert b"verify your email" in response.data
+
+
+def test_send_signup_code_rejects_registered_email(client, app, captured_signup_codes):
+    with app.app_context():
+        create_user(username="taken", email="taken@example.com", password="Validpass123!")
+
+    response = client.post("/api/send_signup_code", json={"email": "taken@example.com"})
+    assert response.status_code == 400
+    assert b"already registered" in response.data
+    assert len(captured_signup_codes) == 0
+
+
+def test_send_signup_code_sends_code_to_new_email(client, app, captured_signup_codes):
+    response = client.post("/api/send_signup_code", json={"email": "new@example.com"})
+    assert response.status_code == 200
+    assert len(captured_signup_codes) == 1
+    assert captured_signup_codes[0]["email"] == "new@example.com"
+
+
+def test_verify_signup_code_rejects_wrong_code(client, app, captured_signup_codes):
+    client.post("/api/send_signup_code", json={"email": "verify@example.com"})
+
+    response = client.post("/api/verify_signup_code", json={"code": "000000", "email": "verify@example.com"})
+    assert response.status_code == 400
+    assert b"Invalid code" in response.data
+
+
+def test_verify_signup_code_succeeds_with_correct_code(client, app, captured_signup_codes):
+    client.post("/api/send_signup_code", json={"email": "correct@example.com"})
+    code = captured_signup_codes[0]["code"]
+
+    response = client.post("/api/verify_signup_code", json={"code": code, "email": "correct@example.com"})
+    assert response.status_code == 200
+    assert b"verified" in response.data
+
+
+def test_verify_signup_code_rejects_expired_code(client, app, captured_signup_codes):
+    client.post("/api/send_signup_code", json={"email": "expired@example.com"})
+    code = captured_signup_codes[0]["code"]
+
+    with client.session_transaction() as sess:
+        sess["signup_time"] = time.time() - 301
+
+    response = client.post("/api/verify_signup_code", json={"code": code, "email": "expired@example.com"})
+    assert response.status_code == 400
+    assert b"expired" in response.data
+
+
+def test_verify_signup_code_blocks_after_five_wrong_attempts(client, app, captured_signup_codes):
+    client.post("/api/send_signup_code", json={"email": "block@example.com"})
+
+    for _ in range(5):
+        client.post("/api/verify_signup_code", json={"code": "000000", "email": "block@example.com"})
+
+    response = client.post("/api/verify_signup_code", json={"code": "000000", "email": "block@example.com"})
+    assert response.status_code == 400
+    assert b"Too many" in response.data
+
+
+def test_full_signup_flow_via_api(client, app, captured_signup_codes):
+    client.post("/api/send_signup_code", json={"email": "alice@example.com"})
+    code = captured_signup_codes[0]["code"]
+
+    client.post("/api/verify_signup_code", json={"code": code, "email": "alice@example.com"})
+
+    response = client.post("/signup", data=signup_data(), follow_redirects=False)
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/dashboard")
+
+    with app.app_context():
+        assert User.query.filter_by(email="alice@example.com").first() is not None
