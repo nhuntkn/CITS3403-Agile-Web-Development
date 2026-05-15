@@ -64,6 +64,7 @@ class Share(db.Model):
     receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = False)
     session_id = db.Column(db.Integer, db.ForeignKey('exercise_session.id'), nullable = False)
     liked = db.Column(db.Boolean, default = False)
+    seen = db.Column(db.Boolean, default = False)
     created_at = db.Column(db.DateTime, default = datetime.utcnow)
 
     sender = db.relationship('User', foreign_keys = [sender_id], backref = 'sent_shares')

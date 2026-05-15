@@ -14,7 +14,9 @@
                     <button class = "forum-tab-btn {{ 'active' if tab == 'sent'}}">Sent</button>
                 </a>
                 <a href = "{{url_for('forum', tab = 'received')}}" class = "forum-tab-link">
-                    <button class = "forum-tab-btn {{ 'active' if tab == 'received'}}">Received</button>
+                    <button class = "forum-tab-btn {{ 'active' if tab == 'received'}}">
+                        Received{% if unread_forum_count > 0 %}<span class="notif-dot"></span>{% endif %}
+                    </button>
                 </a>
             </div>
 
@@ -113,7 +115,9 @@
                         </div>
                         <form method = "POST" action ="{{url_for('forum')}}">
                             <input type = "hidden" name = "share_id" value = "{{share.id}}">
-                            <button class = "like-btn {{ 'liked' if share.liked }}" type = "submit"> ❤️ </button>
+                            <button class = "like-btn {{ 'liked' if share.liked }}" type = "submit">
+                                {% if share.liked %}&#9829; Liked{% else %}&#9825; Like{% endif %}
+                            </button>
                         </form>
                     </div>
                     {% else %}

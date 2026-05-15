@@ -107,6 +107,13 @@ def user_avatar_url(user):
 def inject_avatar_helpers():
     return {"user_avatar_url": user_avatar_url}
 
+@app.context_processor
+def inject_forum_badge():
+    if current_user.is_authenticated:
+        count = Share.query.filter_by(receiver_id=current_user.id, seen=False).count()
+        return {"unread_forum_count": count}
+    return {"unread_forum_count": 0}
+
 def user_avatar_payload(user):
     return {
         "username": user.username,
@@ -581,7 +588,10 @@ def forum():
                     db.session.commit()
             return redirect(url_for('forum', tab = 'received'))
 
-    tab = request.args.get('tab', 'sent')
+    tab = request.args.get('tab', 'received')
+    if tab == 'received':
+        Share.query.filter_by(receiver_id=current_user.id, seen=False).update({"seen": True})
+        db.session.commit()
     sent = Share.query.filter_by(sender_id = current_user.id).order_by(Share.created_at.desc()).all()
     received = Share.query.filter_by(receiver_id = current_user.id).order_by(Share.created_at.desc()).all()
     return render_template("forum.html", tab = tab, sent = sent,

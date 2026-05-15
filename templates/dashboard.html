@@ -82,7 +82,11 @@
     <div class="row g-3">
       <div class="col-12 col-md-6">
         <div class="chart-card">
-          <div class="chart-title">Calories burned — the last 7 days</div>
+          <div class = "chart-nav">
+            <button class = "chart-nav-btn" id = "weekPrev" title = "Previous week">&#8592;</button>
+            <span class="chart-title" id = "weeklyTitle">Calories burned — the last 7 days</span>
+            <button class = "chart-nav-btn" id = "weekNext" title = "Next week" disabled>&#8594;</button>
+          </div>
           <div class="chart-wrapper">
             <canvas id="weeklyChart" height="160"></canvas>
           </div>
@@ -90,7 +94,11 @@
       </div>
       <div class="col-12 col-md-6">
         <div class="chart-card">
-          <div class="chart-title">Calories burned — this month</div>
+          <div class = "chart-nav">
+            <button class = "chart-nav-btn" id = "monthPrev" title  = "Previous month">&#8592;</button>
+            <span class="chart-title" id = "monthlyTitle">Calories burned — this month</span>
+            <button class = "chart-nav-btn" id = "monthNext" title = "Next month" disabled>&#8594;</button>
+          </div>
           <div class="chart-wrapper">
             <canvas id="monthlyChart" height="160"></canvas>
           </div>
@@ -214,65 +222,102 @@
     });
 
     //Weekly chart
-    const weekDays = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      weekDays.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2, '0')}`);
+    function fmtDate(d) {
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     }
-    const weekLabels = weekDays.map(d => {
-      const dt = new Date(d + "T00:00:00");
-      return dt.toLocaleDateString("en-AU", {weekday: "short", day: "numeric"});
-    })
-    const weekData = weekDays.map(d =>
-      sessions.filter(s => s.date === d).reduce((sum, s) => sum + s.total_calories, 0)
-    );
 
-    new Chart(document.getElementById("weeklyChart"), {
+    let weekOffset = 0;
+
+    const weeklyChart = new Chart(document.getElementById("weeklyChart"), {
       type: "bar",
-      data: {
-        labels: weekLabels,
-        datasets: [{ label: "Calories", data: weekData,
-                      backgroundColor: "#7793ae", borderRadius: 4}]
-      },
+      data: { labels: [], datasets: [{ label: "Calories", data: [], backgroundColor: "#7793ae", borderRadius: 4 }] },
       options: {
         responsive: true,
-        plugins: {legend: {display: false}},
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
         scales: {
-          x: {ticks: {color: "#ccc"}, grid: {color: "rgba(255,255,255,0.1)"}},
-          y: {ticks: {color: "#ccc"}, grid: {color: "rgba(255,255,255,0.1)"}, beginAtZero: true }
+          x: { ticks: { color: "#ccc" }, grid: { color: "rgba(255,255,255,0.1)" } },
+          y: { ticks: { color: "#ccc" }, grid: { color: "rgba(255,255,255,0.1)" }, beginAtZero: true }
         }
       }
     });
+
+    function updateWeeklyChart(offset) {
+      const days = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i + (offset * 7));
+        days.push(fmtDate(d));
+      }
+      weeklyChart.data.labels = days.map(d => {
+        const dt = new Date(d + "T00:00:00");
+        return dt.toLocaleDateString("en-AU", { weekday: "short", day: "numeric" });
+      });
+      weeklyChart.data.datasets[0].data = days.map(d =>
+        sessions.filter(s => s.date === d).reduce((sum, s) => sum + s.total_calories, 0)
+      );
+      weeklyChart.update();
+
+      const titleEl = document.getElementById("weeklyTitle");
+      if (offset === 0) {
+        titleEl.textContent = "Calories burned — last 7 days";
+      } else {
+        const s = new Date(days[0] + "T00:00:00");
+        const e = new Date(days[6] + "T00:00:00");
+        const fmt = { day: "numeric", month: "short" };
+        titleEl.textContent = `Calories burned — ${s.toLocaleDateString("en-AU", fmt)} – ${e.toLocaleDateString("en-AU", { ...fmt, year: "numeric" })}`;
+      }
+      document.getElementById("weekNext").disabled = offset >= 0;
+    }
+
+    updateWeeklyChart(0);
+    document.getElementById("weekPrev").addEventListener("click", () => { weekOffset--; updateWeeklyChart(weekOffset); });
+    document.getElementById("weekNext").addEventListener("click", () => { if (weekOffset < 0) { weekOffset++; updateWeeklyChart(weekOffset); } });
 
     //Monthly chart (current month)
-    const now = new Date();
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    const monthDays = Array.from({length: daysInMonth}, (_, i) => {
-      const day = String(i + 1).padStart(2, "0");
-      const mon = String(now.getMonth() + 1).padStart(2, "0");
-      return `${now.getFullYear()}-${mon}-${day}`;
-    });
-    const monthData = monthDays.map(d =>
-      sessions.filter(s => s.date === d).reduce((sum, s) => sum + s.total_calories, 0)
-    );
-    
-    new Chart(document.getElementById("monthlyChart"), {
+    let monthOffset = 0;
+
+    const monthlyChart = new Chart(document.getElementById("monthlyChart"), {
       type: "bar",
-      data: {
-        labels: Array.from({ length: daysInMonth}, (_, i) => i + 1),
-        datasets: [{label: "Calories", data: monthData,
-                    backgroundColor: "#7793ae", borderRadius: 4}]
-      },
+      data: { labels: [], datasets: [{ label: "Calories", data: [], backgroundColor: "#7793ae", borderRadius: 4 }] },
       options: {
         responsive: true,
-        plugins: {legend: {display: false}},
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
         scales: {
-          x: {ticks: {color: "#ccc"}, grid: {color: "rgba(255,255,255,0.1)"}},
-          y: {ticks: {color: "#ccc"}, grid: {color: "rgba(255,255,255,0.1)"}, beginAtZero: true }
+          x: { ticks: { color: "#ccc" }, grid: { color: "rgba(255,255,255,0.1)" } },
+          y: { ticks: { color: "#ccc" }, grid: { color: "rgba(255,255,255,0.1)" }, beginAtZero: true }
         }
       }
     });
+
+    function updateMonthlyChart(offset) {
+      const now = new Date();
+      const target = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+      const year = target.getFullYear();
+      const month = target.getMonth();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const monthDays = Array.from({ length: daysInMonth }, (_, i) => {
+        return `${year}-${String(month + 1).padStart(2, "0")}-${String(i + 1).padStart(2, "0")}`;
+      });
+      monthlyChart.data.labels = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+      monthlyChart.data.datasets[0].data = monthDays.map(d =>
+        sessions.filter(s => s.date === d).reduce((sum, s) => sum + s.total_calories, 0)
+      );
+      monthlyChart.update();
+
+      const titleEl = document.getElementById("monthlyTitle");
+      if (offset === 0) {
+        titleEl.textContent = "Calories burned — this month";
+      } else {
+        titleEl.textContent = `Calories burned — ${target.toLocaleDateString("en-AU", { month: "long", year: "numeric" })}`;
+      }
+      document.getElementById("monthNext").disabled = offset >= 0;
+    }
+
+    updateMonthlyChart(0);
+    document.getElementById("monthPrev").addEventListener("click", () => { monthOffset--; updateMonthlyChart(monthOffset); });
+    document.getElementById("monthNext").addEventListener("click", () => { if (monthOffset < 0) { monthOffset++; updateMonthlyChart(monthOffset); } });
 
     //AI feedback button
     const aiFeedbackBtn = document.getElementById("generateAiFeedbackBtn");
