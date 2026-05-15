@@ -124,6 +124,7 @@ def send_verification_email(to_email, code):
 
 def clear_signup_session():
     session.pop("signup_code", None)
+    session.pop("signup_email", None)
     session.pop("signup_time", None)
     session.pop("signup_attempts", None)
     session.pop("signup_data", None)
@@ -442,6 +443,7 @@ def send_signup_code():
     except Exception:
         return jsonify({"error": "Failed to send verification email"}), 500
 
+    session["signup_email"] = email
     session["signup_code"] = verification_code
     session["signup_time"] = time.time()
     session["signup_attempts"] = 0
@@ -474,7 +476,10 @@ def verify_signup_code():
         remaining = 5 - (attempts + 1)
         return jsonify({"error": f"Invalid code. {remaining} attempt(s) remaining."}), 400
 
+    if email != session.get("signup_email"):
+        return jsonify({"error": "Email does not match the one used for verification code request."}), 400
     session["signup_verified_email"] = email
+    session.pop("signup_email", None)
     session.pop("signup_code", None)
     session.pop("signup_time", None)
     session.pop("signup_attempts", None)
@@ -783,8 +788,8 @@ def account():
 
                 if height:
                     height_value = round(float(height), 2)
-                    if height_value < 1 or height_value > 300:
-                        return render_account("Height must be between 1 and 300 cm")
+                    if height_value < 50 or height_value > 250:
+                        return render_account("Height must be between 50 and 250 cm")
                     user.height = height_value
 
                 if calorie:
@@ -1102,7 +1107,7 @@ def forgot_password():
             verification_code = str(random.randint(100000, 999999))
             try:
                 send_reset_email(email, verification_code)
-            except:
+            except Exception:
                 return render_template(
                     "forgot_password.html",
                     error="Failed to send verification email"

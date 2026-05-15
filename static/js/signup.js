@@ -162,18 +162,10 @@ document.querySelector('input[name="username"]').addEventListener("blur", functi
         });
 });
 
-<<<<<<< HEAD
-// ── DOB max date ──────────────────────────────────────────────────────────
-
-=======
->>>>>>> 296e495073f411fdfeb7b3d0d06b6d955658b47f
 const dobInput = document.querySelector('input[name="dob"]');
 if (dobInput) {
     dobInput.setAttribute("max", new Date().toISOString().split("T")[0]);
 }
-
-<<<<<<< HEAD
-// ── Submit gate ───────────────────────────────────────────────────────────
 
 function checkFormValid() {
     const value = pwd.value;
@@ -186,6 +178,4 @@ function checkFormValid() {
     );
 }
 
-=======
->>>>>>> 296e495073f411fdfeb7b3d0d06b6d955658b47f
 submitBtn.disabled = true;
