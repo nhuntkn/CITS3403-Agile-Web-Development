@@ -482,7 +482,7 @@ body {
   width: auto;
 }
 
-.forum-tab-btn {
+.shares-tab-btn {
   background: #d0d0d0;
   border: none;
   border-radius: 8px;
@@ -492,7 +492,7 @@ body {
   width: 100%;
 }
 
-.forum-tab-btn.active {
+.shares-tab-btn.active {
   background: #555;
   color: #fff;
 }
@@ -549,17 +549,17 @@ body {
 .add-record-btn {
   width: 100%;
 }
-/* ── Forum page ──────────────────────────────────────────── */
-.forum-layout {
+/* ── Shares page ──────────────────────────────────────────── */
+.shares-layout {
   min-height: calc(100vh - 90px);
 }
 
-.forum-sidebar {
+.shares-sidebar {
   min-width: 120px;
   border-right: 2px solid #000000;
 }
 
-.forum-tab-link {
+.shares-tab-link {
   text-decoration: none;
 }
 
