@@ -973,3 +973,5 @@ body {
 /* ── Form validation rule indicators ─────────────────────── */
 .rule-invalid { color: #dc3545; }
 .rule-valid   { color: #198754; }
+
+.like-btn-static { cursor: default; pointer-events: none; }
