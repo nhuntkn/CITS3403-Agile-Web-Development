@@ -99,7 +99,7 @@
                                     {% endfor %}
                                 </select>
                                 {% if not friends %}
-                                <p class="text-muted mt-2" style="font-size: 0.85rem;">You have no friends yet. Add some from the Account page.</p>
+                                <p class="text-muted hint-text mt-2">You have no friends yet. Add some from the Account page.</p>
                                 {% endif %}
                             </div>
                             <div class="modal-footer">
@@ -122,13 +122,8 @@
 {% block scripts %}
     <script>
         window.historyLocations = {{ location_data | tojson }};
-        document.querySelectorAll(".history-share-btn").forEach((button) => {
-            button.addEventListener("click", () => {
-                document.getElementById("historyShareSessionId").value = button.dataset.sessionId;
-                document.getElementById("historyShareSessionLabel").textContent = `Share session from ${button.dataset.sessionDate}.`;
-            });
-        });
     </script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="{{ url_for('static', filename='js/map.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/history.js') }}"></script>
 {% endblock %}

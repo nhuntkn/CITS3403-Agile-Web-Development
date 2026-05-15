@@ -8,14 +8,13 @@
     <a href = "{{url_for('ranking')}}" class = "ep-nav-link {{'active' if request.endpoint == 'ranking'}}">Ranking</a>
     <a href = "{{url_for('history')}}" class = "ep-nav-link {{'active' if request.endpoint == 'history'}}">History</a>
     <a href = "{{url_for('shares')}}" class = "ep-nav-link {{'active' if request.endpoint == 'shares'}}">
-        Shares{% if unread_shares_count > 0 %}<span class="notif-dot"></span>{% endif %}
+        Shares{% if unread_shares_count > 0 or unread_likes_count > 0 %}<span class="notif-dot"></span>{% endif %}
     </a>
     <div class = "ep-user-menu">
         <div class="ep-user-avatar">
             {% set nav_avatar_url = user_avatar_url(current_user) %}
             {% if nav_avatar_url %}
-                <img src="{{ nav_avatar_url }}"
-                    style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                <img src="{{ nav_avatar_url }}" alt="{{ current_user.username }}">
             {% else %}
                 {{ username[0].upper() if username }}
             {% endif %}

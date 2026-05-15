@@ -1,7 +1,9 @@
 /* ============================================================
-   style.css — shared styles for Exercise Planner
-   Covers: base, navbar, page layout, metric cards, utilities
-   Page-specific styles (charts, forms etc.) live in each page
+   style.css — all styles for Exercise Planner
+   Sections: base · navbar · layout · metric cards · calorie box
+             charts · map/history · utilities · auth pages
+             forum · dashboard · avatars · account
+   HTML files contain structure and Jinja only — no inline styles
    ============================================================ */
 
 /* ── Base ────────────────────────────────────────────────── */
@@ -67,6 +69,13 @@ body {
 }
 
 /* User avatar circle */
+.ep-user-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .ep-user-menu {
   position: relative;
   margin-left: 0.75rem;
@@ -291,7 +300,8 @@ body {
   flex-shrink: 0;
 }
 
-.ep-nav-link .notif-dot {
+.ep-nav-link .notif-dot,
+.shares-tab-btn .notif-dot {
   position: absolute;
   top: -5.5px;
   right: -5.5px;
@@ -409,6 +419,8 @@ body {
 }
 .btn-danger-rounded:hover { background: #333333; }
 
+.hint-text { font-size: 0.85rem; }
+
 /* ── Legacy page styles (index / exercise log pages) ─────── */
 .top-bar {
   background-color: #7793ae;
@@ -490,6 +502,7 @@ body {
   font-weight: 600;
   cursor: pointer;
   width: 100%;
+  position: relative;
 }
 
 .shares-tab-btn.active {
@@ -603,16 +616,19 @@ body {
   font-size: 1.3rem;
 }
 
-/* Login page */
+/* Login / auth pages */
 
-.login-navbar {
+.login-navbar,
+.auth-navbar {
   background: #7793ae;
   text-align: center;
   padding: 10px;
 }
 
-.login-navbar img {
+.login-navbar img,
+.auth-navbar img {
   height: 100px;
+  width: auto;
 }
 
 .login-page {
@@ -629,8 +645,7 @@ body {
   justify-content: center;
 }
 
-.login-info-box,
-.login-box {
+.login-info-box {
   background: white;
   border: 1px solid #ddd;
   border-radius: 18px;
@@ -639,6 +654,11 @@ body {
 }
 
 .login-box {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 18px;
+  padding: 3rem;
+  flex: 1;
   max-width: 420px;
 }
 
@@ -649,9 +669,13 @@ body {
 }
 
 .login-description,
-.login-hint,
+.login-hint {
+  color: #666;
+}
+
 .login-links {
   color: #666;
+  text-align: center;
 }
 
 .login-description {
@@ -686,14 +710,10 @@ body {
   margin-top: 0.5rem;
 }
 
-.login-divider,
-.login-links {
-  text-align: center;
-}
-
 .login-divider {
   color: #888;
   margin: 1rem 0;
+  text-align: center;
 }
 
 .login-links a {
@@ -763,8 +783,8 @@ body {
   max-width: 100%;
 }
 
-.calorie-box .progress-bar,
-.ai-feedback-btn {
+
+.calorie-box .progress-bar {
   background: #7793ae;
 }
 
@@ -789,6 +809,7 @@ body {
 }
 
 .ai-feedback-btn {
+  background: #7793ae;
   color: white;
   border: none;
   border-radius: 10px;
@@ -861,12 +882,13 @@ body {
   font-weight: 600;
 }
 
-.info-label,
-.stat-label {
+.info-label {
   color: #777777;
+  font-size: 15px;
 }
 
-.info-label {
+.stat-label {
+  color: #777777;
   font-size: 15px;
 }
 
@@ -910,10 +932,6 @@ body {
   text-align: center;
 }
 
-.stat-label {
-  font-size: 15px;
-}
-
 .stat-value {
   font-size: 19px;
   font-weight: 600;
@@ -935,10 +953,16 @@ body {
 .password-rules,
 .password-message {
   font-size: 14px;
+  margin-top: 8px;
   margin-bottom: 15px;
 }
 
-.account-rule-danger {
+.account-rule-danger,
+.pw-rule {
+  color: red;
+}
+
+.form-feedback {
   color: red;
 }
 
