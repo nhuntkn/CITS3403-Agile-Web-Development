@@ -300,7 +300,8 @@ body {
   flex-shrink: 0;
 }
 
-.ep-nav-link .notif-dot {
+.ep-nav-link .notif-dot,
+.shares-tab-btn .notif-dot {
   position: absolute;
   top: -5.5px;
   right: -5.5px;
@@ -501,6 +502,7 @@ body {
   font-weight: 600;
   cursor: pointer;
   width: 100%;
+  position: relative;
 }
 
 .shares-tab-btn.active {

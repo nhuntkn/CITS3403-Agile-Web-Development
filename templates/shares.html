@@ -11,7 +11,7 @@
         <div class = "d-flex gap-4 shares-layout">
             <div class = "d-flex flex-column gap-2 pe-4 shares-sidebar">
                 <a href = "{{ url_for('shares', tab = 'sent')}}" class = "shares-tab-link">
-                    <button class = "shares-tab-btn {{ 'active' if tab == 'sent'}}">Sent</button>
+                    <button class = "shares-tab-btn {{ 'active' if tab == 'sent'}}">Sent{% if unread_likes_count > 0 %}<span class="notif-dot"></span>{% endif %}</button>
                 </a>
                 <a href = "{{url_for('shares', tab = 'received')}}" class = "shares-tab-link">
                     <button class = "shares-tab-btn {{ 'active' if tab == 'received'}}">
