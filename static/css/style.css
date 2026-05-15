@@ -879,3 +879,20 @@ body {
 .account-empty-message {
   color: #777777;
 }
+
+/* ── Auth top bar (login / signup / forgot password pages) ── */
+.auth-topbar {
+  background-color: #7793ae;
+  padding: 10px 0;
+  text-align: center;
+}
+
+.auth-topbar img {
+  height: 100px;
+  width: auto;
+}
+
+/* ── Form validation rule indicators ─────────────────────── */
+.rule-invalid { color: #dc3545; }
+.rule-valid   { color: #198754; }
+.feedback-error { color: #dc3545; }
