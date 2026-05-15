@@ -158,14 +158,16 @@ def dashAiFeedback():
     except Exception as error:
         error_text = str(error)
 
-        if "insufficient_quota" in error_text or "exceeded your current quota" in error_text:
+        if "API key is not set" in error_text:
+            message = "AI feedback is not configured yet. Please add the required API key in the .env file before using this feature."
+        elif "insufficient_quota" in error_text or "exceeded your current quota" in error_text:
             message = "AI feedback is currently unavailable because the API quota has been reached. Please try again later."
         else:
             message = "AI feedback could not be generated right now. Please try again later."
 
         return jsonify({
             "error": message
-        }), 500
+        }), 503
 
     if existing_feedback:
         existing_feedback.week_start_date = week_start_str
