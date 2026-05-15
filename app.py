@@ -148,8 +148,9 @@ def inject_avatar_helpers():
 def inject_shares_badge():
     if current_user.is_authenticated:
         count = Share.query.filter_by(receiver_id=current_user.id, seen=False).count()
-        return {"unread_shares_count": count}
-    return {"unread_shares_count": 0}
+        likes = Share.query.filter_by(sender_id=current_user.id, liked=True, like_seen=False).count()
+        return {"unread_shares_count": count, "unread_likes_count": likes}
+    return {"unread_shares_count": 0, "unread_likes_count": 0}
 
 def user_avatar_payload(user):
     return {
@@ -715,12 +716,16 @@ def shares():
                 share = db.session.get(Share, int(share_id))
                 if share and share.receiver_id == current_user.id:
                     share.liked = not share.liked
+                    share.like_seen = not share.liked
                     db.session.commit()
             return redirect(url_for('shares', tab = 'received'))
 
     tab = request.args.get('tab', 'received')
     if tab == 'received':
         Share.query.filter_by(receiver_id=current_user.id, seen=False).update({"seen": True})
+        db.session.commit()
+    elif tab == 'sent':
+        Share.query.filter_by(sender_id=current_user.id, like_seen=False).update({"like_seen": True})
         db.session.commit()
     sent = Share.query.filter_by(sender_id = current_user.id).order_by(Share.created_at.desc()).all()
     received = Share.query.filter_by(receiver_id = current_user.id).order_by(Share.created_at.desc()).all()

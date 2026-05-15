@@ -300,33 +300,13 @@ body {
   flex-shrink: 0;
 }
 
-.ep-nav-link .notif-dot {
+.ep-nav-link .notif-dot,
+.shares-tab-btn .notif-dot {
   position: absolute;
   top: -5.5px;
   right: -5.5px;
   margin-left: 0;
   vertical-align: unset;
-}
-
-.chart-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.75rem;
-}
-
-.chart-nav-btn {
-  background: none;
-  border: 1px solid #aaa;
-  border-radius: 6px;
-  padding: 0.2rem 0.6rem;
-  cursor: pointer;
-  line-height: 1;
-}
-
-.chart-nav-btn:disabled {
-  opacity: 0.3;
-  cursor: default;
 }
 
 .activity-map {
@@ -522,6 +502,7 @@ body {
   font-weight: 600;
   cursor: pointer;
   width: 100%;
+  position: relative;
 }
 
 .shares-tab-btn.active {
@@ -802,8 +783,8 @@ body {
   max-width: 100%;
 }
 
-.calorie-box .progress-bar,
-.ai-feedback-btn {
+
+.calorie-box .progress-bar {
   background: #7793ae;
 }
 
