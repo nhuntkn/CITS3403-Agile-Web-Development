@@ -417,7 +417,7 @@ def signup():
                 "signup.html",
                 error="Email already exists"
             )
-        
+
         try:
             weight_value = float(weight)
             height_value = float(height)
@@ -440,7 +440,7 @@ def signup():
         if round(height_value, 2) != height_value:
             return render_template("signup.html", today=current_date.today().isoformat(),
                                    error="Height can only have up to 2 decimal places")
-        
+
         new_user = User(
             username=username,
             email=email,
