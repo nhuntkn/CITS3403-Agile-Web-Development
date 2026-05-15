@@ -802,13 +802,8 @@ body {
   max-width: 100%;
 }
 
-<<<<<<< HEAD
-
-.calorie-box .progress-bar {
-=======
 .calorie-box .progress-bar,
 .ai-feedback-btn {
->>>>>>> 7518f6073bb4190078995b36e34a26dbf5230faa
   background: #7793ae;
 }
 
