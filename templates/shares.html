@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Forum{% endblock %}
+{% block title %}Shares{% endblock %}
 
 {% block navbar %}
     {% include 'navbar.html' %}
@@ -8,13 +8,15 @@
 
 {% block content %}
     <div class = "container py-4">
-        <div class = "d-flex gap-4 forum-layout">
-            <div class = "d-flex flex-column gap-2 pe-4 forum-sidebar">
-                <a href = "{{ url_for('forum', tab = 'sent')}}" class = "forum-tab-link">
-                    <button class = "forum-tab-btn {{ 'active' if tab == 'sent'}}">Sent</button>
+        <div class = "d-flex gap-4 shares-layout">
+            <div class = "d-flex flex-column gap-2 pe-4 shares-sidebar">
+                <a href = "{{ url_for('shares', tab = 'sent')}}" class = "shares-tab-link">
+                    <button class = "shares-tab-btn {{ 'active' if tab == 'sent'}}">Sent</button>
                 </a>
-                <a href = "{{url_for('forum', tab = 'received')}}" class = "forum-tab-link">
-                    <button class = "forum-tab-btn {{ 'active' if tab == 'received'}}">Received</button>
+                <a href = "{{url_for('shares', tab = 'received')}}" class = "shares-tab-link">
+                    <button class = "shares-tab-btn {{ 'active' if tab == 'received'}}">
+                        Received{% if unread_shares_count > 0 %}<span class="notif-dot"></span>{% endif %}
+                    </button>
                 </a>
             </div>
 
@@ -111,10 +113,12 @@
                                 Total: {{share.session.total_calories}} kcal
                             </div>
                         </div>
-                        <form method = "POST" action ="{{url_for('forum')}}">
+                        <form method = "POST" action ="{{url_for('shares')}}">
                             <input type = "hidden" name = "csrf_token" value = "{{ csrf_token() }}">
                             <input type = "hidden" name = "share_id" value = "{{share.id}}">
-                            <button class = "like-btn {{ 'liked' if share.liked }}" type = "submit"> ❤️ </button>
+                            <button class = "like-btn {{ 'liked' if share.liked }}" type = "submit">
+                                {% if share.liked %}&#9829; Liked{% else %}&#9825; Like{% endif %}
+                            </button>
                         </form>
                     </div>
                     {% else %}

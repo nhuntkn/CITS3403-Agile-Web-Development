@@ -3,11 +3,13 @@
         <img src = "{{url_for('static', filename = 'images/logo.png')}}" alt = "EP">
     </a>
     <div class = "ep-nav-spacer"></div>
+    <a href = "{{url_for('exercise')}}" class = "ep-nav-link create-btn {{'active' if request.endpoint == 'exercise'}}">Create Exercise</a>    
     <a href = "{{url_for('dashboard')}}" class = "ep-nav-link {{'active' if request.endpoint == 'dashboard'}}">Dashboard</a>
     <a href = "{{url_for('ranking')}}" class = "ep-nav-link {{'active' if request.endpoint == 'ranking'}}">Ranking</a>
     <a href = "{{url_for('history')}}" class = "ep-nav-link {{'active' if request.endpoint == 'history'}}">History</a>
-    <a href = "{{url_for('forum')}}" class = "ep-nav-link {{'active' if request.endpoint == 'forum'}}">Forum</a>
-    <a href = "{{url_for('exercise')}}" class = "ep-nav-link create-btn {{'active' if request.endpoint == 'exercise'}}">Create Exercise</a>
+    <a href = "{{url_for('shares')}}" class = "ep-nav-link {{'active' if request.endpoint == 'shares'}}">
+        Shares{% if unread_shares_count > 0 %}<span class="notif-dot"></span>{% endif %}
+    </a>
     <div class = "ep-user-menu">
         <div class="ep-user-avatar">
             {% set nav_avatar_url = user_avatar_url(current_user) %}

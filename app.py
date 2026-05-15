@@ -117,6 +117,13 @@ def user_avatar_url(user):
 def inject_avatar_helpers():
     return {"user_avatar_url": user_avatar_url}
 
+@app.context_processor
+def inject_shares_badge():
+    if current_user.is_authenticated:
+        count = Share.query.filter_by(receiver_id=current_user.id, seen=False).count()
+        return {"unread_shares_count": count}
+    return {"unread_shares_count": 0}
+
 def user_avatar_payload(user):
     return {
         "username": user.username,
@@ -593,9 +600,9 @@ def logout():
     logout_user()
     return redirect(url_for("login"))
 
-@app.route("/forum", methods = ["GET", "POST"])
+@app.route("/shares", methods = ["GET", "POST"])
 @login_required
-def forum():
+def shares():
     if request.method == "POST":
         action = request.form.get("action", "like")
 
@@ -615,7 +622,7 @@ def forum():
                                   session_id = int(session_id))
                     db.session.add(share)
                     db.session.commit()
-            return redirect(url_for('forum', tab = 'sent'))
+            return redirect(url_for('shares', tab = 'sent'))
 
         else:
             share_id = request.form.get("share_id")
@@ -624,12 +631,15 @@ def forum():
                 if share and share.receiver_id == current_user.id:
                     share.liked = not share.liked
                     db.session.commit()
-            return redirect(url_for('forum', tab = 'received'))
+            return redirect(url_for('shares', tab = 'received'))
 
-    tab = request.args.get('tab', 'sent')
+    tab = request.args.get('tab', 'received')
+    if tab == 'received':
+        Share.query.filter_by(receiver_id=current_user.id, seen=False).update({"seen": True})
+        db.session.commit()
     sent = Share.query.filter_by(sender_id = current_user.id).order_by(Share.created_at.desc()).all()
     received = Share.query.filter_by(receiver_id = current_user.id).order_by(Share.created_at.desc()).all()
-    return render_template("forum.html", tab = tab, sent = sent,
+    return render_template("shares.html", tab = tab, sent = sent,
                            received = received, username = current_user.username)
 
 
