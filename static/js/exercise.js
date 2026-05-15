@@ -114,3 +114,8 @@ function calculateCalories() {
 
 // add one exercise row by default when page loads
 addExerciseRow();
+
+const sessionDateInput = document.getElementById("sessionDate");
+if (sessionDateInput) {
+    sessionDateInput.max = new Date().toISOString().split("T")[0];
+}

@@ -3,7 +3,8 @@
 {% block title %}Sign Up{% endblock %}
 
 {% block content %}
-<div class="auth-topbar">
+<!-- top bar -->
+<div class="auth-navbar">
     <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Exercise Planner">
 </div>
 
@@ -30,7 +31,7 @@
             <div class="mb-3">
                 <label class="form-label">Username</label>
                 <input class="form-control" name="username" required>
-                <small id="usernameFeedback" class="feedback-error"></small>
+                <small id="usernameFeedback" class="form-feedback"></small>
             </div>
 
             <!-- Email + Send Code -->
@@ -89,7 +90,7 @@
             <div class="mb-3">
                 <label class="form-label">Confirm Password</label>
                 <input type="password" class="form-control" name="confirm" id="confirm" required>
-                <small id="confirmFeedback" class="feedback-error"></small>
+                <small id="confirmFeedback" class="form-feedback"></small>
             </div>
 
             <!-- DOB + Gender -->

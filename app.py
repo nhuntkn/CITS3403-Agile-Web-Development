@@ -413,7 +413,8 @@ def dashboard():
         start_weight=start_weight,
         current_weight=current_weight,
         user_height=user.height if user else None,
-        calorie_goal=calorie_goal
+        calorie_goal=calorie_goal,
+        username=current_user.username
     )
 
 @app.route("/api/send_signup_code", methods=["POST"])
@@ -727,7 +728,8 @@ def account():
         return render_template("account.html",
             user=user,
             current_date=current_date.today().isoformat(),
-            error=error
+            error=error,
+            username=user.username
         )
 
     if request.method == "POST":
