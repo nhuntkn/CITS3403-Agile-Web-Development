@@ -103,6 +103,40 @@ def clear_reset_session():
     session.pop("reset_verified", None)
 
 
+def send_verification_email(to_email, code):
+    if not app.config["MAIL_USERNAME"] or not app.config["MAIL_PASSWORD"]:
+        raise RuntimeError("Email credentials are not configured")
+
+    msg = EmailMessage()
+    msg["Subject"] = "Email Verification Code"
+    msg["From"] = app.config["MAIL_USERNAME"]
+    msg["To"] = to_email
+    msg.set_content(
+        f"Your verification code is: {code}\n\n"
+        "This code will expire in 5 minutes.\n"
+        "If you did not sign up, please ignore this email."
+    )
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        smtp.login(app.config["MAIL_USERNAME"], app.config["MAIL_PASSWORD"])
+        smtp.send_message(msg)
+
+
+def clear_signup_session():
+    session.pop("signup_code", None)
+    session.pop("signup_email", None)
+    session.pop("signup_time", None)
+    session.pop("signup_attempts", None)
+    session.pop("signup_data", None)
+    session.pop("signup_verified_email", None)
+
+@app.route("/test/set_signup_verified_email")
+def test_set_signup_verified_email():
+    if not app.testing:
+        abort(404)
+    session["signup_verified_email"] = request.args.get("email", "")
+    return "", 204
+
 def user_avatar_url(user):
     if not user or not user.avatar:
         return None
@@ -398,6 +432,67 @@ def dashboard():
         username=current_user.username
     )
 
+@app.route("/api/send_signup_code", methods=["POST"])
+def send_signup_code():
+    data = request.get_json()
+    email = (data.get("email") or "").strip()
+
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+
+    if User.query.filter_by(email=email).first():
+        return jsonify({"error": "Email already registered"}), 400
+
+    verification_code = str(random.randint(100000, 999999))
+    try:
+        send_verification_email(email, verification_code)
+    except Exception:
+        return jsonify({"error": "Failed to send verification email"}), 500
+
+    session["signup_email"] = email
+    session["signup_code"] = verification_code
+    session["signup_time"] = time.time()
+    session["signup_attempts"] = 0
+    session.pop("signup_verified_email", None)
+
+    return jsonify({"message": "Verification code sent"})
+
+
+@app.route("/api/verify_signup_code", methods=["POST"])
+def verify_signup_code():
+    data = request.get_json()
+    code = (data.get("code") or "").strip()
+    email = (data.get("email") or "").strip()
+
+    if "signup_code" not in session:
+        return jsonify({"error": "No verification code sent. Please request a new one."}), 400
+
+    attempts = session.get("signup_attempts", 0)
+
+    if attempts >= 5:
+        session.pop("signup_code", None)
+        return jsonify({"error": "Too many incorrect attempts. Please request a new code."}), 400
+
+    if time.time() - session.get("signup_time", 0) > 300:
+        session.pop("signup_code", None)
+        return jsonify({"error": "Verification code expired. Please request a new one."}), 400
+
+    if code != session.get("signup_code"):
+        session["signup_attempts"] = attempts + 1
+        remaining = 5 - (attempts + 1)
+        return jsonify({"error": f"Invalid code. {remaining} attempt(s) remaining."}), 400
+
+    if email != session.get("signup_email"):
+        return jsonify({"error": "Email does not match the one used for verification code request."}), 400
+    session["signup_verified_email"] = email
+    session.pop("signup_email", None)
+    session.pop("signup_code", None)
+    session.pop("signup_time", None)
+    session.pop("signup_attempts", None)
+
+    return jsonify({"message": "Email verified successfully"})
+
+
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
@@ -405,60 +500,59 @@ def signup():
         email = request.form.get("email")
         password = request.form.get("password")
         confirm = request.form.get("confirm")
-
         dob = request.form.get("dob")
         gender = request.form.get("gender")
         weight = request.form.get("weight")
         height = request.form.get("height")
 
+        verified_email = session.get("signup_verified_email", "")
+
+        def render_error(msg):
+            return render_template("signup.html",
+                                   today=current_date.today().isoformat(),
+                                   error=msg,
+                                   verified_email=verified_email)
+
         if not password or len(password) < 12:
-            return render_template("signup.html", error="Password must be at least 12 characters long")
+            return render_error("Password must be at least 12 characters long")
 
         if not any(char.isalpha() for char in password):
-            return render_template("signup.html", error="Password must contain at least one letter")
+            return render_error("Password must contain at least one letter")
 
         if not any(char in "!@#$%^&*" for char in password):
-            return render_template(
-                "signup.html",
-                error="Password must contain at least one special character"
-            )
+            return render_error("Password must contain at least one special character")
 
         if password != confirm:
-            return render_template("signup.html", error="Passwords do not match")
+            return render_error("Passwords do not match")
 
         existing = User.query.filter_by(username=username).first()
         if existing:
-            return render_template("signup.html", error="Username already exists")
+            return render_error("Username already exists")
 
         existing_email = User.query.filter_by(email=email).first()
         if existing_email:
-            return render_template(
-                "signup.html",
-                error="Email already exists"
-            )
+            return render_error("Email already exists")
 
         try:
             weight_value = float(weight)
             height_value = float(height)
         except (TypeError, ValueError):
-            return render_template("signup.html", today=current_date.today().isoformat(),
-                                   error="Weight and height must be valid numbers")
+            return render_error("Weight and height must be valid numbers")
 
         if weight_value < 1 or weight_value > 300:
-            return render_template("signup.html", today=current_date.today().isoformat(),
-                                   error="Weight must be between 1 and 300 kg")
+            return render_error("Weight must be between 1 and 300 kg")
 
         if height_value < 50 or height_value > 250:
-            return render_template("signup.html", today=current_date.today().isoformat(),
-                                   error="Height must be between 50 and 250 cm")
+            return render_error("Height must be between 50 and 250 cm")
 
         if round(weight_value, 2) != weight_value:
-            return render_template("signup.html", today=current_date.today().isoformat(),
-                                   error="Weight can only have up to 2 decimal places")
+            return render_error("Weight can only have up to 2 decimal places")
 
         if round(height_value, 2) != height_value:
-            return render_template("signup.html", today=current_date.today().isoformat(),
-                                   error="Height can only have up to 2 decimal places")
+            return render_error("Height can only have up to 2 decimal places")
+
+        if not verified_email or verified_email != email:
+            return render_error("Please verify your email address before signing up")
 
         new_user = User(
             username=username,
@@ -469,16 +563,17 @@ def signup():
             start_weight=weight_value,
             height=height_value
         )
-
         new_user.set_password(password)
-
         db.session.add(new_user)
         db.session.commit()
 
+        clear_signup_session()
         login_user(new_user)
-        return redirect(url_for('dashboard'))
+        return redirect(url_for("dashboard"))
 
-    return render_template("signup.html", today=current_date.today().isoformat())
+    verified_email = session.get("signup_verified_email", "")
+    return render_template("signup.html", today=current_date.today().isoformat(),
+                           verified_email=verified_email)
 
 @app.route('/check_username')
 def check_username():
@@ -699,8 +794,8 @@ def account():
 
                 if height:
                     height_value = round(float(height), 2)
-                    if height_value < 1 or height_value > 300:
-                        return render_account("Height must be between 1 and 300 cm")
+                    if height_value < 50 or height_value > 250:
+                        return render_account("Height must be between 50 and 250 cm")
                     user.height = height_value
 
                 if calorie:
@@ -1018,7 +1113,7 @@ def forgot_password():
             verification_code = str(random.randint(100000, 999999))
             try:
                 send_reset_email(email, verification_code)
-            except:
+            except Exception:
                 return render_template(
                     "forgot_password.html",
                     error="Failed to send verification email"

@@ -969,3 +969,7 @@ body {
 .account-empty-message {
   color: #777777;
 }
+
+/* ── Form validation rule indicators ─────────────────────── */
+.rule-invalid { color: #dc3545; }
+.rule-valid   { color: #198754; }

@@ -31,13 +31,14 @@ def make_wait(driver):
     return WebDriverWait(driver, 10)
 
 
-def fill_signup_form(driver, username, email, password=VALID_PASSWORD, confirm=None):
+def fill_signup_form(driver, username, email, password=VALID_PASSWORD, confirm=None, fill_email=True):
     from selenium.webdriver.common.by import By
 
     confirm = password if confirm is None else confirm
 
     driver.find_element(By.NAME, "username").send_keys(username)
-    driver.find_element(By.NAME, "email").send_keys(email)
+    if fill_email:
+        driver.find_element(By.NAME, "email").send_keys(email)
     driver.find_element(By.NAME, "password").send_keys(password)
     driver.find_element(By.NAME, "confirm").send_keys(confirm)
     driver.find_element(By.NAME, "dob").send_keys("01-01-2000")
@@ -72,10 +73,12 @@ def click_add_to_record(driver, wait):
 def signup_user(driver, wait, live_server, username, email, password=VALID_PASSWORD):
     from selenium.webdriver.common.by import By
     from selenium.webdriver.support import expected_conditions as EC
+    from urllib.parse import quote
 
+    driver.get(f"{live_server}/test/set_signup_verified_email?email={quote(email)}")
     driver.get(f"{live_server}/signup")
     wait.until(EC.visibility_of_element_located((By.NAME, "username")))
-    fill_signup_form(driver, username, email, password=password)
+    fill_signup_form(driver, username, email, password=password, fill_email=False)
     click_submit(driver, wait)
     wait.until(EC.url_contains("/dashboard"))
     wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".main-box")))
