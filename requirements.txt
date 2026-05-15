@@ -2,6 +2,7 @@ Flask
 Flask-Login
 Flask-Migrate
 Flask-SQLAlchemy
+Flask-WTF
 python-dotenv
 openai
 anthropic

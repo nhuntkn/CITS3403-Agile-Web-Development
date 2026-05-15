@@ -14,6 +14,7 @@
   <!-- main content -->
   <div class="container py-4">
     <form class="main-box" method="POST" action="{{ url_for('exercise') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <h1>Add Session</h1>
 
       {% if message %}
@@ -114,6 +115,7 @@
               <button type = "button" class = "btn-close" data-bs-dismiss = "modal"></button>
             </div>
             <form method = "POST" action = "{{url_for('forum')}}">
+              <input type = "hidden" name = "csrf_token" value = "{{ csrf_token() }}">
               <input type = "hidden" name = "action" value = "share">
               <input type = "hidden" name = "session_id" value = "{{new_session_id}}">
               <div class = "modal-body">
