@@ -24,6 +24,19 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function readJsonScript(elementId, fallback) {
+  const element = document.getElementById(elementId);
+  if (!element) {
+    return fallback;
+  }
+
+  try {
+    return JSON.parse(element.textContent);
+  } catch {
+    return fallback;
+  }
+}
+
 function initActivityLocationMap() {
   const mapElement = document.getElementById("activityMap");
   if (!mapElement) {
@@ -133,7 +146,7 @@ function initHistoryLocationMap() {
 
   const mapPanel = document.getElementById("locationMapPanel");
   const mapStatus = document.getElementById("historyMapStatus");
-  const locations = window.historyLocations || [];
+  const locations = readJsonScript("history-location-data", []);
   let map = null;
   let marker = null;
 

@@ -1,11 +1,125 @@
-# Helper functions for the project
-# This file stores reusable calculations used by the app
-import os, hashlib, json
+import hashlib
+import json
+import os
+import smtplib
 from datetime import timedelta
+from email.message import EmailMessage
+
+from flask import current_app, request, session, url_for
+
+from models import db, Friend, Share, User
 
 def calculate_calories(met_value, minutes, weight):
     calories = minutes * (met_value * 3.5 * weight) / 200
     return round(calories,2)
+
+def parse_location_fields(latitude_raw, longitude_raw):
+    if not latitude_raw and not longitude_raw:
+        return None, None, None
+
+    if not latitude_raw or not longitude_raw:
+        return None, None, "Please select both latitude and longitude for the activity location"
+
+    try:
+        latitude = float(latitude_raw)
+        longitude = float(longitude_raw)
+    except ValueError:
+        return None, None, "Activity location is invalid"
+
+    if latitude < -90 or latitude > 90:
+        return None, None, "Latitude must be between -90 and 90"
+    if longitude < -180 or longitude > 180:
+        return None, None, "Longitude must be between -180 and 180"
+
+    return latitude, longitude, None
+
+def send_email(to_email, subject, body):
+    username = current_app.config["MAIL_USERNAME"]
+    password = current_app.config["MAIL_PASSWORD"]
+
+    if not username or not password:
+        raise RuntimeError("Email credentials are not configured")
+
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = username
+    msg["To"] = to_email
+    msg.set_content(body)
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        smtp.login(username, password)
+        smtp.send_message(msg)
+
+def send_reset_email(to_email, code):
+    send_email(
+        to_email,
+        "Password Reset Verification Code",
+        f"Your verification code is: {code}\n\nThis code will expire in 5 minutes."
+    )
+
+def send_verification_email(to_email, code):
+    send_email(
+        to_email,
+        "Email Verification Code",
+        f"Your verification code is: {code}\n\n"
+        "This code will expire in 5 minutes.\n"
+        "If you did not sign up, please ignore this email."
+    )
+
+def clear_reset_session():
+    session.pop("reset_code", None)
+    session.pop("reset_email", None)
+    session.pop("reset_time", None)
+    session.pop("reset_attempts", None)
+    session.pop("reset_verified", None)
+
+def clear_signup_session():
+    session.pop("signup_code", None)
+    session.pop("signup_email", None)
+    session.pop("signup_time", None)
+    session.pop("signup_attempts", None)
+    session.pop("signup_data", None)
+    session.pop("signup_verified_email", None)
+
+def user_avatar_url(user):
+    if not user or not user.avatar:
+        return None
+
+    avatar_path = os.path.join(current_app.root_path, "static", "uploads", user.avatar)
+    if not os.path.isfile(avatar_path):
+        return None
+
+    return url_for("static", filename="uploads/" + user.avatar)
+
+def user_avatar_payload(user):
+    return {
+        "username": user.username,
+        "avatar_url": user_avatar_url(user)
+    }
+
+def requested_username():
+    data = request.get_json(silent=True) or {}
+    return data.get("username", "").strip()
+
+def user_by_username(username):
+    if not username:
+        return None
+    return User.query.filter_by(username=username).first()
+
+def friendship_between(user_id, other_user_id, status=None):
+    query = Friend.query.filter(
+        ((Friend.sender_id == user_id) & (Friend.receiver_id == other_user_id)) |
+        ((Friend.sender_id == other_user_id) & (Friend.receiver_id == user_id))
+    )
+    if status:
+        query = query.filter(Friend.status == status)
+    return query.first()
+
+def delete_shares_between(user_id, other_user_id):
+    Share.query.filter(
+        ((Share.sender_id == user_id) & (Share.receiver_id == other_user_id)) |
+        ((Share.sender_id == other_user_id) & (Share.receiver_id == user_id))
+    ).delete(synchronize_session=False)
 
 # This function generates AI feedback text based on the provided prompt and the selected AI provider (OpenAI, Claude, or Gemini).
 def generateAiFeedbackText(prompt):

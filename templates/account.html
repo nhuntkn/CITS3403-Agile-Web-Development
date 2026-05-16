@@ -2,214 +2,194 @@
 
 {% block title %}Account{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}">
+{% endblock %}
+
 {% block navbar %}
 {% include 'navbar.html' %}
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid account-page">
-<div class="row">
+  <div class="row">
+    <aside class="col-md-2 bg-light p-3 account-sidebar">
+      <button id="profileSidebarBtn" type="button" class="btn btn-secondary w-100 mb-2">Profile</button>
+      <button id="addSidebarBtn" type="button" class="btn btn-light w-100 mb-2">Friend</button>
+    </aside>
 
-<!-- SIDEBAR -->
-<div class="col-md-2 bg-light p-3">
-<button id="profileSidebarBtn" class="btn btn-secondary w-100 mb-2">Profile</button>
-<button id="addSidebarBtn" class="btn btn-light w-100 mb-2">Friend</button>
-</div>
+    <main class="col-md-10">
+      <div class="container py-4">
+        <div id="accountNotice" class="account-notice account-hidden" role="status" aria-live="polite"></div>
 
-<!-- MAIN -->
-<div class="col-md-10">
-<div class="container py-4">
+        <section id="profileSection" class="main-box">
+          <div class="title-main">My Profile</div>
 
-<!-- PROFILE -->
-<div id="profileSection" class="main-box">
+          {% if error %}
+          <div class="alert alert-danger">
+            {{ error }}
+          </div>
+          {% endif %}
 
-<div class="title-main">My Profile</div>
+          <div class="card p-4 mb-4">
+            <div class="row align-items-center">
+              <div class="col-md-9">
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <div class="info-label">Username</div>
+                    <div class="info-value">{{ user.username }}</div>
+                  </div>
 
-{% if error %}
-<div class="alert alert-danger">
-    {{ error }}
-</div>
-{% endif %}
+                  <div class="col-md-6 mb-3">
+                    <div class="info-label">Date of Birth</div>
+                    <div class="info-value">{{ user.dob }}</div>
+                  </div>
 
-<div class="card p-4 mb-4">
-<div class="row align-items-center">
+                  <div class="col-md-6 mb-3">
+                    <div class="info-label">Gender</div>
+                    <div class="info-value">{{ user.gender }}</div>
+                  </div>
 
-<div class="col-md-9">
-<div class="row">
+                  <div class="col-md-6 mb-3">
+                    <div class="info-label">Current Weight</div>
+                    <div class="info-value">{{ user.weight if user.weight else '' }} kg</div>
+                  </div>
 
-<div class="col-md-6 mb-3">
-<div class="info-label">Username</div>
-<div class="info-value">{{ user.username }}</div>
-</div>
+                  <div class="col-md-6 mb-3">
+                    <div class="info-label">Height</div>
+                    <div class="info-value">{{ user.height }} cm</div>
+                  </div>
 
-<div class="col-md-6 mb-3">
-<div class="info-label">Date of Birth</div>
-<div class="info-value">{{ user.dob }}</div>
-</div>
+                  <div class="col-md-6 mb-3">
+                    <div class="info-label">Email</div>
+                    <div class="info-value">{{ user.email }}</div>
+                  </div>
+                </div>
+              </div>
 
-<div class="col-md-6 mb-3">
-<div class="info-label">Gender</div>
-<div class="info-value">{{ user.gender }}</div>
-</div>
+              <div class="col-md-3 text-center">
+                {% set profile_avatar_url = user_avatar_url(user) %}
+                {% if profile_avatar_url %}
+                <img src="{{ profile_avatar_url }}" class="avatar-preview" alt="{{ user.username }}">
+                {% else %}
+                <div class="avatar-placeholder">{{ user.username[0]|upper }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
 
-<div class="col-md-6 mb-3">
-<div class="info-label">Current Weight</div>
-<div class="info-value">{{ user.weight if user.weight else '' }} kg</div>
-</div>
+          <div class="card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="title-section">Edit Profile</div>
+              <button id="editToggle" type="button" class="account-toggle" aria-expanded="false">Show</button>
+            </div>
 
-<div class="col-md-6 mb-3">
-<div class="info-label">Height</div>
-<div class="info-value">{{ user.height }} cm</div>
-</div>
+            <form method="POST" action="/account" enctype="multipart/form-data" id="editSection" class="account-collapsible-form account-hidden">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="form_type" value="update_profile">
 
-<div class="col-md-6 mb-3">
-<div class="info-label">Email</div>
-<div class="info-value">{{ user.email }}</div>
-</div>
+              <label>Date of Birth</label>
+              <input type="date" class="form-control mb-3" name="dob" max="{{ current_date }}" value="{{ user.dob or '' }}">
 
-</div>
-</div>
+              <label>Gender</label>
+              <select class="form-control mb-3" name="gender">
+                <option value="">Select</option>
+                <option value="Male" {% if user.gender == "Male" %}selected{% endif %}>Male</option>
+                <option value="Female" {% if user.gender == "Female" %}selected{% endif %}>Female</option>
+              </select>
 
-<div class="col-md-3 text-center">
-{% set profile_avatar_url = user_avatar_url(user) %}
-{% if profile_avatar_url %}
-<img src="{{ profile_avatar_url }}" class="avatar-preview">
-{% else %}
-<div class="avatar-placeholder">{{ user.username[0]|upper }}</div>
-{% endif %}
-</div>
+              <label>Current Weight</label>
+              <div class="input-group mb-3">
+                <input type="number" class="form-control" name="weight" min="1" max="300" step="0.01" value="{{ user.weight or '' }}">
+                <span class="input-group-text">kg</span>
+              </div>
 
-</div>
-</div>
+              <label>Start Weight</label>
+              <div class="input-group mb-3">
+                <input type="number" class="form-control" name="start_weight" min="1" max="300" step="0.01" value="{{ user.start_weight or '' }}">
+                <span class="input-group-text">kg</span>
+              </div>
 
+              <label>Height</label>
+              <div class="input-group mb-3">
+                <input type="number" class="form-control" name="height" min="1" max="300" step="0.01" value="{{ user.height or '' }}">
+                <span class="input-group-text">cm</span>
+              </div>
 
-<!-- edit -->
-<div class="card p-4 mb-4">
+              <label>Daily Calorie Goal</label>
+              <input type="number" class="form-control mb-3" name="calorie_goal" min="1" max="10000" step="1" value="{{ user.calorie_goal or 1500 }}">
 
-<div class="d-flex justify-content-between">
-<div class="title-section">Edit Profile</div>
-<span id="editToggle" class="account-toggle">▼</span>
-</div>
+              <label>Profile Image</label>
+              <input type="file" class="form-control mb-3" name="avatar" accept="image/png,image/jpeg,image/gif,image/webp">
 
-<form method="POST" action="/account" enctype="multipart/form-data" id="editSection" class="account-collapsible-form">
+              <div class="avatar-box mb-3 text-center">
+                <img id="previewBox" class="avatar-preview account-hidden" alt="Avatar preview">
+              </div>
 
-<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-<input type="hidden" name="form_type" value="update_profile">
+              <div class="text-center">
+                <button type="submit" class="btn btn-save">Save Changes</button>
+              </div>
+            </form>
+          </div>
 
-<label>Date of Birth</label>
-<input type="date" class="form-control mb-3" name="dob" max="{{ current_date }}" value="{{ user.dob or '' }}">
+          <div class="card p-4">
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="title-section">Change Password</div>
+              <button id="passwordToggle" type="button" class="account-toggle" aria-expanded="false">Show</button>
+            </div>
 
-<label>Gender</label>
-<select class="form-control mb-3" name="gender">
-<option value="">Select</option>
-<option value="Male" {% if user.gender == "Male" %}selected{% endif %}>Male</option>
-<option value="Female" {% if user.gender == "Female" %}selected{% endif %}>Female</option>
-</select>
+            <form method="POST" id="passwordSection" class="account-collapsible-form account-hidden">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="form_type" value="change_password">
 
-<label>Current Weight</label>
-<div class="input-group mb-3">
-<input type="number" class="form-control" name="weight" min="1" max="300" step="0.01" value="{{ user.weight or '' }}">
-<span class="input-group-text">kg</span>
-</div>
+              <label>New Password</label>
+              <input type="password" class="form-control mb-2" id="newPassword" name="new_password" autocomplete="new-password">
 
-<label>Start Weight</label>
-<div class="input-group mb-3">
-<input type="number" class="form-control" name="start_weight" min="1" max="300" step="0.01" value="{{ user.start_weight or '' }}">
-<span class="input-group-text">kg</span>
-</div>
+              <div class="password-rules">
+                <div id="rule-length" class="pw-rule">- At least 12 characters</div>
+                <div id="rule-letter" class="pw-rule">- Contains at least one letter</div>
+                <div id="rule-special" class="pw-rule">- Contains at least one special character (!@#$%^&*)</div>
+              </div>
 
-<label>Height</label>
-<div class="input-group mb-3">
-<input type="number" class="form-control" name="height" min="1" max="300" step="0.01" value="{{ user.height or '' }}">
-<span class="input-group-text">cm</span>
-</div>
+              <label>Confirm Password</label>
+              <input type="password" class="form-control mb-2" id="confirmPassword" name="confirm_password" autocomplete="new-password">
 
-<label>Daily Calorie Goal</label>
-<input type="number" class="form-control mb-3" name="calorie_goal" value="{{ user.calorie_goal or 1500 }}">
+              <div id="matchMessage" class="password-message"></div>
 
-<label>Profile Image</label>
-<input type="file" class="form-control mb-3" name="avatar">
+              <div class="text-center">
+                <button type="submit" class="btn btn-save">Update Password</button>
+              </div>
+            </form>
+          </div>
+        </section>
 
-<div class="avatar-box mb-3 text-center">
-    <img id="previewBox" class="avatar-preview account-hidden">
-</div>
+        <section id="addSection" class="main-box account-hidden">
+          <div class="title-main">Friend</div>
 
-<div class="text-center">
-<button class="btn btn-save">Save Changes</button>
-</div>
+          <div class="card p-4 mb-4">
+            <div class="title-section">Search Users</div>
 
-</form>
-</div>
+            <div class="account-search-row">
+              <input id="searchInput" class="form-control" placeholder="Search by username" aria-label="Search users by username">
+              <button id="searchBtn" type="button" class="btn btn-save">Search</button>
+            </div>
 
-<!-- password -->
-<div class="card p-4">
+            <div id="searchResults" class="mt-2"></div>
+          </div>
 
-<div class="d-flex justify-content-between">
-<div class="title-section">Change Password</div>
-<span id="passwordToggle" class="account-toggle">▼</span>
-</div>
+          <div class="card p-4 mb-4">
+            <div class="title-section">Pending Requests</div>
+            <div id="pendingList"></div>
+          </div>
 
-<form method="POST" id="passwordSection" class="account-collapsible-form">
-
-<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-<input type="hidden" name="form_type" value="change_password">
-
-<label>New Password</label>
-<input type="password" class="form-control mb-2" id="newPassword" name="new_password">
-
-<div class="password-rules">
-    <div id="rule-length" class="pw-rule">• At least 12 characters</div>
-    <div id="rule-letter" class="pw-rule">• Contains at least one letter</div>
-    <div id="rule-special" class="pw-rule">• Contains at least one special character (!@#$%^&*)</div>
-</div>
-
-<label>Confirm Password</label>
-<input type="password" class="form-control mb-2" id="confirmPassword" name="confirm_password">
-
-<div id="matchMessage" class="password-message"></div>
-
-<div class="text-center">
-<button class="btn btn-save">Update Password</button>
-</div>
-
-</form>
-</div>
-
-</div>
-
-
-<!-- ADD FRIEND -->
-<div id="addSection" class="main-box account-hidden">
-
-<div class="title-main">Friend</div>
-
-<div class="card p-4 mb-4">
-<div class="title-section">Search Users</div>
-
-<div class="d-flex gap-2">
-<input id="searchInput" class="form-control">
-<button id="searchBtn" class="btn btn-save">Search</button>
-</div>
-
-<div id="searchResults" class="mt-2"></div>
-</div>
-
-<div class="card p-4 mb-4">
-<div class="title-section">Pending Requests</div>
-<div id="pendingList"></div>
-</div>
-
-<div class="card p-4">
-<div class="title-section">Friends</div>
-<div id="friendsList"></div>
-</div>
-
-</div>
-
-<!-- /MAIN -->
-</div>
-</div>
-</div>
+          <div class="card p-4">
+            <div class="title-section">Friends</div>
+            <div id="friendsList"></div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
 </div>
 {% endblock %}
 

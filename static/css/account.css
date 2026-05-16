@@ -1,0 +1,142 @@
+/* Account page */
+
+.account-page .main-box {
+  background: #ffffff;
+  padding: 28px;
+  border-radius: 12px;
+}
+
+.account-page .card {
+  border-radius: 12px;
+  border: 1px solid #eeeeee;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+}
+
+.title-main {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.title-section {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.info-label {
+  color: #777777;
+  font-size: 15px;
+}
+
+.stat-label {
+  color: #777777;
+  font-size: 15px;
+}
+
+.info-value {
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.avatar-placeholder {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: #6c757d;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+}
+
+.avatar-preview {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  margin: 10px auto;
+}
+
+.btn-save {
+  background: linear-gradient(135deg,#4e73df,#6c8cff);
+  border: none;
+  color: white;
+  padding: 10px 26px;
+  border-radius: 8px;
+}
+
+.stats-box {
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.account-toggle {
+  background: transparent;
+  border: 0;
+  color: #4e73df;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0;
+}
+
+.account-collapsible-form {
+  margin-top: 20px;
+}
+
+.account-hidden {
+  display: none;
+}
+
+.account-notice {
+  margin-bottom: 1rem;
+}
+
+.account-search-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.account-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-bottom: 1px solid #eeeeee;
+  padding: 0.6rem 0;
+}
+
+.account-row-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.password-rules,
+.password-message {
+  font-size: 14px;
+  margin-top: 8px;
+  margin-bottom: 15px;
+}
+
+.account-rule-danger,
+.pw-rule {
+  color: red;
+}
+
+.form-feedback {
+  color: red;
+}
+
+.account-empty-message {
+  color: #777777;
+}

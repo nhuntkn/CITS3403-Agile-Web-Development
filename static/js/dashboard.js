@@ -1,96 +1,109 @@
-const { sessions, startWeight, userHeight, currentWeight, calorieGoal, aiFeedbackUrl } = window.DASHBOARD_DATA;
-
-/* ── Metric cards ─────────────────────────────────────────────────────── */
+const dashboardData = JSON.parse(document.getElementById("dashboard-data").textContent);
+const { sessions, startWeight, userHeight, currentWeight, calorieGoal, aiFeedbackUrl } = dashboardData;
 
 const sorted = [...sessions].sort((a, b) => a.date.localeCompare(b.date));
 
+function setText(id, value) {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value;
+}
+
 if (startWeight !== null) {
-    document.getElementById("startWeight").textContent = startWeight.toFixed(1);
+    setText("startWeight", startWeight.toFixed(1));
 }
 
 if (currentWeight !== null) {
-    document.getElementById("currentWeight").textContent = currentWeight.toFixed(1);
+    setText("currentWeight", currentWeight.toFixed(1));
     if (startWeight !== null) {
         const change = currentWeight - startWeight;
-        document.getElementById("totalChanges").textContent =
-            (change >= 0 ? "+" : "") + change.toFixed(1);
+        setText("totalChanges", (change >= 0 ? "+" : "") + change.toFixed(1));
     }
     if (userHeight) {
         const heightM = userHeight / 100;
         const bmi = currentWeight / (heightM * heightM);
-        document.getElementById("currentBMI").textContent = bmi.toFixed(1);
+        setText("currentBMI", bmi.toFixed(1));
 
         let category = "";
-        if (bmi < 18.5)     category = "Underweight";
-        else if (bmi < 25)  category = "Normal";
-        else if (bmi < 30)  category = "Overweight";
-        else                category = "Obese";
-        document.getElementById("bmiCategory").textContent = category;
+        if (bmi < 18.5) category = "Underweight";
+        else if (bmi < 25) category = "Normal";
+        else if (bmi < 30) category = "Overweight";
+        else category = "Obese";
+        setText("bmiCategory", category);
     }
 }
-
-/* ── Alerts ───────────────────────────────────────────────────────────── */
 
 const alerts = [];
 
 if (currentWeight !== null && userHeight) {
     const heightM = userHeight / 100;
     const bmi = currentWeight / (heightM * heightM);
-    if (bmi < 18.5)
+    if (bmi < 18.5) {
         alerts.push({ cls: "warning", msg: `BMI Alert: Your BMI is ${bmi.toFixed(1)} (Underweight). Consider consulting a healthcare professional.` });
-    else if (bmi >= 30)
-        alerts.push({ cls: "danger",  msg: `BMI Alert: Your BMI is ${bmi.toFixed(1)} (Obese). Consider consulting a healthcare professional.` });
-    else if (bmi >= 25)
+    } else if (bmi >= 30) {
+        alerts.push({ cls: "danger", msg: `BMI Alert: Your BMI is ${bmi.toFixed(1)} (Obese). Consider consulting a healthcare professional.` });
+    } else if (bmi >= 25) {
         alerts.push({ cls: "warning", msg: `BMI Alert: Your BMI is ${bmi.toFixed(1)} (Overweight). Consider consulting a healthcare professional.` });
+    }
 }
 
-if (sorted.length >= 2) {
+if (sorted.length >= 2 && currentWeight !== null) {
     const now = new Date();
     const cutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,'0')}-${String(cutoff.getDate()).padStart(2,'0')}`;
+    const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, "0")}-${String(cutoff.getDate()).padStart(2, "0")}`;
     const older = sorted.filter(s => s.date <= cutoffStr);
     if (older.length > 0) {
         const refWeight = older[older.length - 1].current_weight;
         const change = currentWeight - refWeight;
-        if (Math.abs(change) > 1)
+        if (Math.abs(change) > 1) {
             alerts.push({ cls: "warning", msg: `Weight Alert: You have ${change < 0 ? "lost" : "gained"} ${Math.abs(change).toFixed(1)} kg in the last 7 days.` });
+        }
     }
 }
 
-/* ── Calorie goal bar ─────────────────────────────────────────────────── */
-
 const today = (() => {
     const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 })();
 const todayKcal = sessions
     .filter(s => s.date === today)
     .reduce((sum, s) => sum + s.total_calories, 0);
 
-const pct = Math.min(100, (todayKcal / calorieGoal) * 100);
-document.getElementById("goalCount").textContent = `${Math.round(Math.min(todayKcal, calorieGoal))} / ${calorieGoal} goal`;
+const safeCalorieGoal = Math.max(Number(calorieGoal) || 0, 1);
+const pct = Math.min(100, (todayKcal / safeCalorieGoal) * 100);
+setText("goalCount", `${Math.round(Math.min(todayKcal, safeCalorieGoal))} / ${safeCalorieGoal} goal`);
 const bar = document.getElementById("calorieBar");
-bar.style.width = pct + "%";
-bar.setAttribute("aria-valuenow", pct);
+bar.style.width = `${pct}%`;
+bar.setAttribute("aria-valuenow", String(Math.round(pct)));
 
-if (todayKcal >= calorieGoal) {
-    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-    alerts.push({ cls: "success", msg: `🎉 Goal reached! You've burned ${Math.round(todayKcal)} kcal today — you hit your daily goal!` });
+if (todayKcal >= safeCalorieGoal) {
+    if (typeof confetti === "function") {
+        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+    }
+    alerts.push({ cls: "success", msg: `Goal reached! You've burned ${Math.round(todayKcal)} kcal today - you hit your daily goal!` });
 }
 
 const alertBox = document.getElementById("alertBox");
-alerts.forEach(a => {
+alerts.forEach(alert => {
     const div = document.createElement("div");
-    div.className = `alert alert-${a.cls} alert-dismissible fade show`;
+    div.className = `alert alert-${alert.cls} alert-dismissible fade show`;
     div.setAttribute("role", "alert");
-    div.innerHTML = `${a.msg}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+    div.append(document.createTextNode(alert.msg));
+
+    const close = document.createElement("button");
+    close.type = "button";
+    close.className = "btn-close";
+    close.setAttribute("data-bs-dismiss", "alert");
+    close.setAttribute("aria-label", "Close");
+    div.appendChild(close);
     alertBox.appendChild(div);
 });
 
-/* ── Weekly chart ─────────────────────────────────────────────────────── */
-
 let weeklyOffset = 0;
 let weeklyChart = null;
+
+function dateKey(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
 
 function updateWeeklyChart(offset) {
     weeklyOffset = offset;
@@ -99,11 +112,11 @@ function updateWeeklyChart(offset) {
     for (let i = 6; i >= 0; i--) {
         const d = new Date();
         d.setDate(d.getDate() - i + (weeklyOffset * 7));
-        weekDays.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
+        weekDays.push(dateKey(d));
     }
 
     const weekLabels = weekDays.map(d => {
-        const dt = new Date(d + "T00:00:00");
+        const dt = new Date(`${d}T00:00:00`);
         return dt.toLocaleDateString("en-AU", { weekday: "short", day: "numeric" });
     });
 
@@ -113,12 +126,12 @@ function updateWeeklyChart(offset) {
 
     const titleEl = document.getElementById("weeklyTitle");
     if (weeklyOffset === 0) {
-        titleEl.textContent = "Calories burned — the last 7 days";
+        titleEl.textContent = "Calories burned - the last 7 days";
     } else {
-        const startDt = new Date(weekDays[0] + "T00:00:00");
-        const endDt   = new Date(weekDays[6] + "T00:00:00");
+        const startDt = new Date(`${weekDays[0]}T00:00:00`);
+        const endDt = new Date(`${weekDays[6]}T00:00:00`);
         const fmt = { month: "short", day: "numeric" };
-        titleEl.textContent = `Calories burned — ${startDt.toLocaleDateString("en-AU", fmt)} to ${endDt.toLocaleDateString("en-AU", fmt)}`;
+        titleEl.textContent = `Calories burned - ${startDt.toLocaleDateString("en-AU", fmt)} to ${endDt.toLocaleDateString("en-AU", fmt)}`;
     }
 
     document.getElementById("weeklyNext").disabled = weeklyOffset >= 0;
@@ -150,8 +163,6 @@ function updateWeeklyChart(offset) {
 document.getElementById("weeklyPrev").addEventListener("click", () => updateWeeklyChart(weeklyOffset - 1));
 document.getElementById("weeklyNext").addEventListener("click", () => updateWeeklyChart(weeklyOffset + 1));
 
-/* ── Monthly chart ────────────────────────────────────────────────────── */
-
 let monthlyOffset = 0;
 let monthlyChart = null;
 
@@ -177,8 +188,8 @@ function updateMonthlyChart(offset) {
     const monthName = targetDate.toLocaleDateString("en-AU", { month: "long", year: "numeric" });
     const titleEl = document.getElementById("monthlyTitle");
     titleEl.textContent = monthlyOffset === 0
-        ? `Calories burned — this month (${monthName})`
-        : `Calories burned — ${monthName}`;
+        ? `Calories burned - this month (${monthName})`
+        : `Calories burned - ${monthName}`;
 
     document.getElementById("monthlyNext").disabled = monthlyOffset >= 0;
 
@@ -212,8 +223,6 @@ document.getElementById("monthlyNext").addEventListener("click", () => updateMon
 updateWeeklyChart(0);
 updateMonthlyChart(0);
 
-/* ── AI feedback button ───────────────────────────────────────────────── */
-
 const aiFeedbackBtn = document.getElementById("generateAiFeedbackBtn");
 const aiFeedbackBox = document.getElementById("aiFeedbackBox");
 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
@@ -242,7 +251,6 @@ if (aiFeedbackBtn && aiFeedbackBox) {
             aiFeedbackBox.textContent = data.feedback;
             aiFeedbackBtn.textContent = data.cached ? "Feedback already generated today" : "Generated";
             aiFeedbackBtn.disabled = true;
-
         } catch (error) {
             aiFeedbackBox.textContent = "AI feedback request failed. Please try again.";
             aiFeedbackBtn.textContent = "Generate Weekly AI Feedback";

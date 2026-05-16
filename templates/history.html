@@ -3,6 +3,7 @@
 {% block title %}History{% endblock %}
 
 {% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/history.css') }}">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 {% endblock %}
 
@@ -66,7 +67,7 @@
                                             data-session-date="{{ session.date }}">
                                         Share
                                     </button>
-                                    <form method="POST" action="{{ url_for('delete_session', session_id=session.id) }}" onsubmit="return confirm('Delete this session?');">
+                                    <form method="POST" action="{{ url_for('delete_session', session_id=session.id) }}" data-confirm-message="Delete this session?">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
                                     </form>
@@ -111,8 +112,10 @@
                 </div>
             </div>
             {% else %}
-            <div class="alert alert-info mb-0">
-                No exercise sessions saved yet.
+            <div class="alert alert-info empty-state mb-0">
+                <h4>No exercise sessions saved yet.</h4>
+                <p>Add your first session to start building charts, rankings, and history records.</p>
+                <a class="btn-pink empty-state-action" href="{{ url_for('exercise') }}">Add Session</a>
             </div>
             {% endif %}
         </div>
@@ -120,8 +123,8 @@
 {% endblock %}
 
 {% block scripts %}
-    <script>
-        window.historyLocations = {{ location_data | tojson }};
+    <script id="history-location-data" type="application/json">
+        {{ location_data | tojson }}
     </script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="{{ url_for('static', filename='js/map.js') }}"></script>
