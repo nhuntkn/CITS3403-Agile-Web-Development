@@ -1,12 +1,8 @@
-/* ============================================================
-   style.css �?all styles for Exercise Planner
-   Sections: base · navbar · layout · metric cards · calorie box
-             charts · map/history · utilities · auth pages
-             forum · dashboard · avatars · account
-   HTML files contain structure and Jinja only �?no inline styles
-   ============================================================ */
+/* Shared styles for Exercise Planner.
+   Sections: base, navbar, layout, utilities, avatars, and responsive rules.
+   HTML files contain structure and Jinja only; no inline styles. */
 
-/* ── Base ────────────────────────────────────────────────── */
+/* Base */
 body {
   background: #ffffff;
   font-family: Arial, sans-serif;
@@ -15,7 +11,7 @@ body {
   padding: 0;
 }
 
-/* ── Navbar ──────────────────────────────────────────────── */
+/* Navbar */
 .ep-navbar {
   border-bottom: 2px solid #5a7a96;
   padding: 10px 30px;
@@ -131,7 +127,7 @@ body {
   color: #333333;
 }
 
-/* Pink "Create Exercise" button �?always last in the navbar */
+/* Pink Create Exercise button, always last in the navbar */
 .ep-nav-link.create-btn {
   background: #e91e8c;
   color: #ffffff !important;
@@ -152,14 +148,14 @@ body {
   font-weight: 700;
 }
 
-/* ── Page layout ─────────────────────────────────────────── */
+/* Page layout */
 .page-content {
   max-width: 1000px;
   margin: 0 auto;
   padding: 1.75rem 1.25rem 3rem;
 }
 
-/* ── Utility ─────────────────────────────────────────────── */
+/* Utility */
 .text-pink  { color: #e91e8c; }
 .btn-pink {
   background: #e91e8c;
@@ -275,7 +271,7 @@ body {
   margin-top: 0.35rem;
 }
 
-/* ── Form validation rule indicators ─────────────────────── */
+/* Form validation rule indicators */
 .rule-invalid { color: #dc3545; }
 .rule-valid   { color: #198754; }
 

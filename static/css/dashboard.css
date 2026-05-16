@@ -1,4 +1,4 @@
-/* ── Metric cards ────────────────────────────────────────── */
+/* Metric cards */
 .metric-card {
   background: #e0e0e0;
   border-radius: 12px;
@@ -26,7 +26,7 @@
   margin-top: 2px;
 }
 
-/* ── Calorie goal box ────────────────────────────────────── */
+/* Calorie goal box */
 .calorie-box {
   background: #e8e8e8;
   border-radius: 12px;
@@ -69,7 +69,7 @@
   width: 0;
 }
 
-/* ── Chart cards ─────────────────────────────────────────── */
+/* Chart cards */
 .chart-card {
   background: #e0e0e0;
   border-radius: 14px;
