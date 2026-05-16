@@ -433,3 +433,6 @@ body {
   }
 
   .metric-card .card-value {
+    font-size: 1.8rem;
+  }
+}

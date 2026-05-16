@@ -86,3 +86,10 @@
   height: 80px;
   width: auto;
 }
+
+.add-record-btn {
+  display: block;
+  width: 100%;
+  max-width: 360px;
+  margin-top: 1rem;
+}
