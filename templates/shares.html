@@ -63,7 +63,7 @@
                                 Total: {{share.session.total_calories}} kcal
                             </div>
                         </div>
-                        <span class="like-btn {{ 'liked' if share.liked }}" style="cursor: default; pointer-events: none;">
+                        <span class="like-btn like-btn-static {{ 'liked' if share.liked }}">
                             {% if share.liked %}&#9829; Liked{% else %}&#9825; Like{% endif %}
                         </span>
                     </div>

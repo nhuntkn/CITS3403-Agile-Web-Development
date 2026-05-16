@@ -57,6 +57,15 @@ def captured_reset_codes(monkeypatch):
     monkeypatch.setattr(app_module, "send_reset_email", fake_send_reset_email)
     return sent
 
+@pytest.fixture()
+def captured_signup_codes(monkeypatch):
+    sent = []
+
+    def fake_send_verification_email(to_email, code):
+        sent.append({"email": to_email, "code": code})
+
+    monkeypatch.setattr(app_module, "send_verification_email", fake_send_verification_email)
+    return sent
 
 def create_user(username="alice", email="alice@example.com", password="Validpass123!", **kwargs):
     user = User(

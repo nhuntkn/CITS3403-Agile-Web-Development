@@ -149,8 +149,7 @@ Password rules:
 
 ## Pages & Features
 ### Main Page (Home)
-
-- **BMI Calculator** — enter weight (kg) and height (cm), click Calculate to see result
+- Instructions to use the web
 - **Sign In** — username and password login with redirect to dashboard on success
 - Link to Sign Up page for new users
 
@@ -207,7 +206,7 @@ Weight today (kg) input
 
 ### Profile Page
 
-- Edit personal info: username, password, email, date of birth, sex, weight, height
+- Edit personal info: username, password, date of birth, sex, weight, height
 - Save changes and Logout buttons
 - Separate panel with Change password and Delete account actions
 
