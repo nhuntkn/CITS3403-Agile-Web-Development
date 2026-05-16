@@ -3,6 +3,7 @@
 {% block title %}Add Session{% endblock %}
 
 {% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/exercise.css') }}">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 {% endblock %}
 
@@ -53,7 +54,7 @@
         <div class="col-md-7">
           <h4>Exercises in This Session</h4>
           <div id="exerciseContainer"></div>
-          <button type="button" class="btn btn-outline-primary mt-2" onclick="addExerciseRow()">Add Another Exercise</button>
+          <button type="button" class="btn btn-outline-primary mt-2" id="addExerciseRowBtn">Add Another Exercise</button>
         </div>
 
         <div class="col-md-5">
@@ -68,7 +69,7 @@
       <!-- calculate calories section -->
       <div class="row align-items-center mb-4">
         <div class="col-md-auto">
-          <button type="button" class="btn btn-outline-dark" id="calculateCaloriesBtn" onclick="calculateCalories()">Calculate Session Calories</button>
+          <button type="button" class="btn btn-outline-dark" id="calculateCaloriesBtn">Calculate Session Calories</button>
         </div>
 
         <div class="col-md">

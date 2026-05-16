@@ -22,6 +22,7 @@ flask_app.config.update(
     MAIL_PASSWORD="test-password",
     WTF_CSRF_ENABLED=False,
 )
+app_module.register_testing_routes(flask_app)
 
 
 @pytest.fixture()

@@ -2,6 +2,10 @@
 
 {% block title %}Account{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}">
+{% endblock %}
+
 {% block navbar %}
 {% include 'navbar.html' %}
 {% endblock %}

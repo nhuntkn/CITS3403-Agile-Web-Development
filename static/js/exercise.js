@@ -19,7 +19,7 @@ function addExerciseRow() {
       <div class="row g-3 align-items-end">
         <div class="col-md-4">
           <label class="form-label">Exercise</label>
-          <select class="form-select" name="exercise[]" onchange="updateLevels(${rowCount})" id="exercise${rowCount}" required>
+          <select class="form-select exercise-select" name="exercise[]" data-row-id="${rowCount}" id="exercise${rowCount}" required>
             ${getExerciseOptions()}
           </select>
         </div>
@@ -37,7 +37,7 @@ function addExerciseRow() {
         </div>
 
         <div class="col-md-1 d-flex align-items-end">
-          <button type="button" class="btn btn-outline-danger w-100" onclick="removeRow(${rowCount})" title="Remove">&times;</button>
+          <button type="button" class="btn btn-outline-danger w-100 remove-exercise-row-btn" data-row-id="${rowCount}" title="Remove">&times;</button>
         </div>
       </div>
     </div>
@@ -117,6 +117,29 @@ function calculateCalories() {
 
 // add one exercise row by default when page loads
 addExerciseRow();
+
+const addExerciseRowButton = document.getElementById("addExerciseRowBtn");
+if (addExerciseRowButton) {
+  addExerciseRowButton.addEventListener("click", addExerciseRow);
+}
+
+const calculateCaloriesButton = document.getElementById("calculateCaloriesBtn");
+if (calculateCaloriesButton) {
+  calculateCaloriesButton.addEventListener("click", calculateCalories);
+}
+
+document.getElementById("exerciseContainer").addEventListener("change", (event) => {
+  if (event.target.matches(".exercise-select")) {
+    updateLevels(event.target.dataset.rowId);
+  }
+});
+
+document.getElementById("exerciseContainer").addEventListener("click", (event) => {
+  const button = event.target.closest(".remove-exercise-row-btn");
+  if (button) {
+    removeRow(button.dataset.rowId);
+  }
+});
 
 const sessionDateInput = document.getElementById("sessionDate");
 if (sessionDateInput) {

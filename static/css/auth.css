@@ -1,0 +1,118 @@
+/* Login / auth pages */
+
+.login-navbar,
+.auth-navbar {
+  background: #7793ae;
+  text-align: center;
+  padding: 10px;
+}
+
+.login-navbar img,
+.auth-navbar img {
+  height: 100px;
+  width: auto;
+}
+
+.login-page {
+  min-height: calc(100vh - 120px);
+  background: #f7f7f5;
+  padding: 4rem 2rem;
+}
+
+.login-wrapper {
+  max-width: 1200px;
+  margin: auto;
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+}
+
+.login-info-box {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 18px;
+  padding: 3rem;
+  flex: 1;
+}
+
+.login-box {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 18px;
+  padding: 3rem;
+  flex: 1;
+  max-width: 420px;
+}
+
+.login-info-box h1,
+.login-box h2 {
+  font-size: 2.8rem;
+  color: #000000;
+}
+
+.login-description,
+.login-hint {
+  color: #666;
+}
+
+.login-links {
+  color: #666;
+  text-align: center;
+}
+
+.login-description {
+  margin-bottom: 3rem;
+  font-size: 1.15rem;
+}
+
+.login-step-list p {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.login-step-list span {
+  background: #7793ae;
+  color: white;
+  min-width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.login-step-list strong {
+  color: #222;
+}
+
+.login-submit-btn {
+  margin-top: 0.5rem;
+}
+
+.login-divider {
+  color: #888;
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.login-links a {
+  color: #222;
+  font-weight: bold;
+}
+
+.login-error {
+  color: #b00020;
+  margin-bottom: 1rem;
+}
+
+/* Login page only */
+
+.login-box .app-input,
+.login-box .app-btn {
+  width: 100%;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+}

@@ -2,6 +2,10 @@
 
 {% block title %}Exercise Planner{% endblock %}
 
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
 {% block navbar %}
     <div class="login-navbar">
         <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Exercise Planner">

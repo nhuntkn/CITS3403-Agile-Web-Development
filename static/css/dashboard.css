@@ -1,0 +1,193 @@
+/* ── Metric cards ────────────────────────────────────────── */
+.metric-card {
+  background: #e0e0e0;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  min-height: 95px;
+  height: 100%;
+}
+
+.metric-card .card-title {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 0.6rem;
+  color: #212529;
+}
+
+.metric-card .card-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #333333;
+}
+
+.metric-card .card-sub {
+  font-size: 1rem;
+  color: #666666;
+  margin-top: 2px;
+}
+
+/* ── Calorie goal box ────────────────────────────────────── */
+.calorie-box {
+  background: #e8e8e8;
+  border-radius: 12px;
+  padding: 1.1rem 1.5rem 1.2rem;
+}
+
+.calorie-box .box-title {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.calorie-box .goal-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.calorie-box .goal-label {
+  font-size: 1rem;
+  color: #444444;
+}
+
+.calorie-box .goal-count {
+  font-size: 1rem;
+  color: #333333;
+  font-weight: 500;
+}
+
+.calorie-box .progress {
+  height: 18px;
+  border-radius: 20px;
+  background: #c8c8c8;
+}
+
+.calorie-box .progress-bar {
+  border-radius: 20px;
+  transition: width 0.6s ease;
+  width: 0;
+}
+
+/* ── Chart cards ─────────────────────────────────────────── */
+.chart-card {
+  background: #e0e0e0;
+  border-radius: 14px;
+  padding: 1rem 1rem 0.75rem;
+}
+
+.chart-card .chart-title {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+  color: #212529;
+}
+
+.chart-wrapper {
+  background: #1e1e1e;
+  border-radius: 8px;
+  padding: 0.75rem 0.5rem 0.5rem;
+  position: relative;
+  height: 220px;
+}
+
+.chart-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.chart-nav .chart-title {
+  margin-bottom: 0;
+  flex: 1;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.chart-nav-btn {
+  background: #c8c8c8;
+  border: none;
+  border-radius: 6px;
+  padding: 0.2rem 0.65rem;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #333;
+  line-height: 1.4;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.chart-nav-btn:hover:not(:disabled) {
+  background: #b0b0b0;
+}
+
+.chart-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+
+/* Dashboard addon layout and AI feedback */
+
+.dashboard-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.dashboard-subtitle,
+.ai-feedback-header p {
+  color: #666666;
+  margin-bottom: 0;
+}
+
+.dashboard-calorie-box {
+  width: 360px;
+  max-width: 100%;
+}
+
+
+.calorie-box .progress-bar {
+  background: #7793ae;
+}
+
+.ai-feedback-section {
+  margin-top: 1.5rem;
+  background: #f3f3f3;
+  border: 1px solid #dddddd;
+  border-radius: 14px;
+  padding: 1.2rem;
+}
+
+.ai-feedback-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.ai-feedback-header h4 {
+  margin-bottom: 0.25rem;
+}
+
+.ai-feedback-btn {
+  background: #7793ae;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 0.75rem 1.2rem;
+  font-weight: bold;
+}
+
+.ai-feedback-box {
+  background: white;
+  border: 1px solid #dddddd;
+  border-radius: 12px;
+  padding: 1rem;
+  color: #333333;
+}

@@ -7,7 +7,13 @@ document.querySelectorAll(".history-share-btn").forEach((button) => {
 });
 
 document.querySelectorAll(".history-table form").forEach((form) => {
-    form.addEventListener("submit", () => {
+    form.addEventListener("submit", (event) => {
+        const message = form.dataset.confirmMessage;
+        if (message && !confirm(message)) {
+            event.preventDefault();
+            return;
+        }
+
         const submitButton = form.querySelector("button[type='submit']");
         if (submitButton) {
             submitButton.disabled = true;

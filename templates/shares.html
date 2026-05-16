@@ -2,6 +2,10 @@
 
 {% block title %}Shares{% endblock %}
 
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/shares.css') }}">
+{% endblock %}
+
 {% block navbar %}
     {% include 'navbar.html' %}
 {% endblock %}

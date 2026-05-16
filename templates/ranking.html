@@ -2,6 +2,10 @@
 
 {% block title %}Ranking{% endblock %}
 
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ranking.css') }}">
+{% endblock %}
+
 {% block navbar %}
     {% include 'navbar.html' %}
 {% endblock %}

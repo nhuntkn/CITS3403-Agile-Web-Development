@@ -3,9 +3,7 @@
 import os
 import random
 import time
-import smtplib
 
-from email.message import EmailMessage
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session, abort
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_migrate import Migrate
@@ -13,7 +11,24 @@ from flask_wtf import CSRFProtect
 from flask_wtf.csrf import CSRFError
 from models import db, ExerciseSession, SessionExercise, User, Share, Friend, AIFeedback
 from data import exercise_data
-from utils import calculate_calories, generateAiFeedbackText, getStartWeek, buildFeedback, buildFeedbackHash
+from utils import (
+    buildFeedback,
+    buildFeedbackHash,
+    calculate_calories,
+    clear_reset_session,
+    clear_signup_session,
+    delete_shares_between,
+    friendship_between,
+    generateAiFeedbackText,
+    getStartWeek,
+    parse_location_fields,
+    requested_username,
+    send_reset_email,
+    send_verification_email,
+    user_avatar_payload,
+    user_avatar_url,
+    user_by_username,
+)
 from datetime import date as current_date, timedelta
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
@@ -50,102 +65,16 @@ def handle_csrf_error(error):
         return jsonify({"error": "Invalid or missing CSRF token"}), 400
     return render_template("csrf_error.html", reason=error.description), 400
 
-def parse_location_fields(latitude_raw, longitude_raw):
-    if not latitude_raw and not longitude_raw:
-        return None, None, None
+def register_testing_routes(flask_app):
+    if "test_set_signup_verified_email" in flask_app.view_functions:
+        return
 
-    if not latitude_raw or not longitude_raw:
-        return None, None, "Please select both latitude and longitude for the activity location"
-
-    try:
-        latitude = float(latitude_raw)
-        longitude = float(longitude_raw)
-    except ValueError:
-        return None, None, "Activity location is invalid"
-
-    if latitude < -90 or latitude > 90:
-        return None, None, "Latitude must be between -90 and 90"
-    if longitude < -180 or longitude > 180:
-        return None, None, "Longitude must be between -180 and 180"
-
-    return latitude, longitude, None
-
-
-def send_reset_email(to_email, code):
-    if not app.config["MAIL_USERNAME"] or not app.config["MAIL_PASSWORD"]:
-        raise RuntimeError("Email credentials are not configured")
-
-    msg = EmailMessage()
-
-    msg["Subject"] = "Password Reset Verification Code"
-    msg["From"] = app.config["MAIL_USERNAME"]
-    msg["To"] = to_email
-
-    msg.set_content(
-        f"Your verification code is: {code}\n\n"
-        "This code will expire in 5 minutes."
-    )
-
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-        smtp.login(
-            app.config["MAIL_USERNAME"],
-            app.config["MAIL_PASSWORD"]
-        )
-
-        smtp.send_message(msg)
-
-
-def clear_reset_session():
-    session.pop("reset_code", None)
-    session.pop("reset_email", None)
-    session.pop("reset_time", None)
-    session.pop("reset_attempts", None)
-    session.pop("reset_verified", None)
-
-
-def send_verification_email(to_email, code):
-    if not app.config["MAIL_USERNAME"] or not app.config["MAIL_PASSWORD"]:
-        raise RuntimeError("Email credentials are not configured")
-
-    msg = EmailMessage()
-    msg["Subject"] = "Email Verification Code"
-    msg["From"] = app.config["MAIL_USERNAME"]
-    msg["To"] = to_email
-    msg.set_content(
-        f"Your verification code is: {code}\n\n"
-        "This code will expire in 5 minutes.\n"
-        "If you did not sign up, please ignore this email."
-    )
-
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-        smtp.login(app.config["MAIL_USERNAME"], app.config["MAIL_PASSWORD"])
-        smtp.send_message(msg)
-
-
-def clear_signup_session():
-    session.pop("signup_code", None)
-    session.pop("signup_email", None)
-    session.pop("signup_time", None)
-    session.pop("signup_attempts", None)
-    session.pop("signup_data", None)
-    session.pop("signup_verified_email", None)
-
-@app.route("/test/set_signup_verified_email")
-def test_set_signup_verified_email():
-    if not app.testing:
-        abort(404)
-    session["signup_verified_email"] = request.args.get("email", "")
-    return "", 204
-
-def user_avatar_url(user):
-    if not user or not user.avatar:
-        return None
-
-    avatar_path = os.path.join(app.root_path, "static", "uploads", user.avatar)
-    if not os.path.isfile(avatar_path):
-        return None
-
-    return url_for("static", filename="uploads/" + user.avatar)
+    @flask_app.route("/test/set_signup_verified_email")
+    def test_set_signup_verified_email():
+        if not flask_app.testing:
+            abort(404)
+        session["signup_verified_email"] = request.args.get("email", "")
+        return "", 204
 
 @app.context_processor
 def inject_avatar_helpers():
@@ -158,36 +87,6 @@ def inject_shares_badge():
         likes = Share.query.filter_by(sender_id=current_user.id, liked=True, like_seen=False).count()
         return {"unread_shares_count": count, "unread_likes_count": likes}
     return {"unread_shares_count": 0, "unread_likes_count": 0}
-
-def user_avatar_payload(user):
-    return {
-        "username": user.username,
-        "avatar_url": user_avatar_url(user)
-    }
-
-def requested_username():
-    data = request.get_json(silent=True) or {}
-    return data.get("username", "").strip()
-
-def user_by_username(username):
-    if not username:
-        return None
-    return User.query.filter_by(username=username).first()
-
-def friendship_between(user_id, other_user_id, status=None):
-    query = Friend.query.filter(
-        ((Friend.sender_id == user_id) & (Friend.receiver_id == other_user_id)) |
-        ((Friend.sender_id == other_user_id) & (Friend.receiver_id == user_id))
-    )
-    if status:
-        query = query.filter(Friend.status == status)
-    return query.first()
-
-def delete_shares_between(user_id, other_user_id):
-    Share.query.filter(
-        ((Share.sender_id == user_id) & (Share.receiver_id == other_user_id)) |
-        ((Share.sender_id == other_user_id) & (Share.receiver_id == user_id))
-    ).delete(synchronize_session=False)
 
 @app.route("/dashboard/ai-feedback", methods=["POST"])
 @login_required

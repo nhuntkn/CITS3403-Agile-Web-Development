@@ -3,6 +3,7 @@
 {% block title %}History{% endblock %}
 
 {% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/history.css') }}">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 {% endblock %}
 
@@ -66,7 +67,7 @@
                                             data-session-date="{{ session.date }}">
                                         Share
                                     </button>
-                                    <form method="POST" action="{{ url_for('delete_session', session_id=session.id) }}" onsubmit="return confirm('Delete this session?');">
+                                    <form method="POST" action="{{ url_for('delete_session', session_id=session.id) }}" data-confirm-message="Delete this session?">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
                                     </form>
