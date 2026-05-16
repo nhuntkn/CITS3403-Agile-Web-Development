@@ -3,9 +3,7 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block head %}
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-  <!-- Confetti -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 {% endblock %}
 
@@ -14,78 +12,72 @@
 {% endblock %}
 
 {% block content %}
-<!-- ── Page content ────────────────────────────────────────────────────── -->
 <div class="container py-4">
   <div class="main-box">
+    <div class="dashboard-top-row">
+      <div>
+        <h1>Welcome, {{ current_user.username }}!</h1>
+        <p class="dashboard-subtitle">
+          Track your training, weight changes, and weekly exercise progress.
+        </p>
+      </div>
 
-  <div class="dashboard-top-row">
-    <div>
-      <h1>Welcome, {{ current_user.username }}!</h1>
-      <p class="dashboard-subtitle">
-        Track your training, weight changes, and weekly exercise progress.
-      </p>
+      <div class="calorie-box dashboard-calorie-box">
+        <div class="goal-row">
+          <span class="goal-label">Today's Calorie Goal</span>
+          <span class="goal-count" id="goalCount">0 / 500 goal</span>
+        </div>
+        <div class="progress">
+          <div class="progress-bar" id="calorieBar" role="progressbar"
+               aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+      </div>
     </div>
 
-    <!-- Calorie goal progress -->
-    <div class="calorie-box dashboard-calorie-box">
-      <div class="goal-row">
-        <span class="goal-label">Today's Calorie Goal</span>
-        <span class="goal-count" id="goalCount">0 / 500 goal</span>
-      </div>
-      <div class="progress">
-        <div class="progress-bar" id="calorieBar" role="progressbar"
-            style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-      </div>
-    </div>
-  </div>
+    <hr>
 
-  <hr>
+    <div id="alertBox" class="mb-3"></div>
 
-  <!-- Alerts -->
-  <div id="alertBox" class="mb-3"></div>
-
-  <!-- 4 Metric cards -->
-  <h4>Your Stats</h4>
+    <h4>Your Stats</h4>
     <div class="row g-3 mb-4">
       <div class="col-6 col-md-3">
         <div class="metric-card">
           <div class="card-title">Start Weight</div>
-          <div class="card-value" id="startWeight">—</div>
+          <div class="card-value" id="startWeight">--</div>
           <div class="card-sub">kg</div>
         </div>
       </div>
       <div class="col-6 col-md-3">
         <div class="metric-card">
           <div class="card-title">Current Weight</div>
-          <div class="card-value" id="currentWeight">—</div>
+          <div class="card-value" id="currentWeight">--</div>
           <div class="card-sub">kg</div>
         </div>
       </div>
       <div class="col-6 col-md-3">
         <div class="metric-card">
           <div class="card-title">Current BMI</div>
-          <div class="card-value" id="currentBMI">—</div>
+          <div class="card-value" id="currentBMI">--</div>
           <div class="card-sub" id="bmiCategory"></div>
         </div>
       </div>
       <div class="col-6 col-md-3">
         <div class="metric-card">
           <div class="card-title">Total Change</div>
-          <div class="card-value" id="totalChanges">—</div>
+          <div class="card-value" id="totalChanges">--</div>
           <div class="card-sub">kg since start</div>
         </div>
       </div>
     </div>
 
-    <!-- Two bar charts -->
     <h4>Activity Charts</h4>
     <div class="row g-3">
       <div class="col-12 col-md-6">
         <div class="chart-card">
           <div class="chart-nav">
-            <button class="chart-nav-btn" id="weeklyPrev">&#8592;</button>
-            <span class="chart-title" id="weeklyTitle">Calories burned — the last 7 days</span>
-            <button class="chart-nav-btn" id="weeklyNext" disabled>&#8594;</button>
+            <button class="chart-nav-btn" id="weeklyPrev" type="button" aria-label="Previous week">&#8592;</button>
+            <span class="chart-title" id="weeklyTitle">Calories burned - the last 7 days</span>
+            <button class="chart-nav-btn" id="weeklyNext" type="button" aria-label="Next week" disabled>&#8594;</button>
           </div>
           <div class="chart-wrapper">
             <canvas id="weeklyChart"></canvas>
@@ -95,9 +87,9 @@
       <div class="col-12 col-md-6">
         <div class="chart-card">
           <div class="chart-nav">
-            <button class="chart-nav-btn" id="monthlyPrev">&#8592;</button>
-            <span class="chart-title" id="monthlyTitle">Calories burned — this month</span>
-            <button class="chart-nav-btn" id="monthlyNext" disabled>&#8594;</button>
+            <button class="chart-nav-btn" id="monthlyPrev" type="button" aria-label="Previous month">&#8592;</button>
+            <span class="chart-title" id="monthlyTitle">Calories burned - this month</span>
+            <button class="chart-nav-btn" id="monthlyNext" type="button" aria-label="Next month" disabled>&#8594;</button>
           </div>
           <div class="chart-wrapper">
             <canvas id="monthlyChart"></canvas>
@@ -106,7 +98,6 @@
       </div>
     </div>
 
-    <!-- Ai feedback section -->
     <section class="ai-feedback-section">
       <div class="ai-feedback-header">
         <div>
@@ -124,19 +115,19 @@
       </div>
     </section>
   </div>
-</div><!-- /container -->
+</div>
 {% endblock %}
 
 {% block scripts %}
-  <script>
-    window.DASHBOARD_DATA = {
-      sessions:      {{ sessions_data | tojson }},
-      startWeight:   {{ start_weight | tojson }},
-      userHeight:    {{ user_height | tojson }},
-      currentWeight: {{ current_weight | tojson }},
-      calorieGoal:   {{ calorie_goal | tojson }},
-      aiFeedbackUrl: "{{ url_for('dashAiFeedback') }}"
-    };
+  <script id="dashboard-data" type="application/json">
+    {
+      "sessions": {{ sessions_data | tojson }},
+      "startWeight": {{ start_weight | tojson }},
+      "userHeight": {{ user_height | tojson }},
+      "currentWeight": {{ current_weight | tojson }},
+      "calorieGoal": {{ calorie_goal | tojson }},
+      "aiFeedbackUrl": {{ url_for('dashAiFeedback') | tojson }}
+    }
   </script>
   <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}

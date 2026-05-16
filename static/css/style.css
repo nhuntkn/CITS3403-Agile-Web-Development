@@ -227,6 +227,7 @@ body {
 .calorie-box .progress-bar {
   border-radius: 20px;
   transition: width 0.6s ease;
+  width: 0;
 }
 
 /* ── Chart cards ─────────────────────────────────────────── */
@@ -938,16 +939,46 @@ body {
 }
 
 .account-toggle {
+  background: transparent;
+  border: 0;
+  color: #4e73df;
   cursor: pointer;
+  font-weight: 600;
+  padding: 0;
 }
 
 .account-collapsible-form {
-  display: none;
   margin-top: 20px;
 }
 
 .account-hidden {
   display: none;
+}
+
+.account-notice {
+  margin-bottom: 1rem;
+}
+
+.account-search-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.account-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-bottom: 1px solid #eeeeee;
+  padding: 0.6rem 0;
+}
+
+.account-row-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .password-rules,
@@ -975,3 +1006,158 @@ body {
 .rule-valid   { color: #198754; }
 
 .like-btn-static { cursor: default; pointer-events: none; }
+
+.empty-state {
+  border: 1px dashed #c9d3dc;
+  border-radius: 10px;
+  padding: 1.5rem;
+  background: #f8fafc;
+}
+
+.empty-state h4 {
+  margin-bottom: 0.35rem;
+}
+
+.empty-state p {
+  color: #666666;
+  margin-bottom: 1rem;
+}
+
+.empty-state-action {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.btn:disabled,
+.app-btn:disabled,
+.btn-pink:disabled,
+.btn-save:disabled,
+.ai-feedback-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+@media (max-width: 992px) {
+  .ep-navbar {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    padding: 0.75rem 1rem;
+  }
+
+  .ep-brand img {
+    height: 64px;
+  }
+
+  .ep-nav-spacer {
+    display: none;
+  }
+
+  .ep-nav-link {
+    padding: 0.45rem 0.75rem;
+  }
+
+  .dashboard-top-row,
+  .ai-feedback-header,
+  .login-wrapper,
+  .shares-layout {
+    flex-direction: column;
+  }
+
+  .dashboard-calorie-box,
+  .login-box {
+    width: 100%;
+    max-width: none;
+  }
+
+  .shares-sidebar {
+    width: 100%;
+    min-width: 0;
+    border-right: 0;
+    border-bottom: 1px solid #dddddd;
+    padding-bottom: 1rem;
+  }
+
+  .post-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .post-divider {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-content {
+    padding: 1rem 0.75rem 2rem;
+  }
+
+  .main-box,
+  .account-page .main-box,
+  .login-info-box,
+  .login-box {
+    padding: 1rem;
+  }
+
+  .login-page {
+    padding: 1.5rem 1rem;
+  }
+
+  .login-info-box h1,
+  .login-box h2 {
+    font-size: 2rem;
+  }
+
+  .login-step-list p {
+    align-items: flex-start;
+    gap: 0.85rem;
+    margin-bottom: 1rem;
+  }
+
+  .account-sidebar {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .account-sidebar .btn {
+    margin-bottom: 0 !important;
+  }
+
+  .account-search-row,
+  .account-list-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .account-row-actions {
+    justify-content: stretch;
+  }
+
+  .account-row-actions .btn,
+  .account-list-row > .btn {
+    width: 100%;
+  }
+
+  .history-table {
+    min-width: 760px;
+  }
+
+  .chart-wrapper {
+    height: 260px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ep-nav-link {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ep-user-menu {
+    margin-left: 0;
+  }
+
+  .metric-card .card-value {
+    font-size: 1.45rem;
+  }
+}

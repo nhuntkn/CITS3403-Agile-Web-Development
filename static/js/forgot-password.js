@@ -8,48 +8,29 @@ if (newPassword && confirmPassword) {
     const matchMessage = document.getElementById("matchMessage");
     const resetBtn = document.querySelector("button[value='reset']");
 
-    function validatePassword() {
-        const pw = newPassword.value;
-
-        if (pw.length >= 12) {
-            ruleLength.style.color = "green";
-            ruleLength.innerHTML = "OK - At least 12 characters";
-        } else {
-            ruleLength.style.color = "red";
-            ruleLength.innerHTML = "- At least 12 characters";
-        }
-
-        if (/[a-zA-Z]/.test(pw)) {
-            ruleLetter.style.color = "green";
-            ruleLetter.innerHTML = "OK - Contains at least one letter";
-        } else {
-            ruleLetter.style.color = "red";
-            ruleLetter.innerHTML = "- Contains at least one letter";
-        }
-
-        if (/[!@#$%^&*]/.test(pw)) {
-            ruleSpecial.style.color = "green";
-            ruleSpecial.innerHTML = "OK - Contains at least one special character (!@#$%^&*)";
-        } else {
-            ruleSpecial.style.color = "red";
-            ruleSpecial.innerHTML = "- Contains at least one special character (!@#$%^&*)";
-        }
-
-        checkMatch();
+    function setRule(element, valid, text) {
+        element.classList.toggle("rule-valid", valid);
+        element.classList.toggle("rule-invalid", !valid);
+        element.textContent = `${valid ? "OK - " : "- "}${text}`;
     }
 
-    function checkMatch() {
+    function validatePassword() {
         const pw = newPassword.value;
         const cf = confirmPassword.value;
 
+        setRule(ruleLength, pw.length >= 12, "At least 12 characters");
+        setRule(ruleLetter, /[a-zA-Z]/.test(pw), "Contains at least one letter");
+        setRule(ruleSpecial, /[!@#$%^&*]/.test(pw), "Contains at least one special character (!@#$%^&*)");
+
         if (cf === "") {
-            matchMessage.innerHTML = "";
+            matchMessage.textContent = "";
+            matchMessage.className = "password-message";
         } else if (pw === cf) {
-            matchMessage.style.color = "green";
-            matchMessage.innerHTML = "OK - Passwords match";
+            matchMessage.textContent = "OK - Passwords match";
+            matchMessage.className = "password-message rule-valid";
         } else {
-            matchMessage.style.color = "red";
-            matchMessage.innerHTML = "X - Passwords do not match";
+            matchMessage.textContent = "Passwords do not match";
+            matchMessage.className = "password-message rule-invalid";
         }
 
         const valid =
@@ -61,6 +42,7 @@ if (newPassword && confirmPassword) {
         if (resetBtn) resetBtn.disabled = !valid;
     }
 
-    newPassword.addEventListener("keyup", validatePassword);
-    confirmPassword.addEventListener("keyup", checkMatch);
+    newPassword.addEventListener("input", validatePassword);
+    confirmPassword.addEventListener("input", validatePassword);
+    validatePassword();
 }

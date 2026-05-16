@@ -111,8 +111,10 @@
                 </div>
             </div>
             {% else %}
-            <div class="alert alert-info mb-0">
-                No exercise sessions saved yet.
+            <div class="alert alert-info empty-state mb-0">
+                <h4>No exercise sessions saved yet.</h4>
+                <p>Add your first session to start building charts, rankings, and history records.</p>
+                <a class="btn-pink empty-state-action" href="{{ url_for('exercise') }}">Add Session</a>
             </div>
             {% endif %}
         </div>
@@ -120,8 +122,8 @@
 {% endblock %}
 
 {% block scripts %}
-    <script>
-        window.historyLocations = {{ location_data | tojson }};
+    <script id="history-location-data" type="application/json">
+        {{ location_data | tojson }}
     </script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="{{ url_for('static', filename='js/map.js') }}"></script>

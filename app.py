@@ -165,6 +165,30 @@ def user_avatar_payload(user):
         "avatar_url": user_avatar_url(user)
     }
 
+def requested_username():
+    data = request.get_json(silent=True) or {}
+    return data.get("username", "").strip()
+
+def user_by_username(username):
+    if not username:
+        return None
+    return User.query.filter_by(username=username).first()
+
+def friendship_between(user_id, other_user_id, status=None):
+    query = Friend.query.filter(
+        ((Friend.sender_id == user_id) & (Friend.receiver_id == other_user_id)) |
+        ((Friend.sender_id == other_user_id) & (Friend.receiver_id == user_id))
+    )
+    if status:
+        query = query.filter(Friend.status == status)
+    return query.first()
+
+def delete_shares_between(user_id, other_user_id):
+    Share.query.filter(
+        ((Share.sender_id == user_id) & (Share.receiver_id == other_user_id)) |
+        ((Share.sender_id == other_user_id) & (Share.receiver_id == user_id))
+    ).delete(synchronize_session=False)
+
 @app.route("/dashboard/ai-feedback", methods=["POST"])
 @login_required
 def dashAiFeedback():
@@ -881,23 +905,16 @@ def search_users():
 @app.route('/api/add_friend', methods=['POST'])
 @login_required
 def add_friend():
-    data = request.get_json()
-    username = data.get("username", "").strip()
+    username = requested_username()
 
-    # find target user by username
-    target = User.query.filter_by(username=username).first()
+    target = user_by_username(username)
     if not target:
         return jsonify({"error": "invalid user"}), 404
 
-    # prevent adding yourself
     if target.id == current_user.id:
         return jsonify({"error": "cannot add yourself"}), 400
 
-    # check existing relationship (both directions)
-    existing = Friend.query.filter(
-        ((Friend.sender_id == current_user.id) & (Friend.receiver_id == target.id)) |
-        ((Friend.sender_id == target.id) & (Friend.receiver_id == current_user.id))
-    ).first()
+    existing = friendship_between(current_user.id, target.id)
 
     if existing:
         # already friends
@@ -978,13 +995,9 @@ def get_friends():
 @app.route('/api/accept_friend', methods=['POST'])
 @login_required
 def accept_friend():
+    username = requested_username()
 
-    # get request data
-    data = request.get_json()
-    username = data.get("username", "").strip()
-
-    # find target user by username
-    target = User.query.filter_by(username=username).first()
+    target = user_by_username(username)
     if not target:
         return jsonify({"error": "invalid user"}), 404
 
@@ -1009,13 +1022,9 @@ def accept_friend():
 @app.route('/api/reject_friend', methods=['POST'])
 @login_required
 def reject_friend():
+    username = requested_username()
 
-    # get request data
-    data = request.get_json()
-    username = data.get("username", "").strip()
-
-    # find target user by username
-    target = User.query.filter_by(username=username).first()
+    target = user_by_username(username)
     if not target:
         return jsonify({"error": "invalid user"}), 404
 
@@ -1040,47 +1049,20 @@ def reject_friend():
 @app.route('/api/delete_friend', methods=['POST'])
 @login_required
 def delete_friend():
+    username = requested_username()
 
-    # get request data
-    data = request.get_json()
-    username = data.get("username", "").strip()
-
-    # find target user
-    target = User.query.filter_by(username=username).first()
+    target = user_by_username(username)
 
     if not target:
         return jsonify({"error": "invalid user"}), 404
 
-    # find friendship (both directions)
-    friendship = Friend.query.filter(
-        (
-            (Friend.sender_id == current_user.id) &
-            (Friend.receiver_id == target.id)
-        )
-        |
-        (
-            (Friend.sender_id == target.id) &
-            (Friend.receiver_id == current_user.id)
-        ),
-        Friend.status == "accepted"
-    ).first()
+    friendship = friendship_between(current_user.id, target.id, status="accepted")
 
     # friendship not found
     if not friendship:
         return jsonify({"error": "friendship not found"}), 404
 
-    # delete related shares in both directions
-    Share.query.filter(
-        (
-            (Share.sender_id == current_user.id) &
-            (Share.receiver_id == target.id)
-        )
-        |
-        (
-            (Share.sender_id == target.id) &
-            (Share.receiver_id == current_user.id)
-        )
-    ).delete(synchronize_session=False)
+    delete_shares_between(current_user.id, target.id)
 
     # delete friendship
     db.session.delete(friendship)

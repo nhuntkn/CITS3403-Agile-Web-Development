@@ -51,7 +51,7 @@ function updateLevels(rowId) {
   let exercise = document.getElementById("exercise" + rowId).value;
   let levelSelect = document.getElementById("level" + rowId);
 
-  levelSelect.innerHTML = '<option value="">Select activity level</option>';
+  levelSelect.replaceChildren(new Option("Select activity level", ""));
 
   if (exercise !== "" && exerciseData[exercise]) {
     let levels = exerciseData[exercise];
@@ -82,7 +82,8 @@ function calculateCalories() {
 
   // checks if weight exists and at least one row is selected
   if (!weight || rows.length === 0) {
-    result.innerHTML = "Please enter weight and add at least one exercise.";
+    result.textContent = "Please enter weight and add at least one exercise.";
+    result.className = "alert alert-warning mb-0";
     return;
   }
 
@@ -106,9 +107,11 @@ function calculateCalories() {
 
   // display result
   if (totalCalories > 0) {
-    result.innerHTML = "Estimated total calories burnt: " + Math.round(totalCalories) + " kcal";
+    result.textContent = "Estimated total calories burnt: " + Math.round(totalCalories) + " kcal";
+    result.className = "alert alert-success mb-0";
   } else {
-    result.innerHTML = "Please complete at least one valid exercise row.";
+    result.textContent = "Please complete at least one valid exercise row.";
+    result.className = "alert alert-warning mb-0";
   }
 }
 
@@ -121,3 +124,31 @@ if (sessionDateInput) {
     const localToday = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     sessionDateInput.max = localToday;
 }
+
+const exerciseForm = document.querySelector("form.main-box");
+if (exerciseForm) {
+  exerciseForm.addEventListener("submit", () => {
+    const submitButton = document.getElementById("addToRecordBtn");
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Saving session...";
+    }
+  });
+}
+
+function refreshCalculatedCalories(event) {
+  if (
+    event.target.matches("#weight") ||
+    event.target.matches('input[name="minutes[]"]') ||
+    event.target.matches('select[name="exercise[]"]') ||
+    event.target.matches('select[name="level[]"]')
+  ) {
+    const result = document.getElementById("result");
+    if (result && result.textContent.startsWith("Estimated")) {
+      calculateCalories();
+    }
+  }
+}
+
+document.addEventListener("input", refreshCalculatedCalories);
+document.addEventListener("change", refreshCalculatedCalories);
