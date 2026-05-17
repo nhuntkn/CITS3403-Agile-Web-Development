@@ -148,6 +148,26 @@ body {
   font-weight: 700;
 }
 
+.notif-dot {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  background: #e03c31;
+  border-radius: 50%;
+  margin-left: 4px;
+  vertical-align: super;
+  flex-shrink: 0;
+}
+
+.ep-nav-link .notif-dot,
+.shares-tab-btn .notif-dot {
+  position: absolute;
+  top: -5.5px;
+  right: -5.5px;
+  margin-left: 0;
+  vertical-align: unset;
+}
+
 /* Page layout */
 .page-content {
   max-width: 1000px;
