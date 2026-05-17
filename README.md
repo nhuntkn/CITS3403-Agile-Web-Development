@@ -4,7 +4,9 @@ Exercise Planner helps users record workout sessions, estimate calories burned, 
 
 **Core goal**: track calories burned through exercise, monitor weight changes, and stay consistent.
 
+## Design and Use
 
+The application is designed around a simple exercise tracking flow: users register or sign in, review their current status on the dashboard, create exercise sessions to add new data, then use history, ranking, and sharing pages to review progress and interact with other users. The layout keeps the main navigation visible across signed-in pages so users can move naturally from recording a workout to checking charts, comparing rankings, and sharing saved sessions.
 
 ## Pages & Features
 
@@ -70,7 +72,7 @@ Exercise Planner helps users record workout sessions, estimate calories burned, 
 ### Profile Page
 
 - Displays the user's Username, Date of Birth, Gender, Current Weight, Height, Email
-- Edit personal info: username, password, date of birth, gender, start weight, current weight, height
+- Edit personal info: password, date of birth, gender, start weight, current weight, height
 - Separate panel with Friend system, the page allows users to add friends, monitor friend requests, or delete friends
 
 
@@ -245,6 +247,8 @@ python -m pytest tests/test_selenium.py
 The tests use a separate SQLite database at `instance/test_exercise_planner.db`. This keeps test data away from the local development database at `instance/exercise_planner.db`.
 
 The Selenium test starts a Flask test server automatically on a free local port, then opens the app in a headless browser and checks signup, logout, login, dashboard, ranking, and history navigation flow. If Chrome or a compatible Chrome WebDriver cannot be started on the machine, the Selenium test is skipped with a clear reason.
+
+HTML and CSS were checked for valid structure during cleanup, including removing invalid nested interactive elements from the share page.
 
 Run a quick Python syntax check when needed:
 
