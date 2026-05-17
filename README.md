@@ -71,9 +71,9 @@ The application is designed around a simple exercise tracking flow: users regist
 
 ### Profile Page
 
-- Displays the user's Username, Date of Birth, Gender, Current Weight, Height, Email
-- Edit personal info: password, date of birth, gender, start weight, current weight, height
-- Separate panel with Friend system, the page allows users to add friends, monitor friend requests, or delete friends
+- Displays the user's username, date of birth, gender, current weight, height, email, and profile image
+- Edit personal info: password, date of birth, gender, start weight, current weight, height, daily calorie goal, and profile image
+- Friend system panel allows users to search for users, send friend requests, monitor pending requests, and delete friends
 
 
 
@@ -121,7 +121,11 @@ pip install -r requirements.txt
 
 ### 4. Configure environment variables
 
-Set `SECRET_KEY` before running the app. Email verification also requires `MAIL_USERNAME` and `MAIL_PASSWORD`. The app uses `SECRET_KEY` for sessions, login and CSRF protection
+Set `SECRET_KEY` before running the app. Email verification also requires `MAIL_USERNAME` and `MAIL_PASSWORD`. The app uses `SECRET_KEY` for sessions, login and CSRF protection.
+
+Email verification requires valid `MAIL_USERNAME` and `MAIL_PASSWORD` values. For Gmail, `MAIL_PASSWORD` must be a Google App Password, not the normal Gmail account password. Without these email credentials, account registration that depends on email verification cannot complete.
+
+A `.env.example` file is included in the repository to show the required environment variable names without exposing real secrets.
 
 Windows PowerShell:
 
@@ -138,8 +142,6 @@ export SECRET_KEY="replace-this-with-a-long-random-secret-key"
 export MAIL_USERNAME="your-email@gmail.com"
 export MAIL_PASSWORD="your-google-app-password"
 ```
-
-For Gmail, `MAIL_PASSWORD` should be a Google App Password, not the normal Gmail login password
 
 **Optional** AI summary setup: The app can run without an AI API key. If no API key is provided, the dashboard will show a fallback message instead of generating AI feedback. By default, the app uses OpenAI for the dashboard AI feedback feature.
 
@@ -238,7 +240,7 @@ Run only the unit and Flask route tests:
 python -m pytest tests/test_unit.py tests/test_flask_flows.py
 ```
 
-Run only the Selenium browser test:
+Run only the Selenium browser tests:
 
 ```bash
 python -m pytest tests/test_selenium.py
@@ -246,7 +248,7 @@ python -m pytest tests/test_selenium.py
 
 The tests use a separate SQLite database at `instance/test_exercise_planner.db`. This keeps test data away from the local development database at `instance/exercise_planner.db`.
 
-The Selenium test starts a Flask test server automatically on a free local port, then opens the app in a headless browser and checks signup, logout, login, dashboard, ranking, and history navigation flow. If Chrome or a compatible Chrome WebDriver cannot be started on the machine, the Selenium test is skipped with a clear reason.
+The Selenium tests start a Flask test server automatically on a free local port, then open the app in a headless browser and check signup, password validation, invalid login handling, exercise creation, history deletion, dashboard navigation, ranking navigation, and account user search. If Chrome or a compatible Chrome WebDriver cannot be started on the machine, the Selenium tests is skipped with a clear reason.
 
 HTML and CSS were checked for valid structure during cleanup, including removing invalid nested interactive elements from the share page.
 
