@@ -1,2 +1,54 @@
-/* Ranking page specific styles can live here when needed. */
+/* Ranking page */
+
+.ranking-filter-bar {
+  align-items: center;
+}
+
+.ranking-filter-bar .btn {
+  min-width: 5.5rem;
+}
+
+.ranking-results-note {
+  margin-bottom: 1rem;
+}
+
+.ranking-table {
+  min-width: 680px;
+}
+
+.ranking-table th:first-child,
+.ranking-table td:first-child {
+  width: 72px;
+  white-space: nowrap;
+}
+
+.ranking-table th,
+.ranking-table td {
+  padding: 0.85rem 0.75rem;
+}
+
+.ranking-user {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.ranking-user span {
+  overflow-wrap: anywhere;
+}
+
+.ranking-empty-state {
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 576px) {
+  .ranking-filter-bar .btn {
+    flex: 1 1 calc(50% - 0.5rem);
+  }
+
+  .ranking-table {
+    min-width: 620px;
+  }
+}
 

@@ -17,7 +17,7 @@
             <p class="text-muted">Compare users by total calories burned from saved exercise sessions.</p>
             <hr>
 
-            <div class="d-flex flex-wrap gap-2 mb-3">
+            <div class="ranking-filter-bar d-flex flex-wrap gap-2 mb-3">
                 {% for value, option in period_options.items() %}
                     <a href="{{ url_for('ranking', period=value) }}"
                        class="btn btn-sm {{ 'btn-primary' if selected_period == value else 'btn-outline-primary' }}">
@@ -26,11 +26,11 @@
                 {% endfor %}
             </div>
 
-            <p class="text-muted">Showing {{ period_label|lower }} results. Users with no sessions in this period are placed after users with saved session data.</p>
+            <p class="ranking-results-note text-muted">Showing {{ period_label|lower }} results. Users with no sessions in this period are placed after users with saved session data.</p>
 
             {% if ranking_data %}
             <div class="table-responsive">
-                <table class="table table-striped align-middle">
+                <table class="table table-striped align-middle ranking-table">
                     <thead>
                         <tr>
                             <th>Rank</th>
@@ -61,7 +61,7 @@
                 </table>
             </div>
             {% else %}
-            <div class="alert alert-info mb-0">
+            <div class="alert alert-info ranking-empty-state mb-0">
                 No users have workout data yet.
             </div>
             {% endif %}
