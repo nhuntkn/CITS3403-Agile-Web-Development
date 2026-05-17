@@ -248,7 +248,7 @@ python -m pytest tests/test_selenium.py
 
 The tests use a separate SQLite database at `instance/test_exercise_planner.db`. This keeps test data away from the local development database at `instance/exercise_planner.db`.
 
-The Selenium tests start a Flask test server automatically on a free local port, then open the app in a headless browser and check signup, password validation, invalid login handling, exercise creation, history deletion, dashboard navigation, ranking navigation, and account user search. If Chrome or a compatible Chrome WebDriver cannot be started on the machine, the Selenium tests is skipped with a clear reason.
+The Selenium tests start a Flask test server automatically on a free local port, then open the app in a headless browser and check signup, password validation, invalid login handling, exercise creation, history deletion, dashboard navigation, ranking navigation, and account user search. If Chrome or a compatible Chrome WebDriver cannot be started on the machine, the Selenium tests are skipped with a clear reason.
 
 HTML and CSS were checked for valid structure during cleanup, including removing invalid nested interactive elements from the share page.
 

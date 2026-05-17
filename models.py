@@ -20,7 +20,6 @@ class ExerciseSession(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable = False)
     
     #one exercise session can contain many exercise rows
-    #to display session details in ranking and history later
     exercises = db.relationship('SessionExercise', backref='session', cascade="all, delete-orphan")
 
 class SessionExercise(db.Model):
