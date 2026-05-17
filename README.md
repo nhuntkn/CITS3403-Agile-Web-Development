@@ -7,6 +7,10 @@ Exercise Planner is a focused weight loss companion. Users register with their p
 
 **Core goal**: track calories burned through exercise, monitor weight changes, and stay consistent.
 
+## Design and Use
+
+The application is designed around a simple exercise tracking flow: users register or sign in, review their current status on the dashboard, create exercise sessions to add new data, then use history, ranking, and sharing pages to review progress and interact with other users. The layout keeps the main navigation visible across signed-in pages so users can move naturally from recording a workout to checking charts, comparing rankings, and sharing saved sessions.
+
 ## Quick Start
 
 ### 1. Clone the project
@@ -118,6 +122,8 @@ The tests use a separate SQLite database at `instance/test_exercise_planner.db`.
 
 The Selenium test starts a Flask test server automatically on a free local port, then opens the app in a headless browser and checks signup, logout, login, dashboard, ranking, and history navigation flow. If Chrome or a compatible Chrome WebDriver cannot be started on the machine, the Selenium test is skipped with a clear reason.
 
+HTML and CSS were checked for valid structure during cleanup, including removing invalid nested interactive elements from the share page.
+
 Run a quick Python syntax check when needed:
 
 ```powershell
@@ -206,7 +212,7 @@ Weight today (kg) input
 
 ### Profile Page
 
-- Edit personal info: username, password, date of birth, sex, weight, height
+- Edit personal info: password, date of birth, sex, weight, height
 - Save changes and Logout buttons
 - Separate panel with Change password and Delete account actions
 

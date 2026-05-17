@@ -2,15 +2,27 @@
   background: #d0d0d0;
   border: none;
   border-radius: 8px;
+  color: #212529;
+  display: block;
   padding: 0.5rem 1.25rem;
   font-weight: 600;
   cursor: pointer;
+  text-align: center;
+  text-decoration: none;
   width: 100%;
   position: relative;
 }
 
 .shares-tab-btn.active {
   background: #555;
+  color: #fff;
+}
+
+.shares-tab-btn:hover {
+  color: #212529;
+}
+
+.shares-tab-btn.active:hover {
   color: #fff;
 }
 
