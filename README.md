@@ -1,15 +1,92 @@
 # Exercise Planner (EP)
 
-A web application that helps users keep track of calories burned through exercise, log their workout sessions, and monitor their weight loss progress every day.
-
-## About the Project
-Exercise Planner is a focused weight loss companion. Users register with their physical details, log workouts to track calories burned each day, and monitor their progress through an at-a-glance dashboard. A ranking page keeps motivation high by showing how users compare against each other.
+Exercise Planner helps users record workout sessions, estimate calories burned, track body weight changes, and monitor progress over time through dashboards, history, ranking and sharing features.
 
 **Core goal**: track calories burned through exercise, monitor weight changes, and stay consistent.
 
 ## Design and Use
 
 The application is designed around a simple exercise tracking flow: users register or sign in, review their current status on the dashboard, create exercise sessions to add new data, then use history, ranking, and sharing pages to review progress and interact with other users. The layout keeps the main navigation visible across signed-in pages so users can move naturally from recording a workout to checking charts, comparing rankings, and sharing saved sessions.
+
+## Pages & Features
+
+### Main Page (Home)
+
+- Instructions to use the website
+- **Sign In** — username and password login with redirect to dashboard on success
+- Link to Sign Up page for new users
+- Link to Forgot Password page to change password if forgotten
+
+### Sign Up Page
+
+- Registration form collecting: username, email, password, confirm password, date of birth, sex, weight (kg), height (cm)
+- Username has to be unique
+- Email has to be unique
+- Password validation: at least 12 characters, at least one letter, and at least one special character
+- Sends a verification email before completing account registration
+- Redirects to dashboard after successful registration
+
+### Dashboard
+
+- Navigation bar: EP logo · Dashboard · Ranking · Profile · Create Exercise
+- 4 metric cards: Start Weight, Current Weight, Current BMI, Total Changes
+- Today's calorie goal — progress bar showing calories burned vs daily target
+- Calories burned — this week — bar chart by day (Mon–Sun)
+- Calories burned — this month — bar chart by date (1–30/31)
+- Weekly summary button: generates a summary for the current week, starting from Monday
+
+### Create Exercise Page
+
+- Date picker, Weight input at the top
+- Exercise details panel:
+  - Exercise dropdown (Bodyweight Exercises, Cycling, Elliptical, Jogging/Running, Rowing Machine, Skip Rope, Treadmill walk, Weight Lifting)
+  - Activity level dropdown 
+  - Duration input (minutes)
+  - Add Another Exercise button
+
+
+- Notes panel: Free-text field
+
+- Add Activity Location button:
+  - Uses Leaflet and OpenStreetMap
+  - Click the map to save the activity location
+  - Optional current-location button using the browser's geolocation feature
+
+- Logged session list — shows each added exercise with duration, intensity, and kcal burned
+- Calculate Session Calories — Shows the estimated calories for selected exercise sessions with intensity and duration
+- Add to Record button — saves the completed session to database
+
+### Ranking Page
+
+- Displays all users ranked by total calories burned
+- Shows each user's total sessions
+- Filters by All Time, Daily, Weekly, Monthly, Half yearly
+
+### History Page
+
+- Displays the logged-in user's saved workout sessions
+- Shows date, weight, calories burned, location, notes
+- Displays saved activity locations on an interactive map when the user clicks the  `Check Location` button
+- Action button for users to Share or Delete the session
+
+### Profile Page
+
+- Displays the user's Username, Date of Birth, Gender, Current Weight, Height, Email
+- Edit personal info: password, date of birth, gender, start weight, current weight, height
+- Separate panel with Friend system, the page allows users to add friends, monitor friend requests, or delete friends
+
+
+
+## Group Members
+
+| UWA ID   | Name                          | GitHub Username |
+| -------- | ----------------------------- | --------------- |
+| 24383874 | Jackson Liu                   | JacksonnnnL     |
+| 24527515 | Tran Khanh Nhu (Janet) Nguyen | nhuntkn         |
+| 24487703 | Ziheng Ericson Liu            | godprofessor    |
+| 24854637 | Zhihan Yao                    | ZH-Yao088       |
+
+
 
 ## Quick Start
 
@@ -44,21 +121,48 @@ pip install -r requirements.txt
 
 ### 4. Configure environment variables
 
-Set `SECRET_KEY` in your terminal before running the app. The app will not start without this environment variable.
+Set `SECRET_KEY` before running the app. Email verification also requires `MAIL_USERNAME` and `MAIL_PASSWORD`. The app uses `SECRET_KEY` for sessions, login and CSRF protection
 
 Windows PowerShell:
 
 ```powershell
 $env:SECRET_KEY="replace-this-with-a-long-random-secret-key"
+$env:MAIL_USERNAME="your-email@gmail.com"
+$env:MAIL_PASSWORD="your-google-app-password"
 ```
 
 macOS / Linux:
 
 ```bash
 export SECRET_KEY="replace-this-with-a-long-random-secret-key"
+export MAIL_USERNAME="your-email@gmail.com"
+export MAIL_PASSWORD="your-google-app-password"
 ```
 
-Do not commit the real `.env` file to GitHub.
+For Gmail, `MAIL_PASSWORD` should be a Google App Password, not the normal Gmail login password
+
+**Optional** AI summary setup: The app can run without an AI API key. If no API key is provided, the dashboard will show a fallback message instead of generating AI feedback. By default, the app uses OpenAI for the dashboard AI feedback feature.
+
+Windows PowerShell:
+
+```powershell
+$env:AI_PROVIDER="openai"
+$env:OPENAI_API_KEY="your-openai-api-key"
+```
+
+macOS/Linux:
+
+```bash
+export AI_PROVIDER="openai"
+export OPENAI_API_KEY="your-openai-api-key"
+```
+
+Other supported providers are:
+
+```bash
+AI_PROVIDER="claude" with ANTHROPIC_API_KEY
+AI_PROVIDER="gemini" with GEMINI_API_KEY
+```
 
 ### 5. Initialise the database
 
@@ -82,11 +186,25 @@ http://127.0.0.1:5000/
 
 If `py` does not work on your machine, use `python` or `python3` instead.
 
-## Testing
 
-The project includes automated unit/integration tests and Selenium browser tests.
 
-Before testing, make sure dependencies are installed and `SECRET_KEY` is set in your terminal.
+## First Use
+
+1. Open `http://127.0.0.1:5000/`
+2. Click **Sign Up** and create a new account
+3. Use the dashboard and **Create Exercise** page to add workout sessions
+
+Password rules:
+
+- At least 12 characters
+- At least one letter
+- At least one special character from `!@#$%^&*`
+
+
+
+## Running tests
+
+The project includes automated unit/integration tests and Selenium browser tests. Before running tests, make sure the dependencies are installed and `SECRET_KEY` is set in your terminal.
 
 Windows PowerShell:
 
@@ -102,20 +220,28 @@ export SECRET_KEY="test-secret-key"
 
 Run all automated tests:
 
+Windows:
+
 ```powershell
-py -m pytest
+python -m pytest
+```
+
+macOS/Linux:
+
+```bash
+python3 -m pytest
 ```
 
 Run only the unit and Flask route tests:
 
-```powershell
-py -m pytest tests/test_unit.py tests/test_flask_flows.py
+```bash
+python -m pytest tests/test_unit.py tests/test_flask_flows.py
 ```
 
 Run only the Selenium browser test:
 
-```powershell
-py -m pytest tests/test_selenium.py
+```bash
+python -m pytest tests/test_selenium.py
 ```
 
 The tests use a separate SQLite database at `instance/test_exercise_planner.db`. This keeps test data away from the local development database at `instance/exercise_planner.db`.
@@ -127,7 +253,7 @@ HTML and CSS were checked for valid structure during cleanup, including removing
 Run a quick Python syntax check when needed:
 
 ```powershell
-py -m compileall app.py models.py data.py utils.py
+python -m compileall .
 ```
 
 Manual smoke test checklist:
@@ -141,91 +267,7 @@ Manual smoke test checklist:
 - Check the history page and share a saved session with a friend.
 - Update profile details and change password from the account page.
 
-## First Use
 
-1. Open `http://127.0.0.1:5000/`
-2. Click **Sign Up** and create a new account
-3. Use the dashboard and **Create Exercise** page to add workout sessions
-
-Password rules:
-
-- At least 12 characters
-- At least one letter
-- At least one special character from `!@#$%^&*`
-
-## Pages & Features
-### Main Page (Home)
-- Instructions to use the web
-- **Sign In** — username and password login with redirect to dashboard on success
-- Link to Sign Up page for new users
-
-### Sign Up Page
-
-- Registration form collecting: username, email, password, confirm password, date of birth, sex, weight (kg), height (cm)
-- Username has to be unique
-- Email has to be unique
-- Password validation: at least 12 characters, at least one letter, and at least one special character
-- Redirects to dashboard after successful registration
-
-### Dashboard
-
-- Navigation bar: EP logo · Dashboard · Ranking · Profile · Create Exercise
-- 4 metric cards: **Start Weight, Current Weight, Current BMI, Total Changes**
-- **Today's calorie goal** — progress bar showing calories burned vs daily target
-- **Calories burned — this week** — bar chart by day (Mon–Sun)
-- **Calories burned — this month** — bar chart by date (1–30/31)
-
-### Create Exercise Page
-
-- **Date picker** at the top
-- **Exercise details** panel:
-  - Exercise dropdown (Running, Cycling, Jump rope, Squat, Deadlift, Bench Press, Push-ups, Burpees, Rowing, Elliptical)
-  - Duration input (minutes)
-  - Intensity dropdown (Light, Moderate, High, Very High)
-  - Add button — appends exercise to the session log below
-
-
-- **Notes** panel:
-
-Free-text field ("How today feel?")
-Weight today (kg) input
-
-- **Activity Location** map:
-  - Uses Leaflet and OpenStreetMap
-  - Click the map to save the activity location
-  - Optional current-location button using the browser's geolocation feature
-
-- **Logged session** list — shows each added exercise with duration, intensity, and kcal burned
-- **Estimated calories** burned — running total shown prominently at the bottom
-- **Save session** button — saves the completed session
-
-### Ranking Page
-
-- Displays users ranked by kg lost and calories burned
-- Shows each user's total sessions
-
-### History Page
-
-- Displays the logged-in user's saved workout sessions
-- Shows date, weight, calories burned, and notes
-- Displays saved activity locations on an interactive map
-
-### Profile Page
-
-- Edit personal info: password, date of birth, sex, weight, height
-- Save changes and Logout buttons
-- Separate panel with Change password and Delete account actions
-
-## Tech Stack
-| Layer | Technology |
-|---|---|
-| Frontend | HTML, JavaScript |
-| Templates | Jinja templates with base template inheritance |
-| CSS Framework | Bootstrap |
-| Charting | Chart.js |
-| Mapping | Leaflet, OpenStreetMap |
-| Design | Figma |
-| Auth & Database | Flask-Login, Flask-SQLAlchemy, SQLite |
 
 ## Troubleshooting
 
